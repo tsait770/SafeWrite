@@ -10,6 +10,7 @@ import BottomNav from './components/BottomNav';
 import ProfessionalPublicationCenter from './components/ProfessionalPublicationCenter';
 import StructureGraph from './components/StructureGraph';
 import ProjectDetail from './components/ProjectDetail';
+import CollaborationPanel from './components/CollaborationPanel';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
@@ -24,7 +25,7 @@ const App: React.FC = () => {
     stats: { wordCount: 45210, projectCount: 4, exportCount: 0, lastActive: Date.now(), hasTrialed: false }
   });
 
-  const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT'>('NONE');
+  const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION'>('NONE');
   const [isRestored, setIsRestored] = useState(false);
   const autoSnapshotTimer = useRef<number | null>(null);
 
@@ -165,6 +166,7 @@ const App: React.FC = () => {
               uiMode={state.uiMode}
               onModeToggle={(mode) => setState(prev => ({ ...prev, uiMode: mode }))}
               onOpenTimeline={() => setActiveOverlay('TIMELINE')}
+              onOpenCollaboration={() => setActiveOverlay('COLLABORATION')}
               isRestored={isRestored}
               onBack={() => setState(prev => ({ ...prev, activeTab: AppTab.PROJECT_DETAIL }))}
             />
@@ -217,6 +219,9 @@ const App: React.FC = () => {
       )}
       {activeOverlay === 'EXPORT' && (
         <ProfessionalPublicationCenter onClose={() => setActiveOverlay('NONE')} />
+      )}
+      {activeOverlay === 'COLLABORATION' && (
+        <CollaborationPanel onClose={() => setActiveOverlay('NONE')} />
       )}
     </div>
   );
