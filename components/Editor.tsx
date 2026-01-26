@@ -1,136 +1,104 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-/* 修正：移除不存在於 types.ts 的 EditorMode 匯入 */
-import { Chapter, UIMode } from '../types';
-import { PLACEHOLDER_TEXT } from '../constants';
+import React, { useState, useRef } from 'react';
+import { ModuleItem, Project, UIMode } from '../types';
+import { useEditor } from '../contexts/EditorContext';
 
 interface EditorProps {
-  chapter: Chapter;
-  onUpdateContent: (content: string) => void;
+  module: ModuleItem;
+  project: Project;
   uiMode: UIMode;
   onModeToggle: (mode: UIMode) => void;
-  onOpenTimeline: () => void;
-  isRestored?: boolean;
+  onBack: () => void;
 }
 
-const Editor: React.FC<EditorProps> = ({ 
-  chapter, 
-  onUpdateContent, 
-  uiMode, 
-  onModeToggle, 
-  onOpenTimeline,
-  isRestored = false
-}) => {
-  const [content, setContent] = useState(chapter.content);
-  const [readMode, setReadMode] = useState(false);
-  const [showToast, setShowToast] = useState(false);
+const Editor: React.FC<EditorProps> = ({ module, project, uiMode, onModeToggle, onBack }) => {
+  const { content, setContent, saveStatus } = useEditor();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // 同步內容
-  useEffect(() => {
-    setContent(chapter.content);
-  }, [chapter.content]);
-
-  // 回溯成功提示
-  useEffect(() => {
-    if (isRestored) {
-      setShowToast(true);
-      const timer = setTimeout(() => setShowToast(false), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isRestored]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setContent(newContent);
-    // 靜默自動儲存（背景觸發）
-    onUpdateContent(newContent);
-  };
-
+  const [mentionMenu, setMentionMenu] = useState<{ x: number; y: number } | null>(null);
   const isFocus = uiMode === UIMode.FOCUS;
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === '@') {
+      const rect = textareaRef.current?.getBoundingClientRect();
+      if (rect) setMentionMenu({ x: rect.left, y: 150 });
+    } else if (e.key === 'Escape') {
+      setMentionMenu(null);
+    }
+  };
+
+  const insertMention = (title: string) => {
+    setContent(content + `【${title}】`);
+    setMentionMenu(null);
+  };
+
   return (
-    <div className={`flex flex-col h-full bg-black text-white overflow-hidden transition-all duration-500`}>
-      {/* Header - 依據截圖設計 */}
-      <header className={`shrink-0 h-20 flex items-center justify-between px-6 bg-[#0F0F10] border-b border-white/5 z-50 transition-transform duration-500 ${isFocus ? '-translate-y-full' : 'translate-y-0'}`}>
-        <div className="flex items-center space-x-4">
-          <div className="w-10 h-10 rounded-xl bg-[#7b61ff] flex items-center justify-center text-white font-black text-sm shadow-[0_0_15px_rgba(123,97,255,0.3)]">
-            SW
-          </div>
+    <div className="flex flex-col h-full bg-black text-white relative">
+      {/*沈浸式動畫遮罩*/}
+      <div className={`fixed inset-0 z-[100] pointer-events-none transition-all duration-1000 ${isFocus ? 'bg-black/40' : 'opacity-0'}`}></div>
+
+      <header className={`shrink-0 h-24 flex items-end justify-between px-10 pb-5 z-[200] transition-all duration-700 ${isFocus ? '-translate-y-full opacity-0' : ''}`}>
+        <div className="flex items-center space-x-6">
+          <button onClick={onBack} className="w-12 h-12 rounded-2xl flex items-center justify-center text-gray-500 hover:text-white">
+             <i className="fa-solid fa-chevron-left text-lg"></i>
+          </button>
           <div className="flex flex-col">
-            <p className="text-[9px] font-black text-[#8E8E93] uppercase tracking-[0.2em]">SAFEWRITE</p>
-            <h2 className="text-sm font-bold text-white tracking-tight">{chapter.title}</h2>
+            <div className="flex items-center space-x-2">
+               <span className={`w-1.5 h-1.5 rounded-full ${saveStatus === 'SAVING' ? 'bg-[#7b61ff] animate-pulse' : 'bg-[#7b61ff]'}`}></span>
+               <p className="text-[9px] font-black uppercase tracking-[0.3em] text-[#7b61ff]">
+                  {saveStatus === 'SAVING' ? 'SYNCING MODULE...' : 'ENCRYPTED LOCAL CACHE'}
+               </p>
+            </div>
+            <h2 className="text-lg font-black tracking-tight">{module.title}</h2>
           </div>
         </div>
 
         <div className="flex items-center space-x-4">
-          {/* 閱讀模式切換 */}
-          <button 
-            onClick={() => setReadMode(!readMode)}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${readMode ? 'text-[#7b61ff] bg-[#7b61ff]/10' : 'text-[#8E8E93] hover:bg-white/5'}`}
-          >
-            <i className="fa-solid fa-eye text-lg"></i>
-          </button>
-          
-          {/* FOCUS / MANAGE 切換按鈕 */}
-          <button 
-            onClick={() => onModeToggle(isFocus ? UIMode.MANAGEMENT : UIMode.FOCUS)}
-            className={`h-10 px-6 rounded-2xl text-[10px] font-black uppercase tracking-[0.4em] border transition-all ${isFocus ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-[0_0_20px_rgba(123,97,255,0.4)]' : 'bg-white/5 border-white/10 text-white'}`}
-          >
-            {isFocus ? 'FOCUS' : 'MANAGE'}
-          </button>
-
-          {/* 時光機按鈕 */}
-          <button 
-            onClick={onOpenTimeline}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-[#8E8E93] hover:bg-white/5 transition-all"
-          >
-            <i className="fa-regular fa-clock text-xl"></i>
-          </button>
+           <button onClick={() => onModeToggle(isFocus ? UIMode.MANAGEMENT : UIMode.FOCUS)} className="h-12 px-8 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all">
+             {isFocus ? 'EXIT FOCUS' : 'FOCUS'}
+           </button>
         </div>
       </header>
 
-      {/* 主編輯區 */}
-      <main className={`flex-1 relative overflow-y-auto no-scrollbar pt-12 pb-20 transition-all duration-700 ${readMode ? 'bg-[#0A0A0B]' : 'bg-black'}`}>
-        {/* SUCCESS TOAST */}
-        {showToast && (
-          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top duration-500">
-            <div className="bg-[#7b61ff] text-white px-8 py-4 rounded-[20px] shadow-[0_15px_40px_rgba(123,97,255,0.4)] flex flex-col items-center">
-              <span className="text-[10px] font-black uppercase tracking-[0.3em]">SUCCESS: VERSION</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.3em]">RESTORED</span>
-            </div>
-          </div>
-        )}
+      <main className={`flex-1 overflow-y-auto no-scrollbar z-10 transition-all duration-1000 ${isFocus ? 'pt-40 px-16 scale-105' : 'pt-16 px-10'}`}>
+        <div className="max-w-screen-md mx-auto relative">
+           <textarea
+             ref={textareaRef}
+             value={content}
+             onKeyDown={handleKeyDown}
+             onChange={(e) => setContent(e.target.value)}
+             placeholder="開始寫作，輸入 @ 呼叫聯動模組..."
+             className="w-full bg-transparent border-none focus:ring-0 outline-none resize-none font-serif-editor text-xl leading-[2.6] text-gray-200"
+             style={{ minHeight: '75vh' }}
+           />
 
-        <div className={`max-w-screen-md mx-auto px-10 transition-all duration-700`}>
-          <h1 className={`text-4xl font-black mb-16 tracking-tight text-white transition-all duration-700 ${readMode ? 'opacity-30 scale-95' : 'opacity-100'}`}>
-            {chapter.title}
-          </h1>
-          
-          <div className="relative">
-            <textarea
-              ref={textareaRef}
-              value={content}
-              onChange={handleChange}
-              placeholder={PLACEHOLDER_TEXT}
-              className={`w-full bg-transparent border-none focus:ring-0 outline-none resize-none overflow-hidden transition-all duration-700 font-serif-editor ${readMode ? 'text-[#9CA3AF] text-xl leading-[2.6]' : 'text-gray-200 text-xl leading-[2.4]'}`}
-              style={{ minHeight: '60vh', height: 'auto' }}
-            />
-          </div>
-        </div>
-
-        {/* 浮動控制鈕 */}
-        <div className="fixed bottom-32 right-10 flex flex-col space-y-4">
-           <div className="w-16 h-16 rounded-[28px] bg-[#7b61ff] shadow-[0_15px_30px_rgba(123,97,255,0.4)] flex items-center justify-center text-white active:scale-90 transition-all cursor-pointer">
-              <div className="w-1.5 h-3 bg-white rounded-full"></div>
-           </div>
+           {mentionMenu && (
+             <div className="fixed z-[500] bg-[#1c1c1e] border border-white/10 rounded-3xl shadow-2xl p-4 w-64 animate-in fade-in zoom-in duration-300" style={{ left: mentionMenu.x, top: mentionMenu.y }}>
+                <div className="flex items-center justify-between mb-4 px-2">
+                   <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">引用聯動模組</span>
+                   <i className="fa-solid fa-wand-magic-sparkles text-[#7b61ff] text-xs"></i>
+                </div>
+                <div className="space-y-1">
+                   {project.modules.filter(m => m.id !== module.id).map(m => (
+                     <button key={m.id} onClick={() => insertMention(m.title)} className="w-full text-left p-3 rounded-xl hover:bg-[#7b61ff]/20 hover:text-[#7b61ff] text-sm font-bold transition-all flex items-center space-x-3">
+                        <span className="opacity-40 text-[9px] uppercase font-black">{m.type.slice(0,3)}</span>
+                        <span>{m.title}</span>
+                     </button>
+                   ))}
+                </div>
+             </div>
+           )}
         </div>
       </main>
 
-      {/* FOCUS 模式裝飾條 */}
-      {isFocus && (
-        <div className="fixed top-28 left-10 right-10 h-px bg-[#7b61ff]/20 z-40"></div>
-      )}
+      <footer className={`fixed bottom-0 w-full h-24 bg-black/80 backdrop-blur-3xl border-t border-white/5 flex items-center justify-between px-10 z-[200] transition-transform duration-700 ${isFocus ? 'translate-y-full' : ''}`}>
+         <div className="flex items-center space-x-10 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">
+            <div className="flex items-center space-x-3">
+               <i className="fa-solid fa-feather-pointed text-[#7b61ff]"></i>
+               <span>{content.length} 文字</span>
+            </div>
+            <span>約 {Math.max(1, Math.ceil(content.length / 400))} 分鐘讀時</span>
+         </div>
+      </footer>
     </div>
   );
 };

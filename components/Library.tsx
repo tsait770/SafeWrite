@@ -1,136 +1,168 @@
+
 import React, { useState } from 'react';
+import { Project, ProjectTemplate } from '../types';
 
 interface LibraryProps {
-  onSelectProject: (p: any) => void;
+  onSelectProject: (p: Project) => void;
 }
 
-const Library: React.FC<LibraryProps> = ({ onSelectProject }) => {
-  const [weather] = useState({ temp: '15', city: '新北市', date: 'January 20' });
+const COLORS = [
+  '#7b61ff', '#d4ff70', '#ff5c00', '#ff8a65', '#b39ddb', '#4caf50',
+  '#2196f3', '#f44336', '#e91e63', '#9c27b0', '#009688', '#ffc107'
+];
 
-  const projects = [
+const ICONS = [
+  'fa-book', 'fa-feather', 'fa-scroll', 'fa-pen-nib', 'fa-clapperboard',
+  'fa-flask', 'fa-earth-asia', 'fa-user-ninja', 'fa-newspaper', 'fa-microscope',
+  'fa-brain', 'fa-ghost', 'fa-shield-heart', 'fa-compass', 'fa-mountain-sun',
+  'fa-robot', 'fa-dna', 'fa-rocket', 'fa-dragon', 'fa-book-open'
+];
+
+const Library: React.FC<LibraryProps> = ({ onSelectProject }) => {
+  const [showCreate, setShowCreate] = useState(false);
+  const [newProject, setNewProject] = useState({
+    name: '',
+    color: COLORS[0],
+    icon: ICONS[0],
+    template: ProjectTemplate.NOVEL
+  });
+
+  const [projects, setProjects] = useState<Project[]>([
     {
       id: 'p1',
-      name: 'The Solar Paradox',
-      category: 'SCI-FI • NOVEL',
-      metadata: 'EDITED 10M AGO',
-      progress: 82,
-      color: 'bg-[#F5E050]',
-      textColor: 'text-[#121212]',
-      progressColor: 'bg-[#121212]/30'
+      name: '量子意識與靈魂重啟',
+      template: ProjectTemplate.NOVEL,
+      color: '#7b61ff',
+      icon: 'fa-brain',
+      textColor: 'text-white',
+      stats: { wordCount: 45000, updatedAt: Date.now() },
+      modules: [
+        { id: 'm1', title: '序章：觀測者', type: 'CHAPTER', content: '所有的現實都在被觀測的那一刻坍縮...', order: 0 },
+        { id: 'm2', title: '角色：蘇格拉', type: 'CHARACTER', content: '年齡：不詳。能力：悖論偵測。', order: 1 }
+      ],
+      // Adding missing properties for Sidebar compatibility
+      chapters: [
+        { id: 'm1', title: '序章：觀測者', type: 'CHAPTER', content: '所有的現實都在被觀測的那一刻坍縮...', order: 0 }
+      ],
+      visualOutline: []
     },
     {
       id: 'p2',
-      name: 'Urban Solitude',
-      category: 'PHOTOGRAPHY • ESSAY',
-      metadata: 'DRAFTING • CHAPTER 3',
-      progress: 35,
-      color: 'bg-[#FF6B2C]',
+      name: '末日異能：零號檔案',
+      template: ProjectTemplate.NOVEL,
+      color: '#ff5c00',
+      icon: 'fa-dragon',
       textColor: 'text-white',
-      progressColor: 'bg-white/20'
-    },
-    {
-      id: 'p3',
-      name: 'Cognitive Bias Research',
-      category: 'ACADEMIC • THESIS',
-      metadata: 'REVIEW PENDING',
-      progress: 95,
-      color: 'bg-[#D4FF5F]',
-      textColor: 'text-[#121212]',
-      progressColor: 'bg-[#121212]/20'
-    },
-    {
-      id: 'p4',
-      name: 'Midnight Podcast S2',
-      category: 'AUDIO • SCRIPT',
-      metadata: 'CREATED YESTERDAY',
-      progress: 10,
-      color: 'bg-[#B2A4FF]',
-      textColor: 'text-white',
-      progressColor: 'bg-white/30'
+      stats: { wordCount: 12000, updatedAt: Date.now() },
+      modules: [],
+      chapters: [],
+      visualOutline: []
     }
-  ];
+  ]);
+
+  const handleCreate = () => {
+    if (!newProject.name) return;
+    const project: Project = {
+      id: `p-${Date.now()}`,
+      name: newProject.name,
+      template: newProject.template,
+      color: newProject.color,
+      icon: newProject.icon,
+      textColor: 'text-white',
+      stats: { wordCount: 0, updatedAt: Date.now() },
+      modules: [],
+      chapters: [],
+      visualOutline: []
+    };
+    setProjects([project, ...projects]);
+    setShowCreate(false);
+  };
 
   return (
-    <div className="px-8 space-y-12">
-      {/* Weather Widget */}
-      <section>
-        <div className="weather-card">
-          <div className="weather-container">
-            <div className="cloud front">
-              <span className="left-front"></span>
-              <span className="right-front"></span>
-            </div>
-            <span className="sun sunshine"></span>
-            <span className="sun"></span>
-            <div className="cloud back">
-              <span className="left-back"></span>
-              <span className="right-back"></span>
-            </div>
+    <div className="px-10 py-10 min-h-screen">
+      {/* 天氣與頂部標題 */}
+      <section className="mb-12">
+        <div className="bg-white rounded-[40px] p-8 flex justify-between items-center text-black mb-10 shadow-xl overflow-hidden relative">
+          <div className="z-10">
+            <h2 className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40">Weather Check</h2>
+            <p className="text-4xl font-black tracking-tighter mt-1">15°C New York</p>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="font-extrabold text-base text-[rgba(87,77,51,0.6)] uppercase tracking-tight">{weather.city}</span>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="font-bold text-sm text-[rgba(87,77,51,0.4)]">{weather.date}</span>
-              <span className="bg-black/5 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[rgba(87,77,51,0.5)]">MACOS</span>
-            </div>
-          </div>
-          <span className="temp">{weather.temp}°</span>
-          <div className="temp-scale">
-            <span>Celsius</span>
-          </div>
+          <div className="absolute -right-4 -top-4 w-32 h-32 bg-[#ffc107] rounded-full blur-3xl opacity-20"></div>
+          <i className="fa-solid fa-cloud-sun text-5xl opacity-80 z-10"></i>
+        </div>
+
+        <div className="flex items-center justify-between mb-8 px-2">
+           <h2 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.4em]">Smart Folders</h2>
+           <button onClick={() => setShowCreate(true)} className="w-10 h-10 rounded-2xl bg-[#7b61ff] flex items-center justify-center text-white shadow-lg active:scale-90 transition-all">
+              <i className="fa-solid fa-plus"></i>
+           </button>
         </div>
       </section>
 
-      {/* Core Repositories Stacking */}
-      <section>
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-3">
-             <h2 className="text-[11px] font-black text-[#8e8e93] uppercase tracking-[0.2em]">CORE REPOSITORIES</h2>
-          </div>
-          <div className="flex-1 h-px bg-white/10 ml-6" />
-        </div>
-        
-        <div className="stack-container">
-          {projects.map((proj, idx) => (
-            <div 
-              key={proj.id} 
-              className={`stack-card ${proj.color} ${proj.textColor}`}
-              style={{ 
-                zIndex: projects.length - idx,
-              }}
-              onClick={() => onSelectProject(proj)}
-            >
-              <div className="flex flex-col h-full justify-between">
-                <div className="flex justify-between items-start">
-                  <div className="max-w-[70%]">
-                    <h3 className="text-3xl font-black tracking-tighter leading-[0.9]">{proj.name}</h3>
-                    <p className="text-[10px] font-black uppercase tracking-[0.15em] opacity-50 mt-3">{proj.category}</p>
+      {/* Wallet Stack Cards */}
+      <div className="stack-container">
+        {projects.map((proj, idx) => (
+          <div 
+            key={proj.id}
+            onClick={() => onSelectProject(proj)}
+            className="stack-card"
+            style={{ 
+              backgroundColor: proj.color,
+              zIndex: projects.length - idx
+            }}
+          >
+            <div className="flex justify-between items-start mb-12">
+               <div>
+                  <div className="px-3 py-1 bg-black/10 backdrop-blur-md rounded-full w-fit mb-3">
+                     <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{proj.template}</span>
                   </div>
-                  <button className="card-action-btn">
-                     <svg className="w-5 h-5 opacity-60" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                  </button>
-                </div>
-                
-                <div className="mt-12">
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest opacity-60">
-                    <span>{proj.metadata}</span>
-                    <span>{proj.progress}%</span>
-                  </div>
-                  <div className="progress-bar-container">
-                    <div className={`progress-fill ${proj.progressColor}`} style={{ width: `${proj.progress}%` }} />
-                  </div>
-                </div>
-              </div>
+                  <h3 className="text-3xl font-black tracking-tighter leading-none">{proj.name}</h3>
+               </div>
+               <div className="w-12 h-12 rounded-2xl bg-black/10 flex items-center justify-center text-xl">
+                  <i className={`fa-solid ${proj.icon} opacity-60`}></i>
+               </div>
             </div>
-          ))}
-        </div>
-      </section>
 
-      <div className="text-center pt-10 pb-24">
-        <button className="text-[10px] font-black text-[#8e8e93] uppercase tracking-[0.2em] hover:text-white transition-colors py-4 px-8 border border-white/5 rounded-full">
-          Manage all repositories
-        </button>
+            <div className="flex items-end justify-between">
+               <div className="flex flex-col">
+                  <p className="text-[9px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">Words Counted</p>
+                  <p className="text-xl font-black">{proj.stats.wordCount.toLocaleString()}</p>
+               </div>
+               <div className="w-1.5 h-1.5 rounded-full bg-black/20 ai-active-indicator"></div>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* 建立對話框 */}
+      {showCreate && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-6 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={() => setShowCreate(false)} />
+           <div className="relative w-full max-w-lg bg-[#1c1c1e] rounded-[3.5rem] border border-white/5 p-10 shadow-2xl animate-in zoom-in duration-500">
+              <h2 className="text-2xl font-black tracking-tighter mb-8">建立作品集資料夾</h2>
+              <div className="space-y-8">
+                 <input 
+                   type="text" value={newProject.name} placeholder="作品名稱..." 
+                   onChange={(e) => setNewProject({...newProject, name: e.target.value})}
+                   className="w-full bg-white/5 border border-white/10 h-16 rounded-2xl px-6 outline-none focus:border-[#7b61ff]/50 transition-all font-bold"
+                 />
+                 <div className="grid grid-cols-6 gap-3">
+                    {COLORS.map(c => (
+                      <button key={c} onClick={() => setNewProject({...newProject, color: c})} className={`h-10 rounded-xl ${newProject.color === c ? 'ring-2 ring-white ring-offset-4 ring-offset-[#1c1c1e]' : ''}`} style={{ backgroundColor: c }} />
+                    ))}
+                 </div>
+                 <div className="grid grid-cols-5 gap-3 max-h-40 overflow-y-auto no-scrollbar py-2">
+                    {ICONS.map(i => (
+                      <button key={i} onClick={() => setNewProject({...newProject, icon: i})} className={`h-12 rounded-xl bg-white/5 flex items-center justify-center text-xl ${newProject.icon === i ? 'text-[#7b61ff] bg-[#7b61ff]/10' : 'text-gray-600'}`}>
+                         <i className={`fa-solid ${i}`}></i>
+                      </button>
+                    ))}
+                 </div>
+                 <button onClick={handleCreate} className="w-full py-6 bg-[#7b61ff] rounded-[2.5rem] font-black text-sm uppercase tracking-[0.3em]">創建智慧資料夾</button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 };
