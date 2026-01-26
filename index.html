@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SafeWrite - 智慧寫作系統</title>
+    <title>SafeWrite - 你的作品避風港</title>
     <link rel="manifest" href="metadata.json">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Noto+Serif+TC:wght@400;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+TC:wght@400;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-main: #0a0a0a;
-            --bg-card-dark: #1c1c1e;
-            --accent-purple: #7b61ff;
-            --accent-lime: #d4ff70;
-            --accent-orange: #ff5c00;
-            --accent-peach: #ff8a65;
-            --accent-lavender: #b39ddb;
-            --text-primary: #ffffff;
-            --text-secondary: #8e8e93;
+            --bg-primary: #000000;
+            --bg-card-surface: #1C1C1E;
+            --accent-yellow: #F5E050;
+            --accent-orange: #FF6B2C;
+            --accent-green: #D4FF5F;
+            --accent-purple: #B2A4FF;
+            --accent-peach: #FF9F7A;
+            --text-primary: #FFFFFF;
+            --text-secondary: #8E8E93;
+            --text-on-light: #121212;
+            --radius-lg: 32px;
+            --radius-md: 24px;
         }
 
         body {
@@ -26,8 +29,9 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: var(--bg-main);
+            background: var(--bg-primary);
             color: var(--text-primary);
+            overscroll-behavior-y: none;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -38,46 +42,128 @@
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
         
-        /* iOS Wallet Stack Effect */
+        /* Stacking Card Design */
         .stack-container {
             display: flex;
             flex-direction: column;
-            padding-bottom: 60px;
+            padding-bottom: 40px;
         }
         
         .stack-card {
             border-radius: 44px;
-            padding: 32px;
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 28px 32px;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
+            overflow: hidden;
             cursor: pointer;
-            box-shadow: 0 -20px 60px rgba(0,0,0,0.6);
-            margin-bottom: -160px; /* 控制堆疊緊密度 */
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
+            margin-bottom: -130px;
         }
 
         .stack-card:hover {
-            transform: translateY(-50px) scale(1.02);
+            transform: translateY(-40px) scale(1.02);
             z-index: 100 !important;
-            margin-bottom: -120px;
+            margin-bottom: -90px;
         }
 
         .stack-card:active {
-            transform: translateY(-45px) scale(0.98);
+            transform: translateY(-35px) scale(0.98);
         }
 
         .stack-card:last-child {
             margin-bottom: 0;
         }
 
-        /* 呼吸效果的 AI 偵測條 */
-        .ai-active-indicator {
-            animation: breathe 2s infinite ease-in-out;
+        /* Power/Menu Button inside card */
+        .card-action-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 24px;
+            background: rgba(0, 0, 0, 0.08);
+            backdrop-blur: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1.5px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
         }
-        @keyframes breathe {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 1; }
+        .card-action-btn:hover {
+            background: rgba(0, 0, 0, 0.15);
         }
+
+        /* Dual-Mode Toggle Icon */
+        .dual-mode-toggle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            height: 6px;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 3px;
+            margin-top: 16px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease-in-out;
+        }
+
+        /* Weather Card */
+        .weather-card {
+          width: 100%;
+          height: 235px;
+          position: relative;
+          padding: 28px;
+          background: radial-gradient(178.94% 106.41% at 26.42% 106.41%, #FFF7B1 0%, rgba(255, 255, 255, 0) 71.88%), #FFFFFF;
+          box-shadow: 0px 40px 60px rgba(0, 0, 0, 0.2);
+          border-radius: 40px;
+          overflow: hidden;
+        }
+        .weather-container { width: 250px; height: 250px; position: absolute; right: -35px; top: -50px; display: flex; align-items: center; justify-content: center; transform: scale(0.7); pointer-events: none; }
+        .cloud { width: 250px; }
+        .front { padding-top: 45px; margin-left: 25px; display: inline; position: absolute; z-index: 11; animation: clouds 8s infinite; animation-timing-function: ease-in-out; }
+        .back { margin-top: -30px; margin-left: 150px; z-index: 12; animation: clouds 12s infinite; animation-timing-function: ease-in-out; }
+        .right-front { width: 45px; height: 45px; border-radius: 50% 50% 50% 0%; background-color: #4c9beb; display: inline-block; margin-left: -25px; }
+        .left-front { width: 65px; height: 65px; border-radius: 50% 50% 0% 50%; background-color: #4c9beb; display: inline-block; }
+        .right-back { width: 50px; height: 50px; border-radius: 50% 50% 50% 0%; background-color: #4c9beb; display: inline-block; margin-left: -20px; }
+        .left-back { width: 30px; height: 30px; border-radius: 50% 50% 0% 50%; background-color: #4c9beb; display: inline-block; }
+        .sun { width: 120px; height: 120px; background: linear-gradient(to right, #fcbb04, #fffc00); border-radius: 60px; display: inline; position: absolute; }
+        .sunshine { animation: sunshines 2s infinite; }
+        @keyframes sunshines { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.4); opacity: 0; } }
+        @keyframes clouds { 0% { transform: translateX(15px); } 50% { transform: translateX(0px); } 100% { transform: translateX(15px); } }
+        .temp { position: absolute; left: 28px; bottom: 15px; font-weight: 700; font-size: 72px; line-height: 1; color: rgba(87, 77, 51, 1); letter-spacing: -2px; }
+        .temp-scale { position: absolute; right: 28px; bottom: 28px; padding: 6px 16px; background: rgba(0, 0, 0, 0.06); border-radius: 12px; font-weight: 800; font-size: 14px; color: rgba(87, 77, 51, 0.5); }
+
+        /* Capture Grid Buttons */
+        .capture-btn {
+            border-radius: 40px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            aspect-ratio: 1;
+            transition: all 0.3s ease;
+        }
+        .capture-btn:active { transform: scale(0.95); }
     </style>
 <script type="importmap">
 {
@@ -85,7 +171,11 @@
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.37.0"
+    "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
+    "marked": "https://esm.sh/marked@^17.0.1",
+    "jspdf": "https://esm.sh/jspdf@^4.0.0",
+    "docx": "https://esm.sh/docx@^9.5.1",
+    "jszip": "https://esm.sh/jszip@^3.10.1"
   }
 }
 </script>

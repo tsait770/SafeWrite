@@ -1,79 +1,150 @@
 
-export enum MembershipLevel { FREE = 'FREE', PRO = 'PRO', PREMIUM = 'PREMIUM' }
-
-export enum ProjectTemplate {
-  LONG_FORM = 'Long-form Narrative',
-  RESEARCH = 'Research-driven Writing',
-  NOVEL = 'Novel Writing',
-  SCREENPLAY = 'Screenplay/TV Pilot'
+export enum MembershipLevel {
+  FREE = 'FREE',
+  PRO = 'PRO',
+  PREMIUM = 'PREMIUM'
 }
 
-export type ModuleType = 'CHAPTER' | 'NOTE' | 'LORE' | 'CHARACTER' | 'SOURCE' | 'FINDING' | 'SCENE' | 'DIALOGUE';
+export enum WritingType {
+  NOVEL = 'NOVEL',
+  RESEARCH = 'RESEARCH',
+  SCREENPLAY = 'SCREENPLAY',
+  JOURNAL = 'JOURNAL'
+}
 
-export interface ModuleItem {
+export enum ModuleType {
+  COLLECTION = 'COLLECTION',
+  BOARD = 'BOARD',
+  TIMELINE = 'TIMELINE',
+  MANUSCRIPT = 'MANUSCRIPT'
+}
+
+export interface WritingModule {
   id: string;
-  title: string;
   type: ModuleType;
-  content: string;
+  title: string;
+  icon: string;
+  description: string;
   order: number;
 }
 
-// Added OutlineNode for AIPanel.tsx and Sidebar.tsx
+export interface Project {
+  id: string;
+  name: string;
+  writingType: WritingType;
+  metadata: string;
+  progress: number;
+  color: string;
+  icon: string;
+  chapters: Chapter[];
+  modules: WritingModule[];
+  createdAt: number;
+  updatedAt: number;
+  tags: string[];
+  visualOutline?: OutlineNode[];
+  settings: {
+    typography: 'serif' | 'sans';
+    fontSize: 'normal' | 'large';
+  }
+}
+
+export enum ProjectTemplate {
+  LONG_FORM = 'Long-form Narrative',
+  NOVEL = 'Novel Writing',
+  SCREENPLAY = 'Screenplay/TV Pilot',
+  ACADEMIC = 'Academic Paper',
+  ESSAY = 'Essay & Opinion',
+  CREATOR = 'Creator/Newsletter'
+}
+
+export enum TemplateType {
+  PROSE = 'Standard Prose',
+  POETRY = 'Poetry/Verse',
+  ACADEMIC = 'Academic/Manuscript',
+  SCREENPLAY = 'Screenplay/Format'
+}
+
+export enum PublicationStatus {
+  DRAFT = 'DRAFT',
+  SUBMITTED = 'SUBMITTED',
+  REVIEWING = 'REVIEWING',
+  ACCEPTED = 'ACCEPTED',
+  PUBLISHED = 'PUBLISHED'
+}
+
 export interface OutlineNode {
   id: string;
   label: string;
   level: number;
 }
 
-export interface Project {
-  id: string;
-  name: string;
-  template: ProjectTemplate;
-  color: string;
-  icon: string;
-  textColor: string;
-  modules: ModuleItem[];
-  // Added for Sidebar.tsx compatibility as it expects these properties
-  chapters: ModuleItem[];
-  visualOutline?: OutlineNode[];
-  stats: { wordCount: number; updatedAt: number };
+export interface UserStats {
+  wordCount: number;
+  projectCount: number;
+  exportCount: number;
+  lastActive: number;
+  hasTrialed: boolean;
 }
 
-export enum UIMode { FOCUS = 'FOCUS', MANAGEMENT = 'MANAGEMENT' }
-export enum AppTab { LIBRARY = 'LIBRARY', WRITE = 'WRITE', PROFILE = 'PROFILE' }
-
-// Added Snapshot types for Timeline.tsx and dbService.ts
-export enum SnapshotType { AUTO = 'AUTO', MILESTONE = 'MILESTONE' }
+export enum SnapshotType {
+  AUTO = 'auto',
+  MANUAL = 'manual',
+  MILESTONE = 'milestone',
+}
 
 export interface VersionSnapshot {
   id: string;
   timestamp: number;
-  title?: string;
   content: string;
+  title: string;
   type: SnapshotType;
+  milestoneName?: string;
 }
 
-// Added UserStats for StatusBar.tsx
-export interface UserStats {
-  wordCount: number;
+export interface Chapter {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  history: VersionSnapshot[];
+  publicationStatus?: PublicationStatus;
 }
 
-// Added PublicationStatus for PublicationTracker.tsx
-export enum PublicationStatus {
-  SUBMITTED = 'Submitted',
-  REVIEWING = 'Reviewing',
-  ACCEPTED = 'Accepted'
+export enum UIMode {
+  FOCUS = 'FOCUS',
+  MANAGEMENT = 'MANAGEMENT'
 }
 
-// Added SupportedLanguage for Profile.tsx and LanguageSelector.tsx
-export type SupportedLanguage = 'en' | 'zh-TW' | 'zh-CN' | 'es' | 'pt-BR' | 'pt-PT' | 'de' | 'fr' | 'it' | 'nl' | 'sv' | 'tr' | 'ru' | 'ja' | 'ko' | 'th' | 'vi' | 'id' | 'ms' | 'ar' | 'hi';
+export enum AppMode {
+  REPOSITORY = 'REPOSITORY',
+  CAPTURE = 'CAPTURE'
+}
+
+export enum ThemeMode {
+  DAY = 'DAY',
+  NIGHT = 'NIGHT'
+}
+
+export enum AppTab {
+  LIBRARY = 'LIBRARY',
+  WRITE = 'WRITE',
+  PROFILE = 'PROFILE',
+  PROJECT_DETAIL = 'PROJECT_DETAIL'
+}
+
+export type SupportedLanguage = 
+  | 'en' | 'zh-TW' | 'zh-CN' | 'es' | 'pt-BR' | 'pt-PT' | 'de' | 'fr' 
+  | 'it' | 'nl' | 'sv' | 'tr' | 'ru' | 'ja' | 'ko' | 'th' | 'vi' 
+  | 'id' | 'ms' | 'ar' | 'hi';
 
 export interface AppState {
   currentProject: Project | null;
-  activeModuleId: string | null;
-  activeTab: AppTab;
+  currentChapterId: string | null;
   uiMode: UIMode;
-  // Added missing fields used in Profile.tsx
-  language: SupportedLanguage;
+  appMode: AppMode;
+  activeTab: AppTab;
+  theme: ThemeMode;
   membership: MembershipLevel;
+  stats: UserStats;
+  language: SupportedLanguage;
 }

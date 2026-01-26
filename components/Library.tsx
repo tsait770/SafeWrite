@@ -1,165 +1,229 @@
 
 import React, { useState } from 'react';
-import { Project, ProjectTemplate } from '../types';
+import { Project, WritingType, ModuleType } from '../types';
+import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES } from '../constants';
 
 interface LibraryProps {
-  onSelectProject: (p: Project) => void;
+  onSelectProject: (p: any) => void;
 }
 
-const COLORS = [
-  '#7b61ff', '#d4ff70', '#ff5c00', '#ff8a65', '#b39ddb', '#4caf50',
-  '#2196f3', '#f44336', '#e91e63', '#9c27b0', '#009688', '#ffc107'
-];
-
-const ICONS = [
-  'fa-book', 'fa-feather', 'fa-scroll', 'fa-pen-nib', 'fa-clapperboard',
-  'fa-flask', 'fa-earth-asia', 'fa-user-ninja', 'fa-newspaper', 'fa-microscope',
-  'fa-brain', 'fa-ghost', 'fa-shield-heart', 'fa-compass', 'fa-mountain-sun',
-  'fa-robot', 'fa-dna', 'fa-rocket', 'fa-dragon', 'fa-book-open'
-];
-
 const Library: React.FC<LibraryProps> = ({ onSelectProject }) => {
-  const [showCreate, setShowCreate] = useState(false);
+  const [weather] = useState({ temp: '15', city: '新北市', date: 'January 20' });
+  const [isCreating, setIsCreating] = useState(false);
   const [newProject, setNewProject] = useState({
     name: '',
-    color: COLORS[0],
-    icon: ICONS[0],
-    template: ProjectTemplate.NOVEL
+    type: WritingType.NOVEL,
+    color: PROJECT_COLORS[0],
+    icon: PROJECT_ICONS[0]
   });
 
-  const [projects, setProjects] = useState<Project[]>([
+  const [localProjects, setLocalProjects] = useState([
     {
       id: 'p1',
-      name: '量子意識與靈魂重啟',
-      template: ProjectTemplate.NOVEL,
-      color: '#7b61ff',
-      icon: 'fa-brain',
-      textColor: 'text-white',
-      stats: { wordCount: 45000, updatedAt: Date.now() },
-      modules: [
-        { id: 'm1', title: '序章：觀測者', type: 'CHAPTER', content: '所有的現實都在被觀測的那一刻坍縮...', order: 0 },
-        { id: 'm2', title: '角色：蘇格拉', type: 'CHARACTER', content: '年齡：不詳。能力：悖論偵測。', order: 1 }
-      ],
-      // Adding missing properties for Sidebar compatibility
-      chapters: [
-        { id: 'm1', title: '序章：觀測者', type: 'CHAPTER', content: '所有的現實都在被觀測的那一刻坍縮...', order: 0 }
-      ],
-      visualOutline: []
+      name: 'The Solar Paradox',
+      writingType: WritingType.NOVEL,
+      metadata: 'EDITED 10M AGO',
+      progress: 82,
+      color: '#F5E050',
+      icon: 'fa-feather-pointed',
+      chapters: [{ id: 'c1', title: 'Chapter 1', content: 'Story starts...', order: 1, history: [] }],
+      modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i })),
+      settings: { typography: 'serif', fontSize: 'normal' }
     },
     {
       id: 'p2',
-      name: '末日異能：零號檔案',
-      template: ProjectTemplate.NOVEL,
-      color: '#ff5c00',
-      icon: 'fa-dragon',
-      textColor: 'text-white',
-      stats: { wordCount: 12000, updatedAt: Date.now() },
-      modules: [],
-      chapters: [],
-      visualOutline: []
-    }
+      name: 'Urban Solitude',
+      writingType: WritingType.RESEARCH,
+      metadata: 'DRAFTING • CHAPTER 3',
+      progress: 35,
+      color: '#FF6B2C',
+      icon: 'fa-camera',
+      chapters: [{ id: 'c2', title: 'Draft 1', content: 'Urban life is...', order: 1, history: [] }],
+      modules: TEMPLATES[WritingType.RESEARCH].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i })),
+      settings: { typography: 'sans', fontSize: 'normal' }
+    },
+    {
+        id: 'p3',
+        name: 'Midnight Podcast S2',
+        writingType: WritingType.SCREENPLAY,
+        metadata: 'CREATED YESTERDAY',
+        progress: 10,
+        color: '#B2A4FF',
+        icon: 'fa-film',
+        chapters: [{ id: 'c3', title: 'Act I', content: 'INT. COFFEE SHOP - DAY', order: 1, history: [] }],
+        modules: TEMPLATES[WritingType.SCREENPLAY].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i })),
+        settings: { typography: 'sans', fontSize: 'normal' }
+      }
   ]);
 
   const handleCreate = () => {
     if (!newProject.name) return;
-    const project: Project = {
-      id: `p-${Date.now()}`,
+    const project: any = {
+      id: 'p-' + Date.now(),
       name: newProject.name,
-      template: newProject.template,
+      writingType: newProject.type,
+      metadata: 'JUST CREATED',
+      progress: 0,
       color: newProject.color,
       icon: newProject.icon,
-      textColor: 'text-white',
-      stats: { wordCount: 0, updatedAt: Date.now() },
-      modules: [],
-      chapters: [],
-      visualOutline: []
+      chapters: [{ id: 'c1', title: '第一章', content: '', order: 1, history: [] }],
+      modules: TEMPLATES[newProject.type].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i })),
+      settings: { typography: 'serif', fontSize: 'normal' },
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     };
-    setProjects([project, ...projects]);
-    setShowCreate(false);
+    setLocalProjects([project, ...localProjects]);
+    setIsCreating(false);
+    onSelectProject(project);
   };
 
   return (
-    <div className="px-10 py-10 min-h-screen">
-      {/* 天氣與頂部標題 */}
-      <section className="mb-12">
-        <div className="bg-white rounded-[40px] p-8 flex justify-between items-center text-black mb-10 shadow-xl overflow-hidden relative">
-          <div className="z-10">
-            <h2 className="text-[11px] font-black uppercase tracking-[0.3em] opacity-40">Weather Check</h2>
-            <p className="text-4xl font-black tracking-tighter mt-1">15°C New York</p>
+    <div className="px-8 space-y-12 pb-32">
+      {/* Weather Widget */}
+      <section>
+        <div className="weather-card">
+          <div className="weather-container">
+            <div className="cloud front"><span className="left-front"></span><span className="right-front"></span></div>
+            <span className="sun sunshine"></span><span className="sun"></span>
+            <div className="cloud back"><span className="left-back"></span><span className="right-back"></span></div>
           </div>
-          <div className="absolute -right-4 -top-4 w-32 h-32 bg-[#ffc107] rounded-full blur-3xl opacity-20"></div>
-          <i className="fa-solid fa-cloud-sun text-5xl opacity-80 z-10"></i>
-        </div>
-
-        <div className="flex items-center justify-between mb-8 px-2">
-           <h2 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.4em]">Smart Folders</h2>
-           <button onClick={() => setShowCreate(true)} className="w-10 h-10 rounded-2xl bg-[#7b61ff] flex items-center justify-center text-white shadow-lg active:scale-90 transition-all">
-              <i className="fa-solid fa-plus"></i>
-           </button>
+          <div className="flex flex-col gap-1">
+            <span className="font-extrabold text-base text-[rgba(87,77,51,0.6)] uppercase tracking-tight">{weather.city}</span>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="font-bold text-sm text-[rgba(87,77,51,0.4)]">{weather.date}</span>
+              <span className="bg-black/5 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[rgba(87,77,51,0.5)]">MACOS</span>
+            </div>
+          </div>
+          <span className="temp">{weather.temp}°</span>
+          <div className="temp-scale"><span>Celsius</span></div>
         </div>
       </section>
 
-      {/* Wallet Stack Cards */}
-      <div className="stack-container">
-        {projects.map((proj, idx) => (
-          <div 
-            key={proj.id}
-            onClick={() => onSelectProject(proj)}
-            className="stack-card"
-            style={{ 
-              backgroundColor: proj.color,
-              zIndex: projects.length - idx
-            }}
-          >
-            <div className="flex justify-between items-start mb-12">
-               <div>
-                  <div className="px-3 py-1 bg-black/10 backdrop-blur-md rounded-full w-fit mb-3">
-                     <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{proj.template}</span>
-                  </div>
-                  <h3 className="text-3xl font-black tracking-tighter leading-none">{proj.name}</h3>
-               </div>
-               <div className="w-12 h-12 rounded-2xl bg-black/10 flex items-center justify-center text-xl">
-                  <i className={`fa-solid ${proj.icon} opacity-60`}></i>
-               </div>
-            </div>
-
-            <div className="flex items-end justify-between">
-               <div className="flex flex-col">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] opacity-40 mb-1">Words Counted</p>
-                  <p className="text-xl font-black">{proj.stats.wordCount.toLocaleString()}</p>
-               </div>
-               <div className="w-1.5 h-1.5 rounded-full bg-black/20 ai-active-indicator"></div>
-            </div>
+      {/* Stacking Card List */}
+      <section>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-3">
+             <h2 className="text-[11px] font-black text-[#8e8e93] uppercase tracking-[0.2em]">CORE REPOSITORIES</h2>
           </div>
-        ))}
-      </div>
-
-      {/* 建立對話框 */}
-      {showCreate && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center p-6 animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-black/90 backdrop-blur-xl" onClick={() => setShowCreate(false)} />
-           <div className="relative w-full max-w-lg bg-[#1c1c1e] rounded-[3.5rem] border border-white/5 p-10 shadow-2xl animate-in zoom-in duration-500">
-              <h2 className="text-2xl font-black tracking-tighter mb-8">建立作品集資料夾</h2>
-              <div className="space-y-8">
-                 <input 
-                   type="text" value={newProject.name} placeholder="作品名稱..." 
-                   onChange={(e) => setNewProject({...newProject, name: e.target.value})}
-                   className="w-full bg-white/5 border border-white/10 h-16 rounded-2xl px-6 outline-none focus:border-[#7b61ff]/50 transition-all font-bold"
-                 />
-                 <div className="grid grid-cols-6 gap-3">
-                    {COLORS.map(c => (
-                      <button key={c} onClick={() => setNewProject({...newProject, color: c})} className={`h-10 rounded-xl ${newProject.color === c ? 'ring-2 ring-white ring-offset-4 ring-offset-[#1c1c1e]' : ''}`} style={{ backgroundColor: c }} />
-                    ))}
-                 </div>
-                 <div className="grid grid-cols-5 gap-3 max-h-40 overflow-y-auto no-scrollbar py-2">
-                    {ICONS.map(i => (
-                      <button key={i} onClick={() => setNewProject({...newProject, icon: i})} className={`h-12 rounded-xl bg-white/5 flex items-center justify-center text-xl ${newProject.icon === i ? 'text-[#7b61ff] bg-[#7b61ff]/10' : 'text-gray-600'}`}>
-                         <i className={`fa-solid ${i}`}></i>
-                      </button>
-                    ))}
-                 </div>
-                 <button onClick={handleCreate} className="w-full py-6 bg-[#7b61ff] rounded-[2.5rem] font-black text-sm uppercase tracking-[0.3em]">創建智慧資料夾</button>
+          <button 
+            onClick={() => setIsCreating(true)}
+            className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/40 active:scale-90 transition-all"
+          >
+            <i className="fa-solid fa-plus text-white text-sm"></i>
+          </button>
+        </div>
+        
+        <div className="stack-container relative">
+          {localProjects.map((proj, idx) => (
+            <div 
+              key={proj.id} 
+              className="stack-card"
+              style={{ 
+                zIndex: localProjects.length - idx,
+                backgroundColor: proj.color,
+                color: '#121212'
+              }}
+              onClick={() => onSelectProject(proj)}
+            >
+              <div className="flex flex-col h-full justify-between">
+                <div className="flex justify-between items-start">
+                  <div className="max-w-[70%]">
+                    <div className="flex items-center space-x-2 mb-2 opacity-60">
+                       <i className={`fa-solid ${proj.icon} text-xs`}></i>
+                       <span className="text-[10px] font-black uppercase tracking-widest">{proj.writingType}</span>
+                    </div>
+                    <h3 className="text-3xl font-black tracking-tighter leading-[0.9]">{proj.name}</h3>
+                  </div>
+                  <button className="card-action-btn">
+                     <i className="fa-solid fa-ellipsis-vertical opacity-60"></i>
+                  </button>
+                </div>
+                
+                <div className="mt-12">
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest opacity-60">
+                    <span>{proj.metadata}</span>
+                    <span>{proj.progress}%</span>
+                  </div>
+                  <div className="progress-bar-container">
+                    <div className="progress-fill bg-black/30" style={{ width: `${proj.progress}%` }} />
+                  </div>
+                </div>
               </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Create Project Dialog */}
+      {isCreating && (
+        <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsCreating(false)} />
+           <div className="relative w-full max-w-lg bg-[#1C1C1E] rounded-t-[44px] sm:rounded-[44px] p-10 flex flex-col space-y-10 animate-in slide-in-from-bottom duration-500 overflow-y-auto max-h-[90vh]">
+              <div className="flex justify-between items-center">
+                 <h2 className="text-2xl font-black tracking-tight">建立智慧資料夾</h2>
+                 <button onClick={() => setIsCreating(false)} className="text-gray-500"><i className="fa-solid fa-xmark text-xl"></i></button>
+              </div>
+
+              {/* Name */}
+              <div className="space-y-4">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">作品名稱</label>
+                 <input 
+                    value={newProject.name}
+                    onChange={e => setNewProject({...newProject, name: e.target.value})}
+                    placeholder="例如：太陽悖論" 
+                    className="w-full bg-white/5 border border-white/10 h-16 px-6 rounded-2xl text-lg font-bold outline-none focus:border-blue-500 transition-all"
+                 />
+              </div>
+
+              {/* Template Type */}
+              <div className="space-y-4">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">寫作模板</label>
+                 <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(TEMPLATES).map(([type, config]) => (
+                       <button 
+                          key={type}
+                          onClick={() => setNewProject({...newProject, type: type as WritingType})}
+                          className={`p-5 rounded-2xl border text-left transition-all ${newProject.type === type ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                       >
+                          <i className={`fa-solid ${config.icon} mb-2`}></i>
+                          <p className="text-[11px] font-bold">{config.label}</p>
+                       </button>
+                    ))}
+                 </div>
+              </div>
+
+              {/* Color & Icon */}
+              <div className="space-y-4">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">視覺編碼</label>
+                 <div className="flex flex-wrap gap-2">
+                    {PROJECT_COLORS.map(c => (
+                       <button 
+                          key={c} 
+                          onClick={() => setNewProject({...newProject, color: c})}
+                          className={`w-8 h-8 rounded-full border-2 ${newProject.color === c ? 'border-white' : 'border-transparent'}`} 
+                          style={{backgroundColor: c}}
+                       />
+                    ))}
+                 </div>
+                 <div className="flex flex-wrap gap-2 pt-4">
+                    {PROJECT_ICONS.map(i => (
+                       <button 
+                          key={i}
+                          onClick={() => setNewProject({...newProject, icon: i})}
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${newProject.icon === i ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-500'}`}
+                       >
+                          <i className={`fa-solid ${i}`}></i>
+                       </button>
+                    ))}
+                 </div>
+              </div>
+
+              <button 
+                 onClick={handleCreate}
+                 className="w-full py-6 bg-blue-600 rounded-[30px] text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all"
+              >
+                 開啟寫作容器
+              </button>
            </div>
         </div>
       )}
