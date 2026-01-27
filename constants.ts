@@ -11,21 +11,25 @@ export const COLORS = {
   BG_NIGHT: '#0F172A',   // Midnight Void
 };
 
+// 優先採用參考圖片中的四個核心色彩
 export const PROJECT_COLORS = [
-  '#7b61ff', '#F5E050', '#FF6B2C', '#D4FF5F', '#B2A4FF', '#FF9F7A',
-  '#10B981', '#3B82F6', '#EF4444', '#EC4899', '#8B5CF6', '#14B8A6'
+  '#FADE4B', // 太陽黃
+  '#FF6B2C', // 活力橘
+  '#D4FF5F', // 螢光綠
+  '#B2A4FF', // 夢幻紫
+  '#FF9F7A', '#10B981', '#3B82F6', '#EF4444', '#EC4899', '#8B5CF6', '#14B8A6', '#7b61ff'
 ];
 
 export const PROJECT_ICONS = [
-  'fa-feather-pointed', 'fa-book', 'fa-scroll', 'fa-flask', 'fa-pen-nib',
-  'fa-file-lines', 'fa-brain', 'fa-microphone', 'fa-camera', 'fa-film',
-  'fa-star', 'fa-compass', 'fa-anchor', 'fa-shield-halved', 'fa-gem',
-  'fa-palette', 'fa-music', 'fa-code', 'fa-quote-left', 'fa-newspaper'
+  'fa-book', 'fa-feather-pointed', 'fa-scroll', 'fa-pen-nib', 'fa-clapperboard',
+  'fa-flask', 'fa-globe', 'fa-user-ninja', 'fa-newspaper', 'fa-microscope',
+  'fa-brain', 'fa-ghost', 'fa-shield-heart', 'fa-compass', 'fa-mountain-sun',
+  'fa-robot', 'fa-hourglass-half', 'fa-rocket', 'fa-dragon', 'fa-book-open'
 ];
 
 export const TEMPLATES: Record<WritingType, { label: string, icon: string, modules: Partial<WritingModule>[] }> = {
   [WritingType.NOVEL]: {
-    label: '長篇敘事 Novel',
+    label: '長篇敘事 NOVEL',
     icon: 'fa-book-open',
     modules: [
       { type: ModuleType.BOARD, title: '世界觀設定 World', icon: 'fa-globe', description: '地理、歷史與規則' },
@@ -35,7 +39,7 @@ export const TEMPLATES: Record<WritingType, { label: string, icon: string, modul
     ]
   },
   [WritingType.RESEARCH]: {
-    label: '研究報告 Research',
+    label: '研究報告 RESEARCH',
     icon: 'fa-microscope',
     modules: [
       { type: ModuleType.COLLECTION, title: '文獻來源 Sources', icon: 'fa-link', description: '參考資料與連結' },
@@ -44,7 +48,7 @@ export const TEMPLATES: Record<WritingType, { label: string, icon: string, modul
     ]
   },
   [WritingType.SCREENPLAY]: {
-    label: '影視劇本 Screenplay',
+    label: '影視劇本 SCREENPLAY',
     icon: 'fa-clapperboard',
     modules: [
       { type: ModuleType.BOARD, title: '幕結構 Acts', icon: 'fa-layer-group', description: '三幕劇結構' },
@@ -53,7 +57,7 @@ export const TEMPLATES: Record<WritingType, { label: string, icon: string, modul
     ]
   },
   [WritingType.JOURNAL]: {
-    label: '私人日誌 Journal',
+    label: '私人日誌 JOURNAL',
     icon: 'fa-calendar-day',
     modules: [
       { type: ModuleType.MANUSCRIPT, title: '每日紀錄 Entries', icon: 'fa-book', description: '生活點滴' },

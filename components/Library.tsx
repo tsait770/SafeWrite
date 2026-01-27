@@ -1,81 +1,111 @@
 
-import React, { useState } from 'react';
-import { Project, WritingType, ModuleType } from '../types';
+import React, { useState, useRef } from 'react';
+import { Project, WritingType } from '../types';
 import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES } from '../constants';
 
 interface LibraryProps {
-  onSelectProject: (p: any) => void;
+  projects: Project[];
+  onSelectProject: (p: Project) => void;
+  onCreateProject: (data: { name: string, type: WritingType, color: string, icon: string }) => void;
+  onUpdateProjects: (projects: Project[]) => void;
 }
 
-const Library: React.FC<LibraryProps> = ({ onSelectProject }) => {
+const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreateProject, onUpdateProjects }) => {
   const [weather] = useState({ temp: '15', city: '新北市', date: 'January 20' });
   const [isCreating, setIsCreating] = useState(false);
-  const [newProject, setNewProject] = useState({
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  
+  const [formData, setFormData] = useState({
     name: '',
     type: WritingType.NOVEL,
     color: PROJECT_COLORS[0],
     icon: PROJECT_ICONS[0]
   });
 
-  const [localProjects, setLocalProjects] = useState([
-    {
-      id: 'p1',
-      name: 'The Solar Paradox',
-      writingType: WritingType.NOVEL,
-      metadata: 'EDITED 10M AGO',
-      progress: 82,
-      color: '#F5E050',
-      icon: 'fa-feather-pointed',
-      chapters: [{ id: 'c1', title: 'Chapter 1', content: 'Story starts...', order: 1, history: [] }],
-      modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i })),
-      settings: { typography: 'serif', fontSize: 'normal' }
-    },
-    {
-      id: 'p2',
-      name: 'Urban Solitude',
-      writingType: WritingType.RESEARCH,
-      metadata: 'DRAFTING • CHAPTER 3',
-      progress: 35,
-      color: '#FF6B2C',
-      icon: 'fa-camera',
-      chapters: [{ id: 'c2', title: 'Draft 1', content: 'Urban life is...', order: 1, history: [] }],
-      modules: TEMPLATES[WritingType.RESEARCH].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i })),
-      settings: { typography: 'sans', fontSize: 'normal' }
-    },
-    {
-        id: 'p3',
-        name: 'Midnight Podcast S2',
-        writingType: WritingType.SCREENPLAY,
-        metadata: 'CREATED YESTERDAY',
-        progress: 10,
-        color: '#B2A4FF',
-        icon: 'fa-film',
-        chapters: [{ id: 'c3', title: 'Act I', content: 'INT. COFFEE SHOP - DAY', order: 1, history: [] }],
-        modules: TEMPLATES[WritingType.SCREENPLAY].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i })),
-        settings: { typography: 'sans', fontSize: 'normal' }
-      }
-  ]);
-
-  const handleCreate = () => {
-    if (!newProject.name) return;
-    const project: any = {
-      id: 'p-' + Date.now(),
-      name: newProject.name,
-      writingType: newProject.type,
-      metadata: 'JUST CREATED',
-      progress: 0,
-      color: newProject.color,
-      icon: newProject.icon,
-      chapters: [{ id: 'c1', title: '第一章', content: '', order: 1, history: [] }],
-      modules: TEMPLATES[newProject.type].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i })),
-      settings: { typography: 'serif', fontSize: 'normal' },
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
-    setLocalProjects([project, ...localProjects]);
+  const resetForm = () => {
+    setFormData({ name: '', type: WritingType.NOVEL, color: PROJECT_COLORS[0], icon: PROJECT_ICONS[0] });
     setIsCreating(false);
-    onSelectProject(project);
+    setEditingProject(null);
   };
+
+  const handleOpenCreate = () => {
+    resetForm();
+    setIsCreating(true);
+  };
+
+  const handleOpenEdit = (e: React.MouseEvent, proj: Project) => {
+    e.stopPropagation();
+    setEditingProject(proj);
+    setFormData({
+      name: proj.name,
+      type: proj.writingType,
+      color: proj.color,
+      icon: proj.icon
+    });
+    setActiveMenuId(null);
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name.trim()) return;
+    
+    if (editingProject) {
+      const updated = projects.map(p => 
+        p.id === editingProject.id 
+          ? { ...p, name: formData.name, writingType: formData.type, color: formData.color, icon: formData.icon } 
+          : p
+      );
+      onUpdateProjects(updated);
+    } else {
+      onCreateProject(formData);
+    }
+    resetForm();
+  };
+
+  const handleTogglePin = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const updated = projects.map(p => p.id === id ? { ...p, isPinned: !p.isPinned } : p);
+    // 重新排序：置頂在前，且保持群組內的相對順序
+    const pinned = updated.filter(p => p.isPinned);
+    const unpinned = updated.filter(p => !p.isPinned);
+    onUpdateProjects([...pinned, ...unpinned]);
+    setActiveMenuId(null);
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const updated = projects.filter(p => p.id !== id);
+    onUpdateProjects(updated);
+    setActiveMenuId(null);
+  };
+
+  const onDragStart = (idx: number) => {
+    setDraggedIdx(idx);
+  };
+
+  const onDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === idx) return;
+
+    const draggedItem = projects[draggedIdx];
+    const targetItem = projects[idx];
+
+    // 限制：只能在同一個群組（置頂區或一般區）內移動，確保「置頂」規則不被破壞
+    if (draggedItem.isPinned !== targetItem.isPinned) return;
+
+    const newProjects = [...projects];
+    const item = newProjects.splice(draggedIdx, 1)[0];
+    newProjects.splice(idx, 0, item);
+    onUpdateProjects(newProjects);
+    setDraggedIdx(idx);
+  };
+
+  const onDragEnd = () => {
+    setDraggedIdx(null);
+  };
+
+  const isModalOpen = isCreating || !!editingProject;
 
   return (
     <div className="px-8 space-y-12 pb-32">
@@ -91,61 +121,98 @@ const Library: React.FC<LibraryProps> = ({ onSelectProject }) => {
             <span className="font-extrabold text-base text-[rgba(87,77,51,0.6)] uppercase tracking-tight">{weather.city}</span>
             <div className="flex items-center gap-2 mt-1">
               <span className="font-bold text-sm text-[rgba(87,77,51,0.4)]">{weather.date}</span>
-              <span className="bg-black/5 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest text-[rgba(87,77,51,0.5)]">MACOS</span>
             </div>
           </div>
           <span className="temp">{weather.temp}°</span>
-          <div className="temp-scale"><span>Celsius</span></div>
+          <div className="temp-scale"><span>攝氏 Celsius</span></div>
         </div>
       </section>
 
-      {/* Stacking Card List */}
+      {/* Repository Section */}
       <section>
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-3">
-             <h2 className="text-[11px] font-black text-[#8e8e93] uppercase tracking-[0.2em]">CORE REPOSITORIES</h2>
+          <div className="flex flex-col">
+             <h2 className="text-[11px] font-black text-[#8e8e93] uppercase tracking-[0.2em]">智慧寫作書架 REPOSITORY</h2>
+             <p className="text-[9px] text-[#4E4E52] font-black uppercase tracking-widest mt-1">共有 {projects.length} 個專案</p>
           </div>
           <button 
-            onClick={() => setIsCreating(true)}
-            className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/40 active:scale-90 transition-all"
+            onClick={handleOpenCreate}
+            className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-90 hover:scale-105 transition-all"
           >
-            <i className="fa-solid fa-plus text-white text-sm"></i>
+            <i className="fa-solid fa-plus text-white text-lg"></i>
           </button>
         </div>
         
-        <div className="stack-container relative">
-          {localProjects.map((proj, idx) => (
+        <div className="stack-container relative min-h-[500px]">
+          {projects.map((proj, idx) => (
             <div 
               key={proj.id} 
-              className="stack-card"
+              className={`stack-card animate-in fade-in slide-in-from-bottom-4 duration-500 ${draggedIdx === idx ? 'opacity-30 scale-95 ring-2 ring-white/20' : ''}`}
               style={{ 
-                zIndex: localProjects.length - idx,
+                zIndex: projects.length - idx,
                 backgroundColor: proj.color,
-                color: '#121212'
+                color: '#121212',
+                animationDelay: `${idx * 100}ms`,
+                cursor: 'pointer'
               }}
+              onDragOver={(e) => onDragOver(e, idx)}
               onClick={() => onSelectProject(proj)}
             >
               <div className="flex flex-col h-full justify-between">
                 <div className="flex justify-between items-start">
-                  <div className="max-w-[70%]">
-                    <div className="flex items-center space-x-2 mb-2 opacity-60">
-                       <i className={`fa-solid ${proj.icon} text-xs`}></i>
-                       <span className="text-[10px] font-black uppercase tracking-widest">{proj.writingType}</span>
+                  <div className="max-w-[80%]">
+                    <div className="flex items-center space-x-2 mb-2">
+                       {proj.isPinned && <i className="fa-solid fa-thumbtack text-[10px] text-black/40"></i>}
+                       {proj.isFavorite && <i className="fa-solid fa-heart text-[10px] text-red-500/60"></i>}
+                       <span className="text-[10px] font-black uppercase tracking-widest opacity-50">{proj.tags.join(' • ')}</span>
                     </div>
-                    <h3 className="text-3xl font-black tracking-tighter leading-[0.9]">{proj.name}</h3>
+                    <h3 className="text-3xl font-black tracking-tighter leading-[1] mb-2 truncate pr-4">{proj.name}</h3>
                   </div>
-                  <button className="card-action-btn">
-                     <i className="fa-solid fa-ellipsis-vertical opacity-60"></i>
-                  </button>
+                  
+                  <div className="relative">
+                    <button 
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); onDragStart(idx); }}
+                      onDragEnd={onDragEnd}
+                      className="card-action-btn active:scale-95 cursor-grab active:cursor-grabbing" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuId(activeMenuId === proj.id ? null : proj.id);
+                      }}
+                    >
+                       <i className="fa-solid fa-ellipsis-vertical opacity-60 pointer-events-none"></i>
+                    </button>
+                    
+                    {activeMenuId === proj.id && (
+                      <div className="absolute right-0 top-14 w-40 bg-black/90 backdrop-blur-xl rounded-[24px] border border-white/10 shadow-2xl py-3 z-[1000] animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                         <button onClick={(e) => handleTogglePin(e, proj.id)} className="w-full px-6 py-3 flex items-center space-x-3 hover:bg-white/5 text-white/80 transition-colors">
+                            <i className={`fa-solid fa-thumbtack text-xs ${proj.isPinned ? 'text-blue-500' : ''}`}></i>
+                            <span className="text-[11px] font-black uppercase tracking-widest">{proj.isPinned ? '取消置頂' : '置頂資料夾'}</span>
+                         </button>
+                         <button onClick={(e) => handleOpenEdit(e, proj)} className="w-full px-6 py-3 flex items-center space-x-3 hover:bg-white/5 text-white/80 transition-colors">
+                            <i className="fa-solid fa-pen-to-square text-xs"></i>
+                            <span className="text-[11px] font-black uppercase tracking-widest">編輯資料夾</span>
+                         </button>
+                         <div className="h-px bg-white/5 my-2 mx-4" />
+                         <button onClick={(e) => handleDelete(e, proj.id)} className="w-full px-6 py-3 flex items-center space-x-3 hover:bg-red-500/10 text-red-500 transition-colors">
+                            <i className="fa-solid fa-trash-can text-xs"></i>
+                            <span className="text-[11px] font-black uppercase tracking-widest">刪除資料夾</span>
+                         </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
-                <div className="mt-12">
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest opacity-60">
-                    <span>{proj.metadata}</span>
+                <div className="mt-14">
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">
+                    <span className="flex items-center">
+                       <i className="fa-regular fa-clock mr-1.5 text-[9px]"></i>
+                       {proj.metadata}
+                    </span>
                     <span>{proj.progress}%</span>
                   </div>
-                  <div className="progress-bar-container">
-                    <div className="progress-fill bg-black/30" style={{ width: `${proj.progress}%` }} />
+                  <div className="progress-bar-container bg-black/10">
+                    <div className="progress-fill bg-black/40" style={{ width: `${proj.progress}%` }} />
                   </div>
                 </div>
               </div>
@@ -154,76 +221,102 @@ const Library: React.FC<LibraryProps> = ({ onSelectProject }) => {
         </div>
       </section>
 
-      {/* Create Project Dialog */}
-      {isCreating && (
+      {/* Universal Creation/Edit Modal */}
+      {isModalOpen && (
         <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsCreating(false)} />
-           <div className="relative w-full max-w-lg bg-[#1C1C1E] rounded-t-[44px] sm:rounded-[44px] p-10 flex flex-col space-y-10 animate-in slide-in-from-bottom duration-500 overflow-y-auto max-h-[90vh]">
-              <div className="flex justify-between items-center">
-                 <h2 className="text-2xl font-black tracking-tight">建立智慧資料夾</h2>
-                 <button onClick={() => setIsCreating(false)} className="text-gray-500"><i className="fa-solid fa-xmark text-xl"></i></button>
+           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={resetForm} />
+           <div className="relative w-full max-w-lg bg-[#111111] rounded-t-[44px] sm:rounded-[44px] p-6 sm:p-8 flex flex-col space-y-4 animate-in slide-in-from-bottom duration-500 overflow-y-auto max-h-[92vh] shadow-2xl border border-white/5">
+              
+              <div className="flex justify-between items-start pt-2">
+                 <div className="flex flex-col">
+                    <h2 className="text-2xl font-black tracking-tight text-white leading-tight">
+                      {editingProject ? '編輯智慧資料夾' : '建立智慧資料夾'}
+                    </h2>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-0.5">
+                      {editingProject ? 'UPDATE SMART REPOSITORY' : 'NEW SMART REPOSITORY'}
+                    </p>
+                 </div>
+                 <button onClick={resetForm} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:text-white transition-colors">
+                   <i className="fa-solid fa-xmark text-xl"></i>
+                 </button>
               </div>
 
-              {/* Name */}
-              <div className="space-y-4">
-                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">作品名稱</label>
-                 <input 
-                    value={newProject.name}
-                    onChange={e => setNewProject({...newProject, name: e.target.value})}
-                    placeholder="例如：太陽悖論" 
-                    className="w-full bg-white/5 border border-white/10 h-16 px-6 rounded-2xl text-lg font-bold outline-none focus:border-blue-500 transition-all"
-                 />
+              {/* Name Input */}
+              <div className="space-y-1.5">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">資料夾名稱 FOLDER NAME</label>
+                 <div className="relative">
+                   <input 
+                      autoFocus
+                      value={formData.name}
+                      onChange={e => setFormData({...formData, name: e.target.value})}
+                      placeholder="例如：量子詩集..." 
+                      className="w-full bg-[#1A1A1A] border border-white/5 h-14 px-6 rounded-[22px] text-lg font-bold outline-none focus:border-[#7b61ff] transition-all text-white"
+                   />
+                   <div className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-600">
+                      <i className="fa-solid fa-keyboard"></i>
+                   </div>
+                 </div>
               </div>
 
-              {/* Template Type */}
-              <div className="space-y-4">
-                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">寫作模板</label>
-                 <div className="grid grid-cols-2 gap-3">
+              {/* Template Paradigm */}
+              <div className="space-y-1.5">
+                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">寫作範式 TEMPLATE PARADIGM</label>
+                 <div className="grid grid-cols-2 gap-2.5">
                     {Object.entries(TEMPLATES).map(([type, config]) => (
                        <button 
                           key={type}
-                          onClick={() => setNewProject({...newProject, type: type as WritingType})}
-                          className={`p-5 rounded-2xl border text-left transition-all ${newProject.type === type ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400'}`}
+                          onClick={() => setFormData({...formData, type: type as WritingType})}
+                          className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden group ${formData.type === type ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg shadow-purple-900/20' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
                        >
-                          <i className={`fa-solid ${config.icon} mb-2`}></i>
-                          <p className="text-[11px] font-bold">{config.label}</p>
+                          <i className={`fa-solid ${config.icon} text-base mb-1 ${formData.type === type ? 'text-white' : 'text-[#7b61ff]'}`}></i>
+                          <p className="text-[10px] font-black uppercase tracking-tighter leading-none">{config.label}</p>
                        </button>
                     ))}
                  </div>
               </div>
 
-              {/* Color & Icon */}
+              {/* Visual Coding Section */}
               <div className="space-y-4">
-                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">視覺編碼</label>
-                 <div className="flex flex-wrap gap-2">
-                    {PROJECT_COLORS.map(c => (
-                       <button 
-                          key={c} 
-                          onClick={() => setNewProject({...newProject, color: c})}
-                          className={`w-8 h-8 rounded-full border-2 ${newProject.color === c ? 'border-white' : 'border-transparent'}`} 
-                          style={{backgroundColor: c}}
-                       />
-                    ))}
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">視覺編碼 VISUAL CODING</label>
+                    <div className="grid grid-cols-6 gap-2">
+                       {PROJECT_COLORS.map(c => (
+                          <button 
+                             key={c} 
+                             onClick={() => setFormData({...formData, color: c})}
+                             className={`aspect-square rounded-[8px] border-[2px] transition-transform active:scale-90 ${formData.color === c ? 'border-white scale-105' : 'border-transparent opacity-80'}`} 
+                             style={{backgroundColor: c}}
+                          />
+                       ))}
+                    </div>
                  </div>
-                 <div className="flex flex-wrap gap-2 pt-4">
+
+                 <div className="grid grid-cols-5 gap-2 pb-2">
                     {PROJECT_ICONS.map(i => (
                        <button 
                           key={i}
-                          onClick={() => setNewProject({...newProject, icon: i})}
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${newProject.icon === i ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-500'}`}
+                          onClick={() => setFormData({...formData, icon: i})}
+                          className={`aspect-square rounded-full flex items-center justify-center transition-all ${formData.icon === i ? 'bg-[#7b61ff] text-white scale-110 shadow-lg shadow-purple-900/40' : 'bg-[#1A1A1A] text-gray-500 hover:text-gray-300'}`}
                        >
-                          <i className={`fa-solid ${i}`}></i>
+                          <i className={`fa-solid ${i} text-base`}></i>
                        </button>
                     ))}
                  </div>
               </div>
 
-              <button 
-                 onClick={handleCreate}
-                 className="w-full py-6 bg-blue-600 rounded-[30px] text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl active:scale-95 transition-all"
-              >
-                 開啟寫作容器
-              </button>
+              {/* Action Button */}
+              <div className="pt-2">
+                <button 
+                   onClick={handleSubmit}
+                   disabled={!formData.name.trim()}
+                   className={`w-full py-5 rounded-full text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center ${!formData.name.trim() ? 'bg-gray-700 opacity-50' : 'bg-[#7b61ff] active:scale-95'}`}
+                >
+                   <span>{editingProject ? '更 新 智 慧 資 料 夾' : '建 立 智 慧 資 料 夾'}</span>
+                </button>
+                <p className="text-center text-[9px] text-gray-700 font-black uppercase tracking-[0.1em] mt-3">
+                  系統將自動初始化草稿結構與 AI 分析模組
+                </p>
+              </div>
            </div>
         </div>
       )}

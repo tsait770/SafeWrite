@@ -28,6 +28,13 @@ export interface WritingModule {
   order: number;
 }
 
+/* 視覺化大綱節點介面定義 */
+export interface OutlineNode {
+  id: string;
+  label: string;
+  level: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -42,40 +49,12 @@ export interface Project {
   updatedAt: number;
   tags: string[];
   visualOutline?: OutlineNode[];
+  isPinned?: boolean;
+  isFavorite?: boolean;
   settings: {
     typography: 'serif' | 'sans';
     fontSize: 'normal' | 'large';
   }
-}
-
-export enum ProjectTemplate {
-  LONG_FORM = 'Long-form Narrative',
-  NOVEL = 'Novel Writing',
-  SCREENPLAY = 'Screenplay/TV Pilot',
-  ACADEMIC = 'Academic Paper',
-  ESSAY = 'Essay & Opinion',
-  CREATOR = 'Creator/Newsletter'
-}
-
-export enum TemplateType {
-  PROSE = 'Standard Prose',
-  POETRY = 'Poetry/Verse',
-  ACADEMIC = 'Academic/Manuscript',
-  SCREENPLAY = 'Screenplay/Format'
-}
-
-export enum PublicationStatus {
-  DRAFT = 'DRAFT',
-  SUBMITTED = 'SUBMITTED',
-  REVIEWING = 'REVIEWING',
-  ACCEPTED = 'ACCEPTED',
-  PUBLISHED = 'PUBLISHED'
-}
-
-export interface OutlineNode {
-  id: string;
-  label: string;
-  level: number;
 }
 
 export interface UserStats {
@@ -84,6 +63,9 @@ export interface UserStats {
   exportCount: number;
   lastActive: number;
   hasTrialed: boolean;
+  dailyGoal: number;
+  writingStreak: number;
+  todayWords: number;
 }
 
 export enum SnapshotType {
@@ -108,6 +90,14 @@ export interface Chapter {
   order: number;
   history: VersionSnapshot[];
   publicationStatus?: PublicationStatus;
+}
+
+export enum PublicationStatus {
+  DRAFT = 'DRAFT',
+  SUBMITTED = 'SUBMITTED',
+  REVIEWING = 'REVIEWING',
+  ACCEPTED = 'ACCEPTED',
+  PUBLISHED = 'PUBLISHED'
 }
 
 export enum UIMode {
@@ -138,6 +128,7 @@ export type SupportedLanguage =
   | 'id' | 'ms' | 'ar' | 'hi';
 
 export interface AppState {
+  projects: Project[];
   currentProject: Project | null;
   currentChapterId: string | null;
   uiMode: UIMode;
@@ -147,4 +138,8 @@ export interface AppState {
   membership: MembershipLevel;
   stats: UserStats;
   language: SupportedLanguage;
+  editorSettings: {
+    typewriterMode: boolean;
+    previewMode: boolean;
+  };
 }
