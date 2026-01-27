@@ -66,7 +66,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const handleTogglePin = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const updated = projects.map(p => p.id === id ? { ...p, isPinned: !p.isPinned } : p);
-    // 重新排序：置頂在前，且保持群組內的相對順序
+    // 排序：置頂在前，且保持其餘項目的相對順序
     const pinned = updated.filter(p => p.isPinned);
     const unpinned = updated.filter(p => !p.isPinned);
     onUpdateProjects([...pinned, ...unpinned]);
@@ -81,6 +81,8 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   };
 
   const onDragStart = (idx: number) => {
+    // 規則：置頂資料夾不可移動
+    if (projects[idx].isPinned) return;
     setDraggedIdx(idx);
   };
 
@@ -88,11 +90,8 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
     e.preventDefault();
     if (draggedIdx === null || draggedIdx === idx) return;
 
-    const draggedItem = projects[draggedIdx];
-    const targetItem = projects[idx];
-
-    // 限制：只能在同一個群組（置頂區或一般區）內移動，確保「置頂」規則不被破壞
-    if (draggedItem.isPinned !== targetItem.isPinned) return;
+    // 規則：目標不能是置頂資料夾，且拖移源也不能是置頂資料夾
+    if (projects[idx].isPinned || projects[draggedIdx].isPinned) return;
 
     const newProjects = [...projects];
     const item = newProjects.splice(draggedIdx, 1)[0];
@@ -153,7 +152,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                 backgroundColor: proj.color,
                 color: '#121212',
                 animationDelay: `${idx * 100}ms`,
-                cursor: 'pointer'
+                cursor: proj.isPinned ? 'default' : 'pointer'
               }}
               onDragOver={(e) => onDragOver(e, idx)}
               onClick={() => onSelectProject(proj)}
@@ -171,10 +170,10 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                   
                   <div className="relative">
                     <button 
-                      draggable
+                      draggable={!proj.isPinned}
                       onDragStart={(e) => { e.stopPropagation(); onDragStart(idx); }}
                       onDragEnd={onDragEnd}
-                      className="card-action-btn active:scale-95 cursor-grab active:cursor-grabbing" 
+                      className={`card-action-btn active:scale-95 ${proj.isPinned ? 'cursor-default' : 'cursor-grab active:cursor-grabbing'}`} 
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveMenuId(activeMenuId === proj.id ? null : proj.id);
@@ -184,13 +183,13 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </button>
                     
                     {activeMenuId === proj.id && (
-                      <div className="absolute right-0 top-14 w-40 bg-black/90 backdrop-blur-xl rounded-[24px] border border-white/10 shadow-2xl py-3 z-[1000] animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
+                      <div className="absolute right-0 top-14 w-44 bg-black/90 backdrop-blur-xl rounded-[24px] border border-white/10 shadow-2xl py-3 z-[1000] animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
                          <button onClick={(e) => handleTogglePin(e, proj.id)} className="w-full px-6 py-3 flex items-center space-x-3 hover:bg-white/5 text-white/80 transition-colors">
                             <i className={`fa-solid fa-thumbtack text-xs ${proj.isPinned ? 'text-blue-500' : ''}`}></i>
                             <span className="text-[11px] font-black uppercase tracking-widest">{proj.isPinned ? '取消置頂' : '置頂資料夾'}</span>
                          </button>
                          <button onClick={(e) => handleOpenEdit(e, proj)} className="w-full px-6 py-3 flex items-center space-x-3 hover:bg-white/5 text-white/80 transition-colors">
-                            <i className="fa-solid fa-pen-to-square text-xs"></i>
+                            <i className="fa-solid fa-pen-to-square text-xs text-[#7b61ff]"></i>
                             <span className="text-[11px] font-black uppercase tracking-widest">編輯資料夾</span>
                          </button>
                          <div className="h-px bg-white/5 my-2 mx-4" />
