@@ -8,9 +8,10 @@ interface LibraryProps {
   onSelectProject: (p: Project) => void;
   onCreateProject: (data: { name: string, type: WritingType, color: string, icon: string }) => void;
   onUpdateProjects: (projects: Project[]) => void;
+  onQuickWrite: (p: Project) => void;
 }
 
-const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreateProject, onUpdateProjects }) => {
+const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreateProject, onUpdateProjects, onQuickWrite }) => {
   const [weather] = useState({ temp: '15', city: '新北市', date: 'January 20' });
   const [isCreating, setIsCreating] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -66,7 +67,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const handleTogglePin = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const updated = projects.map(p => p.id === id ? { ...p, isPinned: !p.isPinned } : p);
-    // 排序：置頂在前，且保持其餘項目的相對順序
     const pinned = updated.filter(p => p.isPinned);
     const unpinned = updated.filter(p => !p.isPinned);
     onUpdateProjects([...pinned, ...unpinned]);
@@ -81,7 +81,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   };
 
   const onDragStart = (idx: number) => {
-    // 規則：置頂資料夾不可移動
     if (projects[idx].isPinned) return;
     setDraggedIdx(idx);
   };
@@ -89,8 +88,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const onDragOver = (e: React.DragEvent, idx: number) => {
     e.preventDefault();
     if (draggedIdx === null || draggedIdx === idx) return;
-
-    // 規則：目標不能是置頂資料夾，且拖移源也不能是置頂資料夾
     if (projects[idx].isPinned || projects[draggedIdx].isPinned) return;
 
     const newProjects = [...projects];
@@ -146,18 +143,17 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
           {projects.map((proj, idx) => (
             <div 
               key={proj.id} 
-              className={`stack-card animate-in fade-in slide-in-from-bottom-4 duration-500 ${draggedIdx === idx ? 'opacity-30 scale-95 ring-2 ring-white/20' : ''}`}
+              className={`stack-card group/card animate-in fade-in slide-in-from-bottom-4 duration-500 ${draggedIdx === idx ? 'opacity-30 scale-95 ring-2 ring-white/20' : ''}`}
               style={{ 
                 zIndex: projects.length - idx,
                 backgroundColor: proj.color,
                 color: '#121212',
-                animationDelay: `${idx * 100}ms`,
-                cursor: proj.isPinned ? 'default' : 'pointer'
+                animationDelay: `${idx * 100}ms`
               }}
               onDragOver={(e) => onDragOver(e, idx)}
               onClick={() => onSelectProject(proj)}
             >
-              <div className="flex flex-col h-full justify-between">
+              <div className="flex flex-col h-full justify-between relative">
                 <div className="flex justify-between items-start">
                   <div className="max-w-[80%]">
                     <div className="flex items-center space-x-2 mb-2">
@@ -168,7 +164,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     <h3 className="text-3xl font-black tracking-tighter leading-[1] mb-2 truncate pr-4">{proj.name}</h3>
                   </div>
                   
-                  <div className="relative">
+                  <div className="relative z-20">
                     <button 
                       draggable={!proj.isPinned}
                       onDragStart={(e) => { e.stopPropagation(); onDragStart(idx); }}
@@ -201,6 +197,17 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     )}
                   </div>
                 </div>
+
+                {/* 指令 A: 快速寫作按鈕 */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onQuickWrite(proj);
+                  }}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-black/10 backdrop-blur-md flex items-center justify-center text-black opacity-0 group-hover/card:opacity-100 transition-all hover:scale-110 active:scale-90 border border-black/5"
+                >
+                  <i className="fa-solid fa-bolt-lightning text-xl"></i>
+                </button>
                 
                 <div className="mt-14">
                   <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">
