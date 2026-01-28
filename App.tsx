@@ -60,7 +60,7 @@ const App: React.FC = () => {
         settings: { typography: 'serif', fontSize: 'normal' },
         createdAt: Date.now() - 172800000,
         updatedAt: Date.now() - 3600000,
-        tags: ['REVIEW', 'PENDING']
+        tags: ['FANTASY', 'REVIEW']
       },
       {
         id: 'p4',

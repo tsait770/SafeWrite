@@ -142,7 +142,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
               style={{ 
                 zIndex: projects.length - idx,
                 backgroundColor: proj.color,
-                color: '#121212',
+                color: proj.color === '#000000' || proj.color === '#121212' ? '#ffffff' : '#121212',
                 animationDelay: `${idx * 100}ms`
               }}
               onDragOver={(e) => onDragOver(e, idx)}
@@ -153,7 +153,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                   <div className="max-w-[80%]">
                     <h3 className="text-4xl font-black tracking-tighter leading-[1] mb-2 pr-4">{proj.name}</h3>
                     <div className="flex items-center space-x-2">
-                       {proj.isPinned && <i className="fa-solid fa-thumbtack text-[10px] text-black/40"></i>}
+                       {proj.isPinned && <i className="fa-solid fa-thumbtack text-[10px] opacity-40"></i>}
                        <span className="text-[11px] font-black uppercase tracking-widest opacity-40">{proj.tags.join(' • ')}</span>
                     </div>
                   </div>
@@ -209,60 +209,103 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
         </div>
       </section>
 
-      {/* Creation/Edit Modal */}
+      {/* Creation/Edit Modal - 完全遵循參考圖優化 */}
       {(isCreating || editingProject) && (
-        <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={resetForm} />
-           <div className="relative w-full max-w-lg bg-[#111111] rounded-t-[44px] sm:rounded-[44px] p-8 flex flex-col space-y-6 animate-in slide-in-from-bottom duration-500 overflow-y-auto max-h-[90vh] shadow-2xl border border-white/5">
+        <div className="fixed inset-0 z-[500] flex items-center justify-center animate-in fade-in duration-300 px-4">
+           <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={resetForm} />
+           <div className="relative w-full max-w-lg bg-[#111111] rounded-[44px] p-8 sm:p-10 flex flex-col space-y-8 animate-in slide-in-from-bottom duration-500 overflow-y-auto max-h-[95vh] shadow-2xl border border-white/5 no-scrollbar">
               
               <div className="flex justify-between items-start">
                  <div className="flex flex-col">
-                    <h2 className="text-2xl font-black tracking-tight text-white">
-                      {editingProject ? '編輯寫作專案' : '建立寫作專案'}
-                    </h2>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-0.5">
-                      {editingProject ? 'UPDATE REPOSITORY' : 'NEW REPOSITORY'}
-                    </p>
+                    <h2 className="text-3xl font-black tracking-tight text-white">建立智慧資料夾</h2>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">NEW SMART REPOSITORY</p>
                  </div>
-                 <button onClick={resetForm} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:text-white transition-colors">
+                 <button onClick={resetForm} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
                    <i className="fa-solid fa-xmark text-xl"></i>
                  </button>
               </div>
 
-              <div className="space-y-4">
-                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">專案名稱 PROJECT NAME</label>
-                    <input 
-                       autoFocus
-                       value={formData.name}
-                       onChange={e => setFormData({...formData, name: e.target.value})}
-                       placeholder="輸入專案名稱..." 
-                       className="w-full bg-white/5 border border-white/5 h-16 px-6 rounded-3xl text-lg font-bold outline-none focus:border-[#7b61ff] transition-all text-white"
-                    />
+              <div className="space-y-10">
+                 {/* 資料夾名稱輸入框 */}
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">資料夾名稱 FOLDER NAME</label>
+                    <div className="relative">
+                       <input 
+                          autoFocus
+                          value={formData.name}
+                          onChange={e => setFormData({...formData, name: e.target.value})}
+                          placeholder="例如：量子詩集..." 
+                          className="w-full bg-[#1C1C1E] border border-white/5 h-20 px-8 rounded-3xl text-xl font-black outline-none focus:ring-2 focus:ring-[#7b61ff]/50 transition-all text-white placeholder-gray-600"
+                       />
+                       <i className="fa-solid fa-keyboard absolute right-8 top-1/2 -translate-y-1/2 text-gray-700 text-lg"></i>
+                    </div>
                  </div>
 
-                 <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">專案色彩 COLOR CODING</label>
-                    <div className="grid grid-cols-4 gap-3">
+                 {/* 寫作範式選擇區塊 */}
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">寫作範式 TEMPLATE PARADIGM</label>
+                    <div className="grid grid-cols-2 gap-3">
+                       {Object.entries(TEMPLATES).map(([key, template]) => (
+                          <button
+                            key={key}
+                            onClick={() => setFormData({...formData, type: key as WritingType})}
+                            className={`flex flex-col items-start p-5 rounded-[2.5rem] border transition-all relative overflow-hidden h-32 justify-center ${formData.type === key ? 'bg-[#7b61ff] border-[#7b61ff] shadow-[0_15px_30px_rgba(123,97,255,0.3)] text-white' : 'bg-[#1C1C1E] border-white/5 text-gray-400 hover:border-white/10'}`}
+                          >
+                             <i className={`fa-solid ${template.icon} text-2xl mb-3 ${formData.type === key ? 'text-white' : 'text-blue-500'}`}></i>
+                             <span className="text-[11px] font-black uppercase tracking-widest">{template.label}</span>
+                          </button>
+                       ))}
+                    </div>
+                 </div>
+
+                 {/* 視覺編碼 (12色) */}
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">視覺編碼 VISUAL CODING</label>
+                    <div className="grid grid-cols-6 gap-3">
                        {PROJECT_COLORS.map(c => (
                           <button 
                              key={c} 
                              onClick={() => setFormData({...formData, color: c})}
-                             className={`aspect-square rounded-2xl border-4 transition-all ${formData.color === c ? 'border-white scale-105 shadow-lg' : 'border-transparent opacity-80 hover:opacity-100'}`} 
+                             className={`aspect-square rounded-[1.2rem] border-4 transition-all relative ${formData.color === c ? 'border-white scale-110 z-10' : 'border-transparent opacity-100 hover:opacity-100'}`} 
                              style={{backgroundColor: c}}
-                          />
+                          >
+                             {formData.color === c && (
+                                <div className="absolute inset-0 ring-2 ring-black/20 rounded-lg" />
+                             )}
+                          </button>
+                       ))}
+                    </div>
+
+                    {/* 圖標網格 (20圖標) */}
+                    <div className="grid grid-cols-5 gap-3 mt-8">
+                       {PROJECT_ICONS.map(icon => (
+                          <button 
+                             key={icon} 
+                             onClick={() => setFormData({...formData, icon: icon})}
+                             className={`aspect-square rounded-full flex items-center justify-center text-xl transition-all relative ${formData.icon === icon ? 'bg-[#7b61ff] text-white shadow-[0_0_20px_rgba(123,97,255,0.5)] z-10' : 'bg-[#1C1C1E] text-gray-700 hover:bg-white/5'}`}
+                          >
+                             <i className={`fa-solid ${icon}`}></i>
+                             {formData.icon === icon && (
+                               <div className="absolute inset-0 bg-[#7b61ff] opacity-40 blur-xl -z-10 rounded-full"></div>
+                             )}
+                          </button>
                        ))}
                     </div>
                  </div>
               </div>
 
-              <button 
-                 onClick={handleSubmit}
-                 disabled={!formData.name.trim()}
-                 className={`w-full py-6 rounded-full text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl transition-all ${!formData.name.trim() ? 'bg-gray-700 opacity-50' : 'bg-[#7b61ff] active:scale-95'}`}
-              >
-                 {editingProject ? '更 新 專 案' : '建 立 專 案'}
-              </button>
+              <div className="flex flex-col space-y-6 pt-4">
+                <button 
+                   onClick={handleSubmit}
+                   disabled={!formData.name.trim()}
+                   className={`w-full py-7 rounded-full text-white font-black text-lg uppercase tracking-[0.3em] shadow-2xl transition-all ${!formData.name.trim() ? 'bg-gray-800 opacity-50' : 'bg-[#1F2228] border border-white/5 hover:bg-[#2A2D35] active:scale-95'}`}
+                >
+                   建 立 智 慧 資 料 夾
+                </button>
+                <p className="text-center text-[10px] font-black text-gray-700 uppercase tracking-widest">
+                  系統將自動初始化草稿結構與 AI 分析模組
+                </p>
+              </div>
            </div>
         </div>
       )}

@@ -11,14 +11,23 @@ export const COLORS = {
   BG_NIGHT: '#0F172A',   // Midnight Void
 };
 
-// 嚴格採用參考圖片中的四個核心色彩作為優先預設
+// 根據參考圖優化的 12 個核心色彩，前四個為預設顯示色彩
 export const PROJECT_COLORS = [
-  '#FADE4B', // 太陽黃
+  '#FADE4B', // 太陽黃 (The Solar Paradox)
   '#FF6B2C', // 活力橘
   '#D4FF5F', // 螢光綠
   '#B2A4FF', // 夢幻紫
+  '#7b61ff', // SafeWrite 紫
+  '#FF8A5B', // 蜜桃橘
+  '#4CAF50', // 森林綠
+  '#2196F3', // 湛藍色
+  '#F44336', // 烈焰紅
+  '#E91E63', // 玫瑰粉
+  '#9C27B0', // 深紫色
+  '#00897B', // 湖水綠
 ];
 
+// 根據參考圖優化的 5x4 圖標列表
 export const PROJECT_ICONS = [
   'fa-book', 'fa-feather-pointed', 'fa-scroll', 'fa-pen-nib', 'fa-clapperboard',
   'fa-flask', 'fa-globe', 'fa-user-ninja', 'fa-newspaper', 'fa-microscope',
