@@ -11,13 +11,12 @@ export const COLORS = {
   BG_NIGHT: '#0F172A',   // Midnight Void
 };
 
-// 優先採用參考圖片中的四個核心色彩
+// 嚴格採用參考圖片中的四個核心色彩作為優先預設
 export const PROJECT_COLORS = [
   '#FADE4B', // 太陽黃
   '#FF6B2C', // 活力橘
   '#D4FF5F', // 螢光綠
   '#B2A4FF', // 夢幻紫
-  '#FF9F7A', '#10B981', '#3B82F6', '#EF4444', '#EC4899', '#8B5CF6', '#14B8A6', '#7b61ff'
 ];
 
 export const PROJECT_ICONS = [
@@ -60,7 +59,7 @@ export const TEMPLATES: Record<WritingType, { label: string, icon: string, modul
     label: '私人日誌 JOURNAL',
     icon: 'fa-calendar-day',
     modules: [
-      { type: ModuleType.MANUSCRIPT, title: '每日紀錄 Entries', icon: 'fa-book', description: '生活點滴' },
+      { type: ModuleType.MANUSCRIPT, title: '每日紀錄 Entries', icon: 'fa-book', description: '生活點點滴' },
       { type: ModuleType.BOARD, title: '回顧 Reflections', icon: 'fa-seedling', description: '成長與感悟' }
     ]
   }

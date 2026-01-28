@@ -18,34 +18,64 @@ const App: React.FC = () => {
     projects: [
       {
         id: 'p1',
-        name: '太陽悖論 The Solar Paradox',
+        name: 'The Solar Paradox',
         writingType: WritingType.NOVEL,
-        metadata: '10 分鐘前編輯',
+        metadata: 'Edited 10m ago',
         progress: 82,
-        color: PROJECT_COLORS[0],
+        color: PROJECT_COLORS[0], // #FADE4B
         icon: 'fa-feather-pointed',
         chapters: [{ id: 'c1', title: 'Chapter 1', content: 'Story starts...', order: 1, history: [] }],
         modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i } as WritingModule)),
         settings: { typography: 'serif', fontSize: 'normal' },
         createdAt: Date.now() - 600000,
         updatedAt: Date.now() - 600000,
-        tags: ['科幻', '長篇小說'],
+        tags: ['SCI-FI', 'NOVEL'],
         isPinned: true
       },
       {
         id: 'p2',
-        name: '深海餘燼 Echoes of Deep',
+        name: 'Midnight Protocol',
         writingType: WritingType.NOVEL,
-        metadata: '待審閱中',
-        progress: 95,
-        color: PROJECT_COLORS[1],
-        icon: 'fa-scroll',
-        chapters: [{ id: 'c2', title: '序章', content: '海洋深處的聲音...', order: 1, history: [] }],
+        metadata: 'Edited 2h ago',
+        progress: 45,
+        color: PROJECT_COLORS[1], // #FF6B2C
+        icon: 'fa-shield-heart',
+        chapters: [{ id: 'c2', title: 'Chapter 1', content: 'Protocol initiated...', order: 1, history: [] }],
         modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i } as WritingModule)),
         settings: { typography: 'serif', fontSize: 'normal' },
         createdAt: Date.now() - 86400000,
+        updatedAt: Date.now() - 7200000,
+        tags: ['THRILLER', 'ACTION']
+      },
+      {
+        id: 'p3',
+        name: 'Shadows of Gaia',
+        writingType: WritingType.NOVEL,
+        metadata: 'Review Pending',
+        progress: 95,
+        color: PROJECT_COLORS[2], // #D4FF5F
+        icon: 'fa-scroll',
+        chapters: [{ id: 'c3', title: '序章', content: '大地之影...', order: 1, history: [] }],
+        modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i } as WritingModule)),
+        settings: { typography: 'serif', fontSize: 'normal' },
+        createdAt: Date.now() - 172800000,
         updatedAt: Date.now() - 3600000,
-        tags: ['懸疑', '劇本']
+        tags: ['REVIEW', 'PENDING']
+      },
+      {
+        id: 'p4',
+        name: 'Celestial Hymns',
+        writingType: WritingType.NOVEL,
+        metadata: 'Created Yesterday',
+        progress: 10,
+        color: PROJECT_COLORS[3], // #B2A4FF
+        icon: 'fa-dragon',
+        chapters: [{ id: 'c4', title: 'Draft', content: 'Initial ideas...', order: 1, history: [] }],
+        modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i } as WritingModule)),
+        settings: { typography: 'serif', fontSize: 'normal' },
+        createdAt: Date.now() - 172800000,
+        updatedAt: Date.now() - 172800000,
+        tags: ['POETRY', 'MYSTIC']
       }
     ],
     currentProject: null,
@@ -57,9 +87,9 @@ const App: React.FC = () => {
     membership: MembershipLevel.FREE,
     language: 'zh-TW',
     stats: { 
-      wordCount: 45210, 
+      wordCount: 58210, 
       projectCount: 4, 
-      exportCount: 0, 
+      exportCount: 2, 
       lastActive: Date.now(), 
       hasTrialed: false,
       dailyGoal: 1000,
@@ -74,17 +104,6 @@ const App: React.FC = () => {
 
   const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION'>('NONE');
   const [isRestoring, setIsRestoring] = useState(false);
-
-  const handleQuickWrite = (proj: Project) => {
-    const lastChapterId = proj.chapters[0]?.id || null;
-    setState(prev => ({
-      ...prev,
-      currentProject: proj,
-      currentChapterId: lastChapterId,
-      activeTab: AppTab.WRITE,
-      uiMode: UIMode.FOCUS
-    }));
-  };
 
   const createSnapshot = useCallback((type: SnapshotType) => {
     setState(prev => {
@@ -207,7 +226,6 @@ const App: React.FC = () => {
               onSelectProject={handleSelectProject} 
               onCreateProject={(data) => setState(prev => ({...prev, projects: [{...data, id: 'p-'+Date.now(), chapters: [], modules: [], metadata: '剛剛', progress: 0, settings: {typography: 'serif', fontSize: 'normal'}, createdAt: Date.now(), updatedAt: Date.now(), tags: []} as any, ...prev.projects]}))}
               onUpdateProjects={(p) => setState(prev => ({...prev, projects: p}))}
-              onQuickWrite={handleQuickWrite}
             />
           ) : (
             <CaptureCenter 

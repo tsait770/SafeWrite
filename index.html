@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -12,7 +13,7 @@
         :root {
             --bg-primary: #000000;
             --bg-card-surface: #1C1C1E;
-            --accent-yellow: #F5E050;
+            --accent-yellow: #FADE4B;
             --accent-orange: #FF6B2C;
             --accent-green: #D4FF5F;
             --accent-purple: #B2A4FF;
@@ -56,23 +57,22 @@
         
         .stack-card {
             border-radius: 44px;
-            padding: 28px 32px;
+            padding: 36px 32px;
             transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
             cursor: pointer;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
-            margin-bottom: -130px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: -150px; /* Tighter visual stack */
         }
 
         .stack-card:hover {
-            transform: translateY(-40px) scale(1.02);
+            transform: translateY(-45px) scale(1.01);
             z-index: 100 !important;
-            margin-bottom: -90px;
         }
 
         .stack-card:active {
-            transform: translateY(-35px) scale(0.98);
+            transform: translateY(-40px) scale(0.98);
         }
 
         .stack-card:last-child {
@@ -84,16 +84,14 @@
             width: 48px;
             height: 48px;
             border-radius: 24px;
-            background: rgba(0, 0, 0, 0.08);
-            backdrop-blur: 10px;
+            background: rgba(0, 0, 0, 0.04);
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1.5px solid rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
         .card-action-btn:hover {
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.1);
         }
 
         /* Dual-Mode Toggle Icon */
@@ -114,16 +112,15 @@
 
         /* Progress Bar */
         .progress-bar-container {
-            height: 6px;
+            height: 8px;
             background: rgba(0, 0, 0, 0.08);
-            border-radius: 3px;
-            margin-top: 16px;
+            border-radius: 4px;
             width: 100%;
             overflow: hidden;
         }
         .progress-fill {
             height: 100%;
-            border-radius: 3px;
+            border-radius: 4px;
             transition: width 1s ease-in-out;
         }
 

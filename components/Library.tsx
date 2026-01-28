@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Project, WritingType } from '../types';
 import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES } from '../constants';
 
@@ -8,10 +8,9 @@ interface LibraryProps {
   onSelectProject: (p: Project) => void;
   onCreateProject: (data: { name: string, type: WritingType, color: string, icon: string }) => void;
   onUpdateProjects: (projects: Project[]) => void;
-  onQuickWrite: (p: Project) => void;
 }
 
-const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreateProject, onUpdateProjects, onQuickWrite }) => {
+const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreateProject, onUpdateProjects }) => {
   const [weather] = useState({ temp: '15', city: '新北市', date: 'January 20' });
   const [isCreating, setIsCreating] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -67,9 +66,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const handleTogglePin = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     const updated = projects.map(p => p.id === id ? { ...p, isPinned: !p.isPinned } : p);
-    const pinned = updated.filter(p => p.isPinned);
-    const unpinned = updated.filter(p => !p.isPinned);
-    onUpdateProjects([...pinned, ...unpinned]);
+    onUpdateProjects(updated);
     setActiveMenuId(null);
   };
 
@@ -100,8 +97,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const onDragEnd = () => {
     setDraggedIdx(null);
   };
-
-  const isModalOpen = isCreating || !!editingProject;
 
   return (
     <div className="px-8 space-y-12 pb-32">
@@ -156,12 +151,11 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
               <div className="flex flex-col h-full justify-between relative">
                 <div className="flex justify-between items-start">
                   <div className="max-w-[80%]">
-                    <div className="flex items-center space-x-2 mb-2">
+                    <h3 className="text-4xl font-black tracking-tighter leading-[1] mb-2 pr-4">{proj.name}</h3>
+                    <div className="flex items-center space-x-2">
                        {proj.isPinned && <i className="fa-solid fa-thumbtack text-[10px] text-black/40"></i>}
-                       {proj.isFavorite && <i className="fa-solid fa-heart text-[10px] text-red-500/60"></i>}
-                       <span className="text-[10px] font-black uppercase tracking-widest opacity-50">{proj.tags.join(' • ')}</span>
+                       <span className="text-[11px] font-black uppercase tracking-widest opacity-40">{proj.tags.join(' • ')}</span>
                     </div>
-                    <h3 className="text-3xl font-black tracking-tighter leading-[1] mb-2 truncate pr-4">{proj.name}</h3>
                   </div>
                   
                   <div className="relative z-20">
@@ -175,50 +169,38 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                         setActiveMenuId(activeMenuId === proj.id ? null : proj.id);
                       }}
                     >
-                       <i className="fa-solid fa-ellipsis-vertical opacity-60 pointer-events-none"></i>
+                       <i className="fa-solid fa-ellipsis-vertical opacity-50 pointer-events-none"></i>
                     </button>
                     
                     {activeMenuId === proj.id && (
                       <div className="absolute right-0 top-14 w-44 bg-black/90 backdrop-blur-xl rounded-[24px] border border-white/10 shadow-2xl py-3 z-[1000] animate-in fade-in zoom-in-95" onClick={(e) => e.stopPropagation()}>
                          <button onClick={(e) => handleTogglePin(e, proj.id)} className="w-full px-6 py-3 flex items-center space-x-3 hover:bg-white/5 text-white/80 transition-colors">
                             <i className={`fa-solid fa-thumbtack text-xs ${proj.isPinned ? 'text-blue-500' : ''}`}></i>
-                            <span className="text-[11px] font-black uppercase tracking-widest">{proj.isPinned ? '取消置頂' : '置頂資料夾'}</span>
+                            <span className="text-[11px] font-black uppercase tracking-widest">{proj.isPinned ? '取消置頂' : '置頂專案'}</span>
                          </button>
                          <button onClick={(e) => handleOpenEdit(e, proj)} className="w-full px-6 py-3 flex items-center space-x-3 hover:bg-white/5 text-white/80 transition-colors">
                             <i className="fa-solid fa-pen-to-square text-xs text-[#7b61ff]"></i>
-                            <span className="text-[11px] font-black uppercase tracking-widest">編輯資料夾</span>
+                            <span className="text-[11px] font-black uppercase tracking-widest">編輯專案</span>
                          </button>
                          <div className="h-px bg-white/5 my-2 mx-4" />
                          <button onClick={(e) => handleDelete(e, proj.id)} className="w-full px-6 py-3 flex items-center space-x-3 hover:bg-red-500/10 text-red-500 transition-colors">
                             <i className="fa-solid fa-trash-can text-xs"></i>
-                            <span className="text-[11px] font-black uppercase tracking-widest">刪除資料夾</span>
+                            <span className="text-[11px] font-black uppercase tracking-widest">刪除專案</span>
                          </button>
                       </div>
                     )}
                   </div>
                 </div>
-
-                {/* 指令 A: 快速寫作按鈕 */}
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onQuickWrite(proj);
-                  }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-black/10 backdrop-blur-md flex items-center justify-center text-black opacity-0 group-hover/card:opacity-100 transition-all hover:scale-110 active:scale-90 border border-black/5"
-                >
-                  <i className="fa-solid fa-bolt-lightning text-xl"></i>
-                </button>
                 
-                <div className="mt-14">
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">
+                <div className="mt-12">
+                  <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest opacity-40 mb-3">
                     <span className="flex items-center">
-                       <i className="fa-regular fa-clock mr-1.5 text-[9px]"></i>
-                       {proj.metadata}
+                       {proj.metadata.toUpperCase()}
                     </span>
                     <span>{proj.progress}%</span>
                   </div>
-                  <div className="progress-bar-container bg-black/10">
-                    <div className="progress-fill bg-black/40" style={{ width: `${proj.progress}%` }} />
+                  <div className="progress-bar-container bg-black/5 h-2">
+                    <div className="progress-fill bg-black/30" style={{ width: `${proj.progress}%` }} />
                   </div>
                 </div>
               </div>
@@ -227,19 +209,19 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
         </div>
       </section>
 
-      {/* Universal Creation/Edit Modal */}
-      {isModalOpen && (
+      {/* Creation/Edit Modal */}
+      {(isCreating || editingProject) && (
         <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={resetForm} />
-           <div className="relative w-full max-w-lg bg-[#111111] rounded-t-[44px] sm:rounded-[44px] p-6 sm:p-8 flex flex-col space-y-4 animate-in slide-in-from-bottom duration-500 overflow-y-auto max-h-[92vh] shadow-2xl border border-white/5">
+           <div className="relative w-full max-w-lg bg-[#111111] rounded-t-[44px] sm:rounded-[44px] p-8 flex flex-col space-y-6 animate-in slide-in-from-bottom duration-500 overflow-y-auto max-h-[90vh] shadow-2xl border border-white/5">
               
-              <div className="flex justify-between items-start pt-2">
+              <div className="flex justify-between items-start">
                  <div className="flex flex-col">
-                    <h2 className="text-2xl font-black tracking-tight text-white leading-tight">
-                      {editingProject ? '編輯智慧資料夾' : '建立智慧資料夾'}
+                    <h2 className="text-2xl font-black tracking-tight text-white">
+                      {editingProject ? '編輯寫作專案' : '建立寫作專案'}
                     </h2>
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-0.5">
-                      {editingProject ? 'UPDATE SMART REPOSITORY' : 'NEW SMART REPOSITORY'}
+                      {editingProject ? 'UPDATE REPOSITORY' : 'NEW REPOSITORY'}
                     </p>
                  </div>
                  <button onClick={resetForm} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:text-white transition-colors">
@@ -247,82 +229,40 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                  </button>
               </div>
 
-              {/* Name Input */}
-              <div className="space-y-1.5">
-                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">資料夾名稱 FOLDER NAME</label>
-                 <div className="relative">
-                   <input 
-                      autoFocus
-                      value={formData.name}
-                      onChange={e => setFormData({...formData, name: e.target.value})}
-                      placeholder="例如：量子詩集..." 
-                      className="w-full bg-[#1A1A1A] border border-white/5 h-14 px-6 rounded-[22px] text-lg font-bold outline-none focus:border-[#7b61ff] transition-all text-white"
-                   />
-                   <div className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-600">
-                      <i className="fa-solid fa-keyboard"></i>
-                   </div>
-                 </div>
-              </div>
-
-              {/* Template Paradigm */}
-              <div className="space-y-1.5">
-                 <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">寫作範式 TEMPLATE PARADIGM</label>
-                 <div className="grid grid-cols-2 gap-2.5">
-                    {Object.entries(TEMPLATES).map(([type, config]) => (
-                       <button 
-                          key={type}
-                          onClick={() => setFormData({...formData, type: type as WritingType})}
-                          className={`p-3.5 rounded-2xl border text-left transition-all relative overflow-hidden group ${formData.type === type ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg shadow-purple-900/20' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
-                       >
-                          <i className={`fa-solid ${config.icon} text-base mb-1 ${formData.type === type ? 'text-white' : 'text-[#7b61ff]'}`}></i>
-                          <p className="text-[10px] font-black uppercase tracking-tighter leading-none">{config.label}</p>
-                       </button>
-                    ))}
-                 </div>
-              </div>
-
-              {/* Visual Coding Section */}
               <div className="space-y-4">
                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-2">視覺編碼 VISUAL CODING</label>
-                    <div className="grid grid-cols-6 gap-2">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">專案名稱 PROJECT NAME</label>
+                    <input 
+                       autoFocus
+                       value={formData.name}
+                       onChange={e => setFormData({...formData, name: e.target.value})}
+                       placeholder="輸入專案名稱..." 
+                       className="w-full bg-white/5 border border-white/5 h-16 px-6 rounded-3xl text-lg font-bold outline-none focus:border-[#7b61ff] transition-all text-white"
+                    />
+                 </div>
+
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">專案色彩 COLOR CODING</label>
+                    <div className="grid grid-cols-4 gap-3">
                        {PROJECT_COLORS.map(c => (
                           <button 
                              key={c} 
                              onClick={() => setFormData({...formData, color: c})}
-                             className={`aspect-square rounded-[8px] border-[2px] transition-transform active:scale-90 ${formData.color === c ? 'border-white scale-105' : 'border-transparent opacity-80'}`} 
+                             className={`aspect-square rounded-2xl border-4 transition-all ${formData.color === c ? 'border-white scale-105 shadow-lg' : 'border-transparent opacity-80 hover:opacity-100'}`} 
                              style={{backgroundColor: c}}
                           />
                        ))}
                     </div>
                  </div>
-
-                 <div className="grid grid-cols-5 gap-2 pb-2">
-                    {PROJECT_ICONS.map(i => (
-                       <button 
-                          key={i}
-                          onClick={() => setFormData({...formData, icon: i})}
-                          className={`aspect-square rounded-full flex items-center justify-center transition-all ${formData.icon === i ? 'bg-[#7b61ff] text-white scale-110 shadow-lg shadow-purple-900/40' : 'bg-[#1A1A1A] text-gray-500 hover:text-gray-300'}`}
-                       >
-                          <i className={`fa-solid ${i} text-base`}></i>
-                       </button>
-                    ))}
-                 </div>
               </div>
 
-              {/* Action Button */}
-              <div className="pt-2">
-                <button 
-                   onClick={handleSubmit}
-                   disabled={!formData.name.trim()}
-                   className={`w-full py-5 rounded-full text-white font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center ${!formData.name.trim() ? 'bg-gray-700 opacity-50' : 'bg-[#7b61ff] active:scale-95'}`}
-                >
-                   <span>{editingProject ? '更 新 智 慧 資 料 夾' : '建 立 智 慧 資 料 夾'}</span>
-                </button>
-                <p className="text-center text-[9px] text-gray-700 font-black uppercase tracking-[0.1em] mt-3">
-                  系統將自動初始化草稿結構與 AI 分析模組
-                </p>
-              </div>
+              <button 
+                 onClick={handleSubmit}
+                 disabled={!formData.name.trim()}
+                 className={`w-full py-6 rounded-full text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl transition-all ${!formData.name.trim() ? 'bg-gray-700 opacity-50' : 'bg-[#7b61ff] active:scale-95'}`}
+              >
+                 {editingProject ? '更 新 專 案' : '建 立 專 案'}
+              </button>
            </div>
         </div>
       )}
