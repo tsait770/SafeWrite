@@ -5,7 +5,7 @@ export enum MembershipLevel {
   PREMIUM = 'PREMIUM'
 }
 
-// 10 大核心寫作範本 (依照市場權重排序)
+// 10 大核心寫作範本 + 自定義
 export enum WritingType {
   LONG_FORM = 'LONG_FORM',      // 長篇敘事
   ARCHIVE = 'ARCHIVE',          // 個人資料庫
@@ -16,7 +16,8 @@ export enum WritingType {
   RESEARCH = 'RESEARCH',        // 研究導向
   ACADEMIC = 'ACADEMIC',        // 學術論文
   SCREENPLAY = 'SCREENPLAY',    // 影視劇本
-  SERIES = 'SERIES'             // 系列史詩
+  SERIES = 'SERIES',            // 系列史詩
+  CUSTOM = 'CUSTOM'             // 自定義範本
 }
 
 // 20 種核心寫作模組功能
@@ -112,7 +113,6 @@ export interface WritingModule {
   isInitial?: boolean;
 }
 
-// 修復：新增 OutlineNode 介面以支援編輯器與 AI 面板功能
 export interface OutlineNode {
   id: string;
   label: string;
@@ -157,7 +157,6 @@ export interface Project {
   icon: string;
   chapters: Chapter[];
   modules: WritingModule[];
-  // 修復：新增 visualOutline 屬性以配合 Sidebar 元件使用
   visualOutline?: OutlineNode[];
   createdAt: number;
   updatedAt: number;

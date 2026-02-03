@@ -120,6 +120,14 @@ export const TEMPLATES: Record<WritingType, TemplateConfig> = {
       { function: ModuleFunction.ARCS, title: '故事弧線', icon: 'fa-waveform' },
       { function: ModuleFunction.CHARACTERS, title: '跨作品角色', icon: 'fa-users-gear' }
     ]
+  },
+  [WritingType.CUSTOM]: {
+    label: '自定義範本', enLabel: 'CUSTOM TEMPLATE', icon: 'fa-plus',
+    description: '由您定義結構，靈活適配任何創作場景。',
+    skeleton: [
+      { function: ModuleFunction.MAIN_DRAFT, title: '主草稿', icon: 'fa-file-lines' },
+      { function: ModuleFunction.NOTES, title: '自定義筆記', icon: 'fa-note-sticky' }
+    ]
   }
 };
 

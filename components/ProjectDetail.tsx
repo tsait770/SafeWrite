@@ -122,17 +122,17 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
 
          {/* Chapter Management - 重構為參考圖樣式 */}
          <section className="space-y-6">
-            <div className="flex items-center justify-between px-2">
+            <div className="flex items-center justify-between px-2 mb-4">
                <div>
-                  <h2 className="text-2xl font-black text-white tracking-tight">章節管理</h2>
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">拖拽排序 · 點擊編輯</p>
+                  <h2 className="text-3xl font-black text-white tracking-tight">章節管理</h2>
+                  <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mt-1">拖拽排序 · 點擊編輯</p>
                </div>
-               <button onClick={() => setIsAddingChapter(true)} className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl shadow-lg active:scale-95 transition-all">
+               <button onClick={() => setIsAddingChapter(true)} className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
                   <i className="fa-solid fa-plus"></i>
                </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
                {project.chapters.length === 0 ? (
                   <div className="py-20 text-center border border-dashed border-white/5 rounded-[40px] opacity-30">
                      <i className="fa-solid fa-feather-pointed text-4xl mb-4"></i>
@@ -145,32 +145,33 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                       draggable
                       onDragStart={() => onDragStart(idx)}
                       onDragOver={(e) => onDragOver(e, idx)}
-                      className={`group bg-[#1C1C1E] p-5 rounded-[28px] border border-white/5 flex items-center justify-between transition-all ${draggedIdx === idx ? 'opacity-40 scale-95' : ''}`}
+                      className={`group bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 flex items-center justify-between transition-all hover:bg-[#252528] ${draggedIdx === idx ? 'opacity-40 scale-95' : ''}`}
                     >
-                       <div className="flex items-center space-x-4">
-                          <button className="text-gray-700 hover:text-white transition-colors">
-                            <i className="fa-solid fa-grip-vertical"></i>
+                       <div className="flex items-center space-x-6">
+                          <button className="text-gray-700 hover:text-white transition-colors cursor-grab active:cursor-grabbing">
+                            <i className="fa-solid fa-ellipsis-vertical text-xl opacity-30"></i>
+                            <i className="fa-solid fa-ellipsis-vertical text-xl opacity-30 -ml-2"></i>
                           </button>
                           <div className="flex flex-col">
-                             <h4 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{chapter.title}</h4>
-                             <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest mt-0.5">
+                             <h4 className="text-xl font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">{chapter.title}</h4>
+                             <p className="text-[11px] text-gray-600 font-black uppercase tracking-widest mt-1">
                                {chapter.wordCount} 字
                              </p>
                           </div>
                        </div>
                        
-                       <div className="flex items-center space-x-3">
-                          <button onClick={(e) => { e.stopPropagation(); onEnterEditor(chapter.id); }} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all">
-                             <i className="fa-solid fa-pen-nib text-sm"></i>
+                       <div className="flex items-center space-x-4">
+                          <button onClick={(e) => { e.stopPropagation(); onEnterEditor(chapter.id); }} className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all">
+                             <i className="fa-solid fa-pen text-lg"></i>
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDelete(chapter.id); }} className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all">
-                             <i className="fa-solid fa-trash-can text-sm"></i>
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(chapter.id); }} className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                             <i className="fa-solid fa-trash-can text-lg"></i>
                           </button>
                           <button 
                             onClick={() => onEnterEditor(chapter.id)}
-                            className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-lg shadow-md active:scale-95 transition-all"
+                            className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-xl shadow-[0_10px_20px_rgba(37,99,235,0.3)] active:scale-95 transition-all"
                           >
-                             <i className="fa-solid fa-play"></i>
+                             <i className="fa-solid fa-play ml-1"></i>
                           </button>
                        </div>
                     </div>
@@ -180,7 +181,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
 
             {isAddingChapter && (
                <div className="bg-[#1C1C1E] p-8 rounded-[40px] border border-blue-600/50 animate-in slide-in-from-top-4 shadow-2xl">
-                  <label className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 block">輸入章節名稱</label>
+                  <label className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-2 block">輸入章節名稱</label>
                   <input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="例如：第 2 章 · Chapter 2..." className="w-full bg-transparent text-2xl font-black outline-none text-white mb-6 border-b border-white/10 pb-2 focus:border-blue-600 transition-colors" />
                   <div className="flex justify-end space-x-4">
                      <button onClick={() => setIsAddingChapter(false)} className="text-xs font-black text-gray-500 uppercase tracking-widest">取消</button>
@@ -194,7 +195,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
       <div className="fixed bottom-32 left-8 right-8">
          <button 
            onClick={() => project.chapters.length > 0 ? onEnterEditor(project.chapters[0].id) : setIsAddingChapter(true)}
-           className="w-full h-24 bg-white text-black font-black text-sm uppercase tracking-[0.4em] rounded-[32px] shadow-2xl active:scale-95 transition-all flex items-center justify-center space-x-4"
+           className="w-full h-24 bg-white text-black font-black text-sm uppercase tracking-[0.4em] rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.4)] active:scale-95 transition-all flex items-center justify-center space-x-4"
          >
             <i className="fa-solid fa-bolt-lightning text-xl"></i>
             <span>進入創作流主機</span>

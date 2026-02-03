@@ -81,9 +81,9 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
 
   const topParadigms = [
     WritingType.LONG_FORM,
-    WritingType.ARCHIVE,
+    WritingType.NOVEL, // 右上區塊更改為小說創作
     WritingType.ESSAY,
-    WritingType.CREATOR
+    WritingType.CUSTOM 
   ];
 
   const otherParadigms = (Object.keys(TEMPLATES) as WritingType[]).filter(t => !topParadigms.includes(t));
@@ -118,7 +118,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
           </div>
           <button 
             onClick={() => setIsCreating(true)}
-            className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-90 transition-all"
+            className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-90 hover:scale-105 transition-all"
           >
             <i className="fa-solid fa-plus text-white text-lg"></i>
           </button>
@@ -225,11 +225,11 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                             <button 
                               key={type} 
                               onClick={() => setFormData({...formData, type})} 
-                              className={`flex flex-col items-start p-5 rounded-[2.5rem] border transition-all h-36 justify-center ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
+                              className={`flex flex-col items-start p-5 rounded-[2.5rem] border transition-all h-36 justify-center text-left ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
                             >
                                <i className={`fa-solid ${t.icon} text-2xl mb-3 ${active ? 'text-white' : 'text-[#7b61ff]'}`}></i>
                                <span className="text-[11px] font-black uppercase tracking-widest leading-none">{t.label}</span>
-                               <p className="text-[8px] font-bold opacity-40 mt-1 line-clamp-2">{t.description}</p>
+                               <p className="text-[8px] font-bold opacity-40 mt-1 line-clamp-2 leading-relaxed">{t.description}</p>
                             </button>
                           );
                        })}
