@@ -19,63 +19,19 @@ const App: React.FC = () => {
       {
         id: 'p1',
         name: 'The Solar Paradox',
-        writingType: WritingType.NOVEL,
+        writingType: WritingType.LONG_FORM,
+        targetWordCount: 50000,
         metadata: 'Edited 10m ago',
         progress: 82,
-        color: PROJECT_COLORS[0], // #FADE4B
+        color: PROJECT_COLORS[4],
         icon: 'fa-feather-pointed',
-        chapters: [{ id: 'c1', title: 'Chapter 1', content: 'Story starts...', order: 1, history: [] }],
-        modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i } as WritingModule)),
+        chapters: [{ id: 'c1', title: '第 1 章 · Chapter 1', content: '故事開始於太陽不再升起的那一天...', order: 1, history: [], wordCount: 1250, lastEdited: Date.now() }],
+        modules: [],
         settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 600000,
+        createdAt: Date.now() - 600000 * 24 * 12,
         updatedAt: Date.now() - 600000,
-        tags: ['SCI-FI', 'NOVEL'],
+        tags: ['SCI-FI', 'SPACE'],
         isPinned: true
-      },
-      {
-        id: 'p2',
-        name: 'Midnight Protocol',
-        writingType: WritingType.NOVEL,
-        metadata: 'Edited 2h ago',
-        progress: 45,
-        color: PROJECT_COLORS[1], // #FF6B2C
-        icon: 'fa-shield-heart',
-        chapters: [{ id: 'c2', title: 'Chapter 1', content: 'Protocol initiated...', order: 1, history: [] }],
-        modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i } as WritingModule)),
-        settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 86400000,
-        updatedAt: Date.now() - 7200000,
-        tags: ['THRILLER', 'ACTION']
-      },
-      {
-        id: 'p3',
-        name: 'Shadows of Gaia',
-        writingType: WritingType.NOVEL,
-        metadata: 'Review Pending',
-        progress: 95,
-        color: PROJECT_COLORS[2], // #D4FF5F
-        icon: 'fa-scroll',
-        chapters: [{ id: 'c3', title: '序章', content: '大地之影...', order: 1, history: [] }],
-        modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i } as WritingModule)),
-        settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 172800000,
-        updatedAt: Date.now() - 3600000,
-        tags: ['FANTASY', 'REVIEW']
-      },
-      {
-        id: 'p4',
-        name: 'Celestial Hymns',
-        writingType: WritingType.NOVEL,
-        metadata: 'Created Yesterday',
-        progress: 10,
-        color: PROJECT_COLORS[3], // #B2A4FF
-        icon: 'fa-dragon',
-        chapters: [{ id: 'c4', title: 'Draft', content: 'Initial ideas...', order: 1, history: [] }],
-        modules: TEMPLATES[WritingType.NOVEL].modules.map((m, i) => ({ ...m, id: `m-${i}`, order: i } as WritingModule)),
-        settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 172800000,
-        updatedAt: Date.now() - 172800000,
-        tags: ['POETRY', 'MYSTIC']
       }
     ],
     currentProject: null,
@@ -103,114 +59,43 @@ const App: React.FC = () => {
   });
 
   const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION'>('NONE');
-  const [isRestoring, setIsRestoring] = useState(false);
 
-  const createSnapshot = useCallback((type: SnapshotType) => {
-    setState(prev => {
-      if (!prev.currentProject || !prev.currentChapterId) return prev;
-      const chapter = prev.currentProject.chapters.find(c => c.id === prev.currentChapterId);
-      if (!chapter) return prev;
+  const handleUpdateProject = (updated: Project) => {
+    setState(prev => ({
+      ...prev,
+      projects: prev.projects.map(p => p.id === updated.id ? updated : p),
+      currentProject: prev.currentProject?.id === updated.id ? updated : prev.currentProject
+    }));
+  };
 
-      const newSnapshot: VersionSnapshot = {
-        id: 'snap-' + Date.now(),
-        timestamp: Date.now(),
-        content: chapter.content,
-        title: chapter.title,
-        type: type,
-        milestoneName: type === SnapshotType.MILESTONE ? `Milestone ${chapter.history.length + 1}` : undefined
-      };
-
-      const newChapters = prev.currentProject.chapters.map(c => {
-        if (c.id === prev.currentChapterId) {
-          return { ...c, history: [newSnapshot, ...c.history] };
-        }
-        return c;
-      });
-
-      const updatedProject = { ...prev.currentProject, chapters: newChapters, updatedAt: Date.now() };
-      return { ...prev, currentProject: updatedProject };
-    });
-  }, []);
-
-  const handleRestore = (snapshot: VersionSnapshot) => {
-    setIsRestoring(true);
-    setTimeout(() => {
-      setState(prev => {
-        if (!prev.currentProject || !prev.currentChapterId) return prev;
-        const newChapters = prev.currentProject.chapters.map(c => {
-          if (c.id === prev.currentChapterId) return { ...c, content: snapshot.content, title: snapshot.title };
-          return c;
-        });
-        const updatedProject = { ...prev.currentProject, chapters: newChapters, updatedAt: Date.now() };
-        return { ...prev, currentProject: updatedProject };
-      });
-      setIsRestoring(false);
-      setActiveOverlay('NONE');
-    }, 800);
+  const handleEnterEditor = (chapterId: string) => {
+    setState(prev => ({ ...prev, currentChapterId: chapterId, activeTab: AppTab.WRITE }));
   };
 
   const handleUpdateContent = (newContent: string) => {
     setState(prev => {
       if (!prev.currentProject || !prev.currentChapterId) return prev;
-      const project = { ...prev.currentProject };
-      const chapters = project.chapters.map(c => 
-        c.id === prev.currentChapterId ? { ...c, content: newContent } : c
+      const chapters = prev.currentProject.chapters.map(c => 
+        c.id === prev.currentChapterId ? { ...c, content: newContent, wordCount: newContent.length, lastEdited: Date.now() } : c
       );
-      const oldChapter = prev.currentProject.chapters.find(c => c.id === prev.currentChapterId);
-      const diff = newContent.length - (oldChapter?.content.length || 0);
-      
-      const updatedProject = { ...project, chapters, updatedAt: Date.now() };
-      const updatedProjects = prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p);
-
-      return { 
-        ...prev, 
-        projects: updatedProjects,
-        currentProject: updatedProject,
-        stats: { ...prev.stats, todayWords: Math.max(0, prev.stats.todayWords + diff) }
+      const updatedProject = { ...prev.currentProject, chapters, updatedAt: Date.now() };
+      return {
+        ...prev,
+        projects: prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p),
+        currentProject: updatedProject
       };
     });
   };
 
-  const handleUpdateOutline = (nodes: OutlineNode[]) => {
-    setState(prev => {
-      if (!prev.currentProject) return prev;
-      const updatedProject = { ...prev.currentProject, visualOutline: nodes };
-      const updatedProjects = prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p);
-      return { ...prev, projects: updatedProjects, currentProject: updatedProject };
-    });
-  };
-
-  const handleSelectProject = (proj: Project) => {
-    setState(prev => ({ ...prev, currentProject: proj, activeTab: AppTab.PROJECT_DETAIL }));
-  };
-
-  const handleOpenModule = (moduleId: string) => {
-    if (!state.currentProject) return;
-    const module = state.currentProject.modules.find(m => m.id === moduleId);
-    if (module?.type === 'MANUSCRIPT') {
-        const chapters = state.currentProject.chapters || [];
-        setState(prev => ({
-            ...prev,
-            currentChapterId: chapters[0]?.id || null,
-            activeTab: AppTab.WRITE
-        }));
-    }
-  };
-
   const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
-  const isFocus = state.uiMode === UIMode.FOCUS;
 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden bg-black text-white">
       {state.activeTab !== AppTab.WRITE && (
-        <header className="fixed top-0 w-full z-[100] h-24 flex items-end justify-between px-8 pb-4 bg-black/60 backdrop-blur-3xl border-b border-white/5 transition-transform duration-500">
+        <header className="fixed top-0 w-full z-[100] h-24 flex items-end justify-between px-8 pb-4 bg-black/60 backdrop-blur-3xl border-b border-white/5">
           <div className="flex flex-col">
-            <h1 className="text-2xl font-black tracking-tighter">
-              {state.activeTab === AppTab.PROJECT_DETAIL ? (state.currentProject?.name || '專案') : (state.appMode === AppMode.REPOSITORY ? 'SafeWrite' : '靈感中心')}
-            </h1>
-            <p className="text-[10px] text-[#8e8e93] font-black uppercase tracking-[0.2em] mt-0.5">
-              {state.activeTab === AppTab.PROJECT_DETAIL ? '智慧倉庫 SMART REPOSITORY' : (state.appMode === AppMode.REPOSITORY ? '檔案與存放庫 FILES & REPOSITORIES' : '靈感擷取 CAPTURE CENTER')}
-            </p>
+            <h1 className="text-2xl font-black tracking-tighter">SafeWrite</h1>
+            <p className="text-[10px] text-[#8e8e93] font-black uppercase tracking-[0.2em] mt-0.5">專業級敘事引擎</p>
           </div>
           <button onClick={() => setState(p => ({...p, appMode: p.appMode === AppMode.REPOSITORY ? AppMode.CAPTURE : AppMode.REPOSITORY}))} className="dual-mode-toggle group">
              <i className={`fa-solid fa-circle-nodes text-2xl transition-all ${state.appMode === AppMode.CAPTURE ? 'text-[#D4FF5F]' : 'text-white'}`}></i>
@@ -223,21 +108,23 @@ const App: React.FC = () => {
           state.appMode === AppMode.REPOSITORY ? (
             <Library 
               projects={state.projects} 
-              onSelectProject={handleSelectProject} 
-              onCreateProject={(data) => setState(prev => ({...prev, projects: [{...data, id: 'p-'+Date.now(), chapters: [], modules: [], metadata: '剛剛', progress: 0, settings: {typography: 'serif', fontSize: 'normal'}, createdAt: Date.now(), updatedAt: Date.now(), tags: []} as any, ...prev.projects]}))}
+              onSelectProject={(p) => setState(prev => ({...prev, currentProject: p, activeTab: AppTab.PROJECT_DETAIL}))}
+              onCreateProject={(proj) => setState(prev => ({...prev, projects: [proj, ...prev.projects]}))}
               onUpdateProjects={(p) => setState(prev => ({...prev, projects: p}))}
             />
           ) : (
             <CaptureCenter 
               projects={state.projects}
-              onSaveToProject={(pid, content) => { /* logic here */ }}
+              onSaveToProject={(pid, content) => {}}
             />
           )
         ) : state.activeTab === AppTab.PROJECT_DETAIL ? (
           <ProjectDetail 
             project={state.currentProject!} 
             onBack={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))}
-            onOpenModule={handleOpenModule}
+            onOpenModule={() => {}}
+            onUpdateProject={handleUpdateProject}
+            onEnterEditor={handleEnterEditor}
           />
         ) : state.activeTab === AppTab.WRITE ? (
           currentChapter ? (
@@ -249,8 +136,7 @@ const App: React.FC = () => {
               onOpenTimeline={() => setActiveOverlay('TIMELINE')}
               onOpenCollaboration={() => setActiveOverlay('COLLABORATION')}
               onBack={() => setState(prev => ({ ...prev, activeTab: AppTab.PROJECT_DETAIL }))}
-              onUpdateOutline={handleUpdateOutline}
-              isRestored={isRestoring}
+              onUpdateOutline={() => {}}
               membership={state.membership}
             />
           ) : null
@@ -262,16 +148,16 @@ const App: React.FC = () => {
       <BottomNav 
         activeTab={state.activeTab} 
         onTabChange={(tab) => setState(prev => ({ ...prev, activeTab: tab }))}
-        isVisible={!isFocus && activeOverlay === 'NONE' && state.activeTab !== AppTab.WRITE}
+        isVisible={activeOverlay === 'NONE' && state.activeTab !== AppTab.WRITE}
       />
 
       {activeOverlay === 'TIMELINE' && (
         <Timeline 
           history={currentChapter?.history || []} 
           onClose={() => setActiveOverlay('NONE')} 
-          onRestore={handleRestore}
+          onRestore={() => {}}
           onPreview={() => {}} 
-          onCreateMilestone={() => createSnapshot(SnapshotType.MILESTONE)}
+          onCreateMilestone={() => {}}
           onClearAuto={() => {}}
         />
       )}

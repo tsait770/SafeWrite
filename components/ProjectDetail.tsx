@@ -1,104 +1,203 @@
 
-import React from 'react';
-import { Project, WritingModule, ModuleType } from '../types';
+import React, { useState } from 'react';
+import { Project, Chapter, WritingModule } from '../types';
 import { TEMPLATES } from '../constants';
 
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
   onOpenModule: (moduleId: string) => void;
+  onUpdateProject: (p: Project) => void;
+  onEnterEditor: (chapterId: string) => void;
 }
 
-const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenModule }) => {
-  const templateInfo = TEMPLATES[project.writingType];
+const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenModule, onUpdateProject, onEnterEditor }) => {
+  const [isAddingChapter, setIsAddingChapter] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+
+  const totalWords = project.chapters.reduce((acc, c) => acc + (c.wordCount || 0), 0);
+  const writingDays = Math.max(1, Math.ceil((Date.now() - project.createdAt) / (1000 * 60 * 60 * 24)));
+
+  const handleAdd = () => {
+    if (!newTitle.trim()) return;
+    const newChapter: Chapter = {
+      id: 'c-' + Date.now(),
+      title: newTitle,
+      content: '',
+      order: project.chapters.length + 1,
+      history: [],
+      wordCount: 0,
+      lastEdited: Date.now()
+    };
+    onUpdateProject({ ...project, chapters: [...project.chapters, newChapter] });
+    setNewTitle('');
+    setIsAddingChapter(false);
+  };
+
+  const handleDelete = (id: string) => {
+    onUpdateProject({ ...project, chapters: project.chapters.filter(c => c.id !== id) });
+  };
+
+  const onDragStart = (idx: number) => {
+    setDraggedIdx(idx);
+  };
+
+  const onDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === idx) return;
+
+    const newChapters = [...project.chapters];
+    const item = newChapters.splice(draggedIdx, 1)[0];
+    newChapters.splice(idx, 0, item);
+    
+    const orderedChapters = newChapters.map((c, i) => ({ ...c, order: i + 1 }));
+    onUpdateProject({ ...project, chapters: orderedChapters });
+    setDraggedIdx(idx);
+  };
 
   return (
-    <div className="flex flex-col h-full animate-in slide-in-from-right duration-500">
+    <div className="flex flex-col h-full animate-in slide-in-from-right duration-500 overflow-y-auto no-scrollbar pb-40">
       <header className="px-8 pt-6 pb-10">
-         <button 
-           onClick={onBack}
-           className="mb-8 flex items-center space-x-2 text-[#8e8e93] hover:text-white transition-colors"
-         >
-           <i className="fa-solid fa-chevron-left text-xs"></i>
-           <span className="text-[10px] font-black uppercase tracking-widest">BACK TO REPOSITORY</span>
-         </button>
-         
-         <div className="flex items-start justify-between">
-            <div className="space-y-2">
-               <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl" style={{backgroundColor: project.color, color: '#121212'}}>
-                     <i className={`fa-solid ${project.icon}`}></i>
-                  </div>
-                  <h1 className="text-4xl font-black tracking-tighter">{project.name}</h1>
+         <div className="flex items-center justify-between mb-10">
+            <button onClick={onBack} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-400 active:scale-90 transition-transform">
+               <i className="fa-solid fa-chevron-left"></i>
+            </button>
+            <div className="flex flex-col items-center">
+               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-2xl mb-2" style={{ backgroundColor: project.color, color: '#121212' }}>
+                  <i className={`fa-solid ${project.icon}`}></i>
                </div>
-               <div className="flex items-center space-x-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#8e8e93] pl-16">
-                  <span>{templateInfo.label}</span>
-                  <div className="w-1 h-1 rounded-full bg-white/20" />
-                  <span>{project.progress}% 完成度</span>
+               <h1 className="text-3xl font-black tracking-tight">{project.name}</h1>
+               <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1">{TEMPLATES[project.writingType]?.label}</p>
+            </div>
+            <button className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
+               <i className="fa-solid fa-ellipsis-vertical"></i>
+            </button>
+         </div>
+
+         {/* Stats Panel */}
+         <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">總字數統計</p>
+               <div className="flex items-baseline space-x-2">
+                 <p className="text-2xl font-black text-white">{totalWords.toLocaleString()}</p>
+                 <span className="text-[9px] text-gray-600">/ {project.targetWordCount.toLocaleString()}</span>
                </div>
             </div>
-            
-            <button className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
-               <i className="fa-solid fa-gear text-[#8e8e93]"></i>
-            </button>
+            <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">創作天數</p>
+               <p className="text-2xl font-black text-[#D4FF5F]">{writingDays} DAYS</p>
+            </div>
+            <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">當前進度</p>
+               <div className="flex items-center space-x-3">
+                  <p className="text-2xl font-black text-[#7b61ff]">{Math.min(100, Math.floor((totalWords / project.targetWordCount) * 100))}%</p>
+                  <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                     <div className="h-full bg-[#7b61ff]" style={{ width: `${Math.min(100, (totalWords / project.targetWordCount) * 100)}%` }} />
+                  </div>
+               </div>
+            </div>
+            <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">架構模組數</p>
+               <p className="text-2xl font-black text-white">{project.modules.length} NODES</p>
+            </div>
          </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto no-scrollbar px-8 pb-32 space-y-12">
-         {/* Module Grid */}
-         <section>
-            <div className="flex items-center justify-between mb-8">
-               <h2 className="text-[11px] font-black text-[#8e8e93] uppercase tracking-[0.2em]">模組功能引擎 MODULE ENGINE</h2>
-               <div className="flex-1 h-px bg-white/10 ml-6" />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
-               {project.modules.sort((a,b) => a.order - b.order).map((module) => (
-                  <button 
-                    key={module.id}
-                    onClick={() => onOpenModule(module.id)}
-                    className="group relative bg-[#1C1C1E] border border-white/5 rounded-[32px] p-8 flex items-center justify-between text-left transition-all hover:scale-[1.02] active:scale-[0.98] hover:border-blue-500/30 overflow-hidden"
-                  >
-                     <div className="absolute top-0 left-0 w-1.5 h-full transition-colors group-hover:bg-blue-500 bg-white/5" />
-                     <div className="flex items-center space-x-6">
-                        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-2xl text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                           <i className={`fa-solid ${module.icon}`}></i>
-                        </div>
-                        <div>
-                           <h3 className="text-xl font-bold text-white mb-1">{module.title}</h3>
-                           <p className="text-[10px] font-black text-[#8e8e93] uppercase tracking-widest">{module.description}</p>
-                        </div>
+      <main className="px-8 space-y-12">
+         {/* Skeleton Modules Showcase */}
+         <section className="space-y-6">
+            <h2 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] px-2">智慧架構 SKELETON</h2>
+            <div className="grid grid-cols-2 gap-3">
+               {project.modules.map((m) => (
+                  <div key={m.id} className="p-5 bg-white/5 border border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center space-y-3 opacity-80 hover:opacity-100 transition-opacity">
+                     <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400">
+                        <i className={`fa-solid ${m.icon}`}></i>
                      </div>
-                     <i className="fa-solid fa-chevron-right text-[#8e8e93] group-hover:translate-x-1 transition-transform"></i>
-                  </button>
+                     <span className="text-[9px] font-black text-white uppercase tracking-widest">{m.title}</span>
+                  </div>
                ))}
             </div>
          </section>
 
-         {/* Project Stats / Insights */}
-         <section className="bg-gradient-to-tr from-blue-600/10 to-transparent p-10 rounded-[44px] border border-white/5">
-            <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-6">寫作洞察 INSIGHTS</h3>
-            <div className="grid grid-cols-3 gap-8">
+         {/* Chapter Management - 重構為參考圖樣式 */}
+         <section className="space-y-6">
+            <div className="flex items-center justify-between px-2">
                <div>
-                  <p className="text-[9px] font-black text-[#8e8e93] uppercase tracking-widest mb-1">總字數</p>
-                  <p className="text-2xl font-black">12,402</p>
+                  <h2 className="text-2xl font-black text-white tracking-tight">章節管理</h2>
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">拖拽排序 · 點擊編輯</p>
                </div>
-               <div>
-                  <p className="text-[9px] font-black text-[#8e8e93] uppercase tracking-widest mb-1">創作天數</p>
-                  <p className="text-2xl font-black">24 Days</p>
-               </div>
-               <div>
-                  <p className="text-[9px] font-black text-[#8e8e93] uppercase tracking-widest mb-1">今日增長</p>
-                  <p className="text-2xl font-black text-green-500">+850</p>
-               </div>
+               <button onClick={() => setIsAddingChapter(true)} className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl shadow-lg active:scale-95 transition-all">
+                  <i className="fa-solid fa-plus"></i>
+               </button>
             </div>
+
+            <div className="space-y-3">
+               {project.chapters.length === 0 ? (
+                  <div className="py-20 text-center border border-dashed border-white/5 rounded-[40px] opacity-30">
+                     <i className="fa-solid fa-feather-pointed text-4xl mb-4"></i>
+                     <p className="text-[10px] font-black uppercase tracking-widest">目前尚無內容，請點擊新增</p>
+                  </div>
+               ) : (
+                  project.chapters.map((chapter, idx) => (
+                    <div 
+                      key={chapter.id} 
+                      draggable
+                      onDragStart={() => onDragStart(idx)}
+                      onDragOver={(e) => onDragOver(e, idx)}
+                      className={`group bg-[#1C1C1E] p-5 rounded-[28px] border border-white/5 flex items-center justify-between transition-all ${draggedIdx === idx ? 'opacity-40 scale-95' : ''}`}
+                    >
+                       <div className="flex items-center space-x-4">
+                          <button className="text-gray-700 hover:text-white transition-colors">
+                            <i className="fa-solid fa-grip-vertical"></i>
+                          </button>
+                          <div className="flex flex-col">
+                             <h4 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{chapter.title}</h4>
+                             <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest mt-0.5">
+                               {chapter.wordCount} 字
+                             </p>
+                          </div>
+                       </div>
+                       
+                       <div className="flex items-center space-x-3">
+                          <button onClick={(e) => { e.stopPropagation(); onEnterEditor(chapter.id); }} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all">
+                             <i className="fa-solid fa-pen-nib text-sm"></i>
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); handleDelete(chapter.id); }} className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                             <i className="fa-solid fa-trash-can text-sm"></i>
+                          </button>
+                          <button 
+                            onClick={() => onEnterEditor(chapter.id)}
+                            className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-lg shadow-md active:scale-95 transition-all"
+                          >
+                             <i className="fa-solid fa-play"></i>
+                          </button>
+                       </div>
+                    </div>
+                  ))
+               )}
+            </div>
+
+            {isAddingChapter && (
+               <div className="bg-[#1C1C1E] p-8 rounded-[40px] border border-blue-600/50 animate-in slide-in-from-top-4 shadow-2xl">
+                  <label className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-2 block">輸入章節名稱</label>
+                  <input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="例如：第 2 章 · Chapter 2..." className="w-full bg-transparent text-2xl font-black outline-none text-white mb-6 border-b border-white/10 pb-2 focus:border-blue-600 transition-colors" />
+                  <div className="flex justify-end space-x-4">
+                     <button onClick={() => setIsAddingChapter(false)} className="text-xs font-black text-gray-500 uppercase tracking-widest">取消</button>
+                     <button onClick={handleAdd} className="bg-blue-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">確認建立</button>
+                  </div>
+               </div>
+            )}
          </section>
       </main>
 
-      <div className="fixed bottom-32 left-8 right-8 pointer-events-none">
-         <button className="w-full h-24 bg-blue-600 rounded-[30px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl shadow-blue-900/40 flex items-center justify-center space-x-4 pointer-events-auto active:scale-95 transition-all">
+      <div className="fixed bottom-32 left-8 right-8">
+         <button 
+           onClick={() => project.chapters.length > 0 ? onEnterEditor(project.chapters[0].id) : setIsAddingChapter(true)}
+           className="w-full h-24 bg-white text-black font-black text-sm uppercase tracking-[0.4em] rounded-[32px] shadow-2xl active:scale-95 transition-all flex items-center justify-center space-x-4"
+         >
             <i className="fa-solid fa-bolt-lightning text-xl"></i>
-            <span>進入創作流進入主稿</span>
+            <span>進入創作流主機</span>
          </button>
       </div>
     </div>

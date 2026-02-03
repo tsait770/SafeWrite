@@ -5,91 +5,47 @@ export enum MembershipLevel {
   PREMIUM = 'PREMIUM'
 }
 
+// 10 大核心寫作範本 (依照市場權重排序)
 export enum WritingType {
-  NOVEL = 'NOVEL',
-  RESEARCH = 'RESEARCH',
-  SCREENPLAY = 'SCREENPLAY',
-  JOURNAL = 'JOURNAL'
+  LONG_FORM = 'LONG_FORM',      // 長篇敘事
+  ARCHIVE = 'ARCHIVE',          // 個人資料庫
+  ESSAY = 'ESSAY',              // 論說觀點
+  CREATOR = 'CREATOR',          // 創作者電子報
+  NOVEL = 'NOVEL',              // 專業小說
+  NON_FICTION = 'NON_FICTION',  // 非虛構架構
+  RESEARCH = 'RESEARCH',        // 研究導向
+  ACADEMIC = 'ACADEMIC',        // 學術論文
+  SCREENPLAY = 'SCREENPLAY',    // 影視劇本
+  SERIES = 'SERIES'             // 系列史詩
 }
 
-export enum ModuleType {
-  COLLECTION = 'COLLECTION',
-  BOARD = 'BOARD',
-  TIMELINE = 'TIMELINE',
-  MANUSCRIPT = 'MANUSCRIPT'
-}
-
-export interface WritingModule {
-  id: string;
-  type: ModuleType;
-  title: string;
-  icon: string;
-  description: string;
-  order: number;
-}
-
-/* 視覺化大綱節點介面定義 */
-export interface OutlineNode {
-  id: string;
-  label: string;
-  level: number;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  writingType: WritingType;
-  metadata: string;
-  progress: number;
-  color: string;
-  icon: string;
-  chapters: Chapter[];
-  modules: WritingModule[];
-  createdAt: number;
-  updatedAt: number;
-  tags: string[];
-  visualOutline?: OutlineNode[];
-  isPinned?: boolean;
-  isFavorite?: boolean;
-  settings: {
-    typography: 'serif' | 'sans';
-    fontSize: 'normal' | 'large';
-  }
-}
-
-export interface UserStats {
-  wordCount: number;
-  projectCount: number;
-  exportCount: number;
-  lastActive: number;
-  hasTrialed: boolean;
-  dailyGoal: number;
-  writingStreak: number;
-  todayWords: number;
-}
-
-export enum SnapshotType {
-  AUTO = 'auto',
-  MANUAL = 'manual',
-  MILESTONE = 'milestone',
-}
-
-export interface VersionSnapshot {
-  id: string;
-  timestamp: number;
-  content: string;
-  title: string;
-  type: SnapshotType;
-  milestoneName?: string;
-}
-
-export interface Chapter {
-  id: string;
-  title: string;
-  content: string;
-  order: number;
-  history: VersionSnapshot[];
-  publicationStatus?: PublicationStatus;
+// 20 種核心寫作模組功能
+export enum ModuleFunction {
+  MAIN_DRAFT = 'MAIN_DRAFT',
+  CHAPTERS = 'CHAPTERS',
+  NOTES = 'NOTES',
+  WORLD_LORE = 'WORLD_LORE',
+  SERIES_BUILDER = 'SERIES_BUILDER',
+  VOLUMES = 'VOLUMES',
+  ARCS = 'ARCS',
+  CHARACTERS = 'CHARACTERS',
+  OUTLINE = 'OUTLINE',
+  SECTIONS = 'SECTIONS',
+  REFERENCES = 'REFERENCES',
+  SOURCES = 'SOURCES',
+  FINDINGS = 'FINDINGS',
+  IDEAS = 'IDEAS',
+  LOGS = 'LOGS',
+  ACTS = 'ACTS',
+  SCENES = 'SCENES',
+  DIALOGUE = 'DIALOGUE',
+  THESIS = 'THESIS',
+  ARGUMENTS = 'ARGUMENTS',
+  EVIDENCE = 'EVIDENCE',
+  ABSTRACT = 'ABSTRACT',
+  METHODOLOGY = 'METHODOLOGY',
+  CITATIONS = 'CITATIONS',
+  ISSUES = 'ISSUES'
 }
 
 export enum PublicationStatus {
@@ -98,6 +54,15 @@ export enum PublicationStatus {
   REVIEWING = 'REVIEWING',
   ACCEPTED = 'ACCEPTED',
   PUBLISHED = 'PUBLISHED'
+}
+
+export enum ModuleType {
+  COLLECTION = 'COLLECTION',
+  BOARD = 'BOARD',
+  TIMELINE = 'TIMELINE',
+  MANUSCRIPT = 'MANUSCRIPT',
+  WORLD = 'WORLD',
+  CHARACTER = 'CHARACTER'
 }
 
 export enum UIMode {
@@ -117,15 +82,92 @@ export enum ThemeMode {
 
 export enum AppTab {
   LIBRARY = 'LIBRARY',
+  PROJECT_DETAIL = 'PROJECT_DETAIL',
   WRITE = 'WRITE',
-  PROFILE = 'PROFILE',
-  PROJECT_DETAIL = 'PROJECT_DETAIL'
+  PROFILE = 'PROFILE'
+}
+
+export enum SnapshotType {
+  AUTO = 'auto',
+  MANUAL = 'manual',
+  MILESTONE = 'milestone',
+}
+
+export interface VersionSnapshot {
+  id: string;
+  timestamp: number;
+  content: string;
+  title: string;
+  type: SnapshotType;
+  milestoneName?: string;
+}
+
+export interface WritingModule {
+  id: string;
+  function: ModuleFunction;
+  title: string;
+  icon: string;
+  description: string;
+  order: number;
+  isInitial?: boolean;
+}
+
+// 修復：新增 OutlineNode 介面以支援編輯器與 AI 面板功能
+export interface OutlineNode {
+  id: string;
+  label: string;
+  level: number;
+}
+
+export interface Chapter {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  history: VersionSnapshot[];
+  wordCount: number;
+  lastEdited: number;
+  publicationStatus?: PublicationStatus;
+}
+
+export interface UserStats {
+  wordCount: number;
+  projectCount: number;
+  exportCount: number;
+  lastActive: number;
+  hasTrialed: boolean;
+  dailyGoal: number;
+  writingStreak: number;
+  todayWords: number;
 }
 
 export type SupportedLanguage = 
   | 'en' | 'zh-TW' | 'zh-CN' | 'es' | 'pt-BR' | 'pt-PT' | 'de' | 'fr' 
   | 'it' | 'nl' | 'sv' | 'tr' | 'ru' | 'ja' | 'ko' | 'th' | 'vi' 
   | 'id' | 'ms' | 'ar' | 'hi';
+
+export interface Project {
+  id: string;
+  name: string;
+  writingType: WritingType;
+  targetWordCount: number;
+  metadata: string;
+  progress: number;
+  color: string;
+  icon: string;
+  chapters: Chapter[];
+  modules: WritingModule[];
+  // 修復：新增 visualOutline 屬性以配合 Sidebar 元件使用
+  visualOutline?: OutlineNode[];
+  createdAt: number;
+  updatedAt: number;
+  tags: string[];
+  isPinned?: boolean;
+  settings: {
+    typography: 'serif' | 'sans';
+    fontSize: 'normal' | 'large';
+  }
+}
 
 export interface AppState {
   projects: Project[];
