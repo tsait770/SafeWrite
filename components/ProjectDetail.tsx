@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Project, Chapter, WritingModule } from '../types';
 import { TEMPLATES } from '../constants';
 
@@ -8,16 +8,29 @@ interface ProjectDetailProps {
   onBack: () => void;
   onOpenModule: (moduleId: string) => void;
   onUpdateProject: (p: Project) => void;
+  onDeleteProject: (id: string) => void;
   onEnterEditor: (chapterId: string) => void;
 }
 
-const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenModule, onUpdateProject, onEnterEditor }) => {
+const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenModule, onUpdateProject, onDeleteProject, onEnterEditor }) => {
   const [isAddingChapter, setIsAddingChapter] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const totalWords = project.chapters.reduce((acc, c) => acc + (c.wordCount || 0), 0);
   const writingDays = Math.max(1, Math.ceil((Date.now() - project.createdAt) / (1000 * 60 * 60 * 24)));
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleOpenAdd = () => {
     const nextNum = project.chapters.length + 1;
@@ -42,8 +55,28 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
     setIsAddingChapter(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDeleteChapter = (id: string) => {
     onUpdateProject({ ...project, chapters: project.chapters.filter(c => c.id !== id) });
+  };
+
+  const handleTogglePin = () => {
+    onUpdateProject({ ...project, isPinned: !project.isPinned });
+    setIsMenuOpen(false);
+  };
+
+  const handleEditProject = () => {
+    const newName = window.prompt('請輸入新的專案名稱：', project.name);
+    if (newName && newName.trim()) {
+      onUpdateProject({ ...project, name: newName.trim() });
+    }
+    setIsMenuOpen(false);
+  };
+
+  const handleDeleteProjectConfirm = () => {
+    if (window.confirm('確定要刪除整個專案嗎？此操作無法復原。')) {
+      onDeleteProject(project.id);
+    }
+    setIsMenuOpen(false);
   };
 
   const onDragStart = (idx: number) => {
@@ -71,15 +104,43 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                <i className="fa-solid fa-chevron-left"></i>
             </button>
             <div className="flex flex-col items-center">
-               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-2xl mb-2" style={{ backgroundColor: project.color, color: '#121212' }}>
+               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-2xl mb-2 relative" style={{ backgroundColor: project.color, color: '#121212' }}>
                   <i className={`fa-solid ${project.icon}`}></i>
+                  {project.isPinned && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#D4FF5F] rounded-full border-2 border-black flex items-center justify-center text-[10px]">
+                      <i className="fa-solid fa-thumbtack"></i>
+                    </div>
+                  )}
                </div>
                <h1 className="text-3xl font-black tracking-tight">{project.name}</h1>
                <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1">{TEMPLATES[project.writingType]?.label}</p>
             </div>
-            <button className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
-               <i className="fa-solid fa-ellipsis-vertical"></i>
-            </button>
+            <div className="relative" ref={menuRef}>
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)} 
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMenuOpen ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}
+              >
+                 <i className="fa-solid fa-ellipsis-vertical text-xl"></i>
+              </button>
+              
+              {isMenuOpen && (
+                <div className="absolute right-0 top-14 w-48 bg-[#1C1C1E] border border-white/10 rounded-3xl shadow-3xl z-[100] p-2 animate-in fade-in zoom-in duration-200">
+                  <button onClick={handleTogglePin} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
+                    <i className={`fa-solid fa-thumbtack ${project.isPinned ? 'text-[#D4FF5F]' : 'text-gray-500'}`}></i>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white">{project.isPinned ? '取消置頂' : '新增置頂'}</span>
+                  </button>
+                  <button onClick={handleEditProject} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
+                    <i className="fa-solid fa-pen-to-square text-blue-400"></i>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white">編輯專案</span>
+                  </button>
+                  <div className="h-px bg-white/5 my-1 mx-2" />
+                  <button onClick={handleDeleteProjectConfirm} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-red-500/10 text-left transition-colors">
+                    <i className="fa-solid fa-trash-can text-red-500"></i>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-red-500">刪除專案</span>
+                  </button>
+                </div>
+              )}
+            </div>
          </div>
 
          {/* Stats Panel */}
@@ -116,14 +177,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
          <section className="space-y-6">
             <h2 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] px-2">智慧架構 SKELETON</h2>
             <div className="grid grid-cols-2 gap-3">
-               {project.modules.map((m) => (
-                  <div key={m.id} className="p-5 bg-white/5 border border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center space-y-3 opacity-80 hover:opacity-100 transition-opacity">
-                     <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400">
-                        <i className={`fa-solid ${m.icon}`}></i>
-                     </div>
-                     <span className="text-[9px] font-black text-white uppercase tracking-widest">{m.title}</span>
+               {project.modules.length === 0 ? (
+                  <div className="col-span-2 py-8 text-center bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 opacity-30">
+                    <p className="text-[9px] font-black uppercase tracking-widest">尚無自定義模組</p>
                   </div>
-               ))}
+               ) : (
+                  project.modules.map((m) => (
+                    <div key={m.id} className="p-5 bg-white/5 border border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center space-y-3 opacity-80 hover:opacity-100 transition-opacity">
+                       <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400">
+                          <i className={`fa-solid ${m.icon}`}></i>
+                       </div>
+                       <span className="text-[9px] font-black text-white uppercase tracking-widest">{m.title}</span>
+                    </div>
+                  ))
+               )}
             </div>
          </section>
 
@@ -172,7 +239,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                           <button onClick={(e) => { e.stopPropagation(); onEnterEditor(chapter.id); }} className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all">
                              <i className="fa-solid fa-pen text-lg"></i>
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDelete(chapter.id); }} className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteChapter(chapter.id); }} className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all">
                              <i className="fa-solid fa-trash-can text-lg"></i>
                           </button>
                           <button 

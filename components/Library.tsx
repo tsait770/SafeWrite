@@ -14,6 +14,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const [weather] = useState({ temp: '15', city: '新北市', date: 'January 20' });
   const [isCreating, setIsCreating] = useState(false);
   const [isTemplatesExpanded, setIsTemplatesExpanded] = useState(false);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -58,13 +59,50 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
       createdAt: Date.now(),
       updatedAt: Date.now(),
       tags: [],
-      settings: { typography: 'serif', fontSize: 'normal' }
+      settings: { typography: 'serif', fontSize: 'normal' },
+      isPinned: false
     };
 
     onCreateProject(newProject);
     resetForm();
     onSelectProject(newProject);
   };
+
+  const handleTogglePin = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation();
+    const updatedProjects = projects.map(p => 
+      p.id === project.id ? { ...p, isPinned: !p.isPinned } : p
+    );
+    onUpdateProjects(updatedProjects);
+    setActiveMenuId(null);
+  };
+
+  const handleRename = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation();
+    const newName = window.prompt('請輸入新的專案名稱：', project.name);
+    if (newName && newName.trim()) {
+      const updatedProjects = projects.map(p => 
+        p.id === project.id ? { ...p, name: newName.trim(), updatedAt: Date.now() } : p
+      );
+      onUpdateProjects(updatedProjects);
+    }
+    setActiveMenuId(null);
+  };
+
+  const handleDelete = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation();
+    if (window.confirm(`確定要刪除「${project.name}」嗎？此操作無法復原。`)) {
+      const updatedProjects = projects.filter(p => p.id !== project.id);
+      onUpdateProjects(updatedProjects);
+    }
+    setActiveMenuId(null);
+  };
+
+  // 排序：置頂優先，其餘按最後更新時間排列
+  const sortedProjects = [...projects].sort((a, b) => {
+    if (a.isPinned === b.isPinned) return b.updatedAt - a.updatedAt;
+    return a.isPinned ? -1 : 1;
+  });
 
   // 首頁固定 2x2 範本
   const gridParadigms = [
@@ -114,12 +152,12 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
         </div>
         
         <div className="stack-container relative">
-          {projects.map((proj, idx) => (
+          {sortedProjects.map((proj, idx) => (
             <div 
               key={proj.id} 
               className="stack-card animate-in fade-in slide-in-from-bottom-8 duration-500"
               style={{ 
-                zIndex: projects.length - idx,
+                zIndex: sortedProjects.length - idx,
                 backgroundColor: proj.color,
                 color: proj.color === '#000000' || proj.color === '#121212' || proj.color === '#1E293B' ? '#ffffff' : '#121212',
                 animationDelay: `${idx * 150}ms`
@@ -128,16 +166,58 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
             >
               <div className="flex flex-col h-full justify-between relative">
                 <div className="flex justify-between items-start">
-                  <div className="max-w-[75%]">
-                    <h3 className="text-[34px] font-black tracking-tighter leading-[1.05] mb-2 pr-4">{proj.name}</h3>
+                  <div className="max-w-[70%]">
+                    <div className="flex items-center space-x-2 mb-1">
+                      {proj.isPinned && <i className="fa-solid fa-thumbtack text-xs opacity-60"></i>}
+                      <h3 className="text-[34px] font-black tracking-tighter leading-[1.05] truncate">{proj.name}</h3>
+                    </div>
                     <div className="flex items-center space-x-2">
                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
                          {TEMPLATES[proj.writingType]?.label} • {proj.targetWordCount / 1000}K 目標
                        </span>
                     </div>
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center">
-                    <i className={`fa-solid ${proj.icon} text-lg opacity-40`}></i>
+                  
+                  {/* Overflow Menu Button */}
+                  <div className="relative">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuId(activeMenuId === proj.id ? null : proj.id);
+                      }}
+                      className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors"
+                    >
+                      <i className="fa-solid fa-ellipsis-vertical text-lg opacity-60"></i>
+                    </button>
+
+                    {activeMenuId === proj.id && (
+                      <div 
+                        className="absolute right-0 top-12 w-36 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl z-[200] p-1 animate-in fade-in zoom-in duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button 
+                          onClick={(e) => handleTogglePin(e, proj)}
+                          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/5 text-left transition-colors"
+                        >
+                          <i className={`fa-solid fa-thumbtack text-[11px] ${proj.isPinned ? 'text-[#D4FF5F]' : 'text-gray-500'}`}></i>
+                          <span className="text-[11px] font-black text-white uppercase tracking-wider">{proj.isPinned ? '取消置頂' : '置頂專案'}</span>
+                        </button>
+                        <button 
+                          onClick={(e) => handleRename(e, proj)}
+                          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/5 text-left transition-colors"
+                        >
+                          <i className="fa-solid fa-pen-to-square text-[11px] text-blue-400"></i>
+                          <span className="text-[11px] font-black text-white uppercase tracking-wider">編輯名稱</span>
+                        </button>
+                        <button 
+                          onClick={(e) => handleDelete(e, proj)}
+                          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-left transition-colors"
+                        >
+                          <i className="fa-solid fa-trash-can text-[11px] text-red-500"></i>
+                          <span className="text-[11px] font-black text-red-500 uppercase tracking-wider">刪除專案</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 

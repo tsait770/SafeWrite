@@ -116,6 +116,15 @@ const App: React.FC = () => {
     }));
   };
 
+  const handleDeleteProject = (projectId: string) => {
+    setState(prev => ({
+      ...prev,
+      projects: prev.projects.filter(p => p.id !== projectId),
+      currentProject: null,
+      activeTab: AppTab.LIBRARY
+    }));
+  };
+
   const handleEnterEditor = (chapterId: string) => {
     setState(prev => ({ ...prev, currentChapterId: chapterId, activeTab: AppTab.WRITE }));
   };
@@ -181,6 +190,7 @@ const App: React.FC = () => {
             onBack={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))}
             onOpenModule={() => {}}
             onUpdateProject={handleUpdateProject}
+            onDeleteProject={handleDeleteProject}
             onEnterEditor={handleEnterEditor}
           />
         ) : state.activeTab === AppTab.WRITE ? (
