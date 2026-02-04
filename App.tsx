@@ -23,7 +23,7 @@ const App: React.FC = () => {
         targetWordCount: 50000,
         metadata: 'Edited 10m ago',
         progress: 82,
-        color: '#FADE4B', // 預設黃色 (卡片 1)
+        color: '#FADE4B',
         icon: 'fa-feather-pointed',
         chapters: [{ id: 'c1', title: '第 1 章 · Chapter 1', content: '故事開始於太陽不再升起的那一天...', order: 1, history: [], wordCount: 1250, lastEdited: Date.now() }],
         modules: [],
@@ -40,7 +40,7 @@ const App: React.FC = () => {
         targetWordCount: 10000,
         metadata: 'Edited 2h ago',
         progress: 45,
-        color: '#FF6B2C', // 預設橙色 (卡片 2)
+        color: '#FF6B2C',
         icon: 'fa-pen-nib',
         chapters: [],
         modules: [],
@@ -56,7 +56,7 @@ const App: React.FC = () => {
         targetWordCount: 3000,
         metadata: 'Edited yesterday',
         progress: 15,
-        color: '#D4FF5F', // 預設萊姆綠 (卡片 3)
+        color: '#D4FF5F',
         icon: 'fa-note-sticky',
         chapters: [],
         modules: [],
@@ -68,11 +68,11 @@ const App: React.FC = () => {
       {
         id: 'p4',
         name: 'twet',
-        writingType: WritingType.COURSE, // 模擬截圖中的教學課程
+        writingType: WritingType.COURSE,
         targetWordCount: 5000,
         metadata: 'Just created',
         progress: 0,
-        color: '#B2A4FF', // 預設紫色 (卡片 4)
+        color: '#B2A4FF',
         icon: 'fa-graduation-cap',
         chapters: [],
         modules: [],
@@ -136,21 +136,29 @@ const App: React.FC = () => {
   };
 
   const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
-
-  // 決定導航列是否顯示：在純文字編輯器全螢幕時隱藏，但在寫作空狀態或其他分頁時顯示
   const isBottomNavVisible = activeOverlay === 'NONE' && (state.activeTab !== AppTab.WRITE || !currentChapter);
 
   return (
     <div className="h-screen flex flex-col relative overflow-hidden bg-black text-white">
-      {/* 頂部工具列：在寫作模式下完全消失，無論是否有內容 */}
       {state.activeTab !== AppTab.WRITE && (
         <header className="fixed top-0 w-full z-[100] h-24 pt-[env(safe-area-inset-top,0px)] flex items-end justify-between px-8 pb-4 bg-black/60 backdrop-blur-3xl border-b border-white/5">
           <div className="flex flex-col">
             <h1 className="text-2xl font-black tracking-tighter text-white">SafeWrite</h1>
             <p className="text-[10px] text-[#8e8e93] font-black uppercase tracking-[0.2em] mt-0.5">專業級敘事引擎</p>
           </div>
-          <button onClick={() => setState(p => ({...p, appMode: p.appMode === AppMode.REPOSITORY ? AppMode.CAPTURE : AppMode.REPOSITORY}))} className="dual-mode-toggle group">
-             <i className={`fa-solid fa-circle-nodes text-2xl transition-all ${state.appMode === AppMode.CAPTURE ? 'text-[#D4FF5F]' : 'text-white'}`}></i>
+          <button 
+            onClick={() => setState(p => ({...p, appMode: p.appMode === AppMode.REPOSITORY ? AppMode.CAPTURE : AppMode.REPOSITORY}))} 
+            className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-all overflow-visible group"
+          >
+             <div className="relative w-7 h-7 flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
+                {/* 精緻化左上角文件圖示 */}
+                <i className={`fa-solid fa-file absolute -top-[1.5px] -left-[1.5px] transition-all duration-500 ${state.appMode === AppMode.REPOSITORY ? 'text-white text-[13.5px] opacity-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.2)]' : 'text-white/20 text-[11px]'}`}></i>
+                
+                {/* 精緻化右下角圓圈點圖示 */}
+                <div className={`absolute -bottom-[2px] -right-[2px] rounded-full border-[2.2px] flex items-center justify-center transition-all duration-500 cubic-bezier(0.19, 1, 0.22, 1) ${state.appMode === AppMode.CAPTURE ? 'w-[16px] h-[16px] border-[#D4FF5F] bg-[#D4FF5F]/10 scale-110 shadow-[0_0_15px_rgba(212,255,95,0.4)]' : 'w-[13px] h-[13px] border-white/30'}`}>
+                   <div className={`rounded-full transition-all duration-500 ${state.appMode === AppMode.CAPTURE ? 'w-[5px] h-[5px] bg-[#D4FF5F] shadow-[0_0_8px_#D4FF5F] animate-pulse' : 'w-[4px] h-[4px] bg-white/30'}`}></div>
+                </div>
+             </div>
           </button>
         </header>
       )}
@@ -165,10 +173,7 @@ const App: React.FC = () => {
               onUpdateProjects={(p) => setState(prev => ({...prev, projects: p}))}
             />
           ) : (
-            <CaptureCenter 
-              projects={state.projects}
-              onSaveToProject={(pid, content) => {}}
-            />
+            <CaptureCenter projects={state.projects} onSaveToProject={(pid, content) => {}} />
           )
         ) : state.activeTab === AppTab.PROJECT_DETAIL ? (
           <ProjectDetail 
@@ -192,24 +197,15 @@ const App: React.FC = () => {
               membership={state.membership}
             />
           ) : (
-            /* 寫作引導介面 (Empty State) - 手機端最佳化 & 完美垂直居中 */
-            <div className="h-full flex flex-col items-center justify-center p-10 text-center animate-in fade-in duration-700 select-none overscroll-none touch-none bg-black">
-               {/* 縮小圖標容器比例 */}
-               <div className="w-28 h-28 bg-[#1C1C1E] rounded-[36px] flex items-center justify-center border border-white/5 shadow-2xl mb-12 transform transition-transform active:scale-95">
+            <div className="h-full flex flex-col items-center justify-center p-10 text-center bg-black">
+               <div className="w-28 h-28 bg-[#1C1C1E] rounded-[36px] flex items-center justify-center border border-white/5 shadow-2xl mb-12">
                   <i className="fa-solid fa-feather-pointed text-[#3b82f6] text-4xl"></i>
                </div>
-               
-               {/* 文字排版最佳化 */}
                <h2 className="text-2xl font-black text-white tracking-tight mb-4">尚未選擇作品</h2>
                <p className="text-[#8E8E93] text-[13px] leading-[1.6] max-w-[240px] font-medium mx-auto">
                   請先從書架選擇一個現有作品，或在書架中建立新專案以開始寫作。
                </p>
-               
-               {/* 按鈕縮小比例並調整間距 */}
-               <button 
-                 onClick={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))}
-                 className="mt-14 w-full max-w-[180px] py-4 bg-[#2563eb] rounded-[24px] text-white font-black text-[11px] uppercase tracking-[0.3em] shadow-[0_10px_30px_rgba(37,99,235,0.25)] active:scale-95 transition-all"
-               >
+               <button onClick={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))} className="mt-14 w-full max-w-[180px] py-4 bg-[#2563eb] rounded-[24px] text-white font-black text-[11px] uppercase tracking-[0.3em] shadow-[0_10px_30px_rgba(37,99,235,0.25)]">
                  返回書架
                </button>
             </div>
@@ -219,27 +215,7 @@ const App: React.FC = () => {
         ) : null}
       </main>
 
-      <BottomNav 
-        activeTab={state.activeTab} 
-        onTabChange={(tab) => setState(prev => ({ ...prev, activeTab: tab }))}
-        isVisible={isBottomNavVisible}
-      />
-
-      {activeOverlay === 'NONE' && (
-        <div />
-      )}
-      {activeOverlay === 'TIMELINE' && (
-        <Timeline 
-          history={currentChapter?.history || []} 
-          onClose={() => setActiveOverlay('NONE')} 
-          onRestore={() => {}}
-          onPreview={() => {}} 
-          onCreateMilestone={() => {}}
-          onClearAuto={() => {}}
-        />
-      )}
-      {activeOverlay === 'COLLABORATION' && <CollaborationPanel onClose={() => setActiveOverlay('NONE')} />}
-      {activeOverlay === 'EXPORT' && <ProfessionalPublicationCenter onClose={() => setActiveOverlay('NONE')} />}
+      <BottomNav activeTab={state.activeTab} onTabChange={(tab) => setState(prev => ({ ...prev, activeTab: tab }))} isVisible={isBottomNavVisible} />
     </div>
   );
 };
