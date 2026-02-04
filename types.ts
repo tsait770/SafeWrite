@@ -5,48 +5,22 @@ export enum MembershipLevel {
   PREMIUM = 'PREMIUM'
 }
 
-// 10 大核心寫作範本 + 自定義
+// 核心寫作範本類型
 export enum WritingType {
-  LONG_FORM = 'LONG_FORM',      // 長篇敘事
-  ARCHIVE = 'ARCHIVE',          // 個人資料庫
-  ESSAY = 'ESSAY',              // 論說觀點
-  CREATOR = 'CREATOR',          // 創作者電子報
-  NOVEL = 'NOVEL',              // 專業小說
-  NON_FICTION = 'NON_FICTION',  // 非虛構架構
-  RESEARCH = 'RESEARCH',        // 研究導向
-  ACADEMIC = 'ACADEMIC',        // 學術論文
-  SCREENPLAY = 'SCREENPLAY',    // 影視劇本
-  SERIES = 'SERIES',            // 系列史詩
-  CUSTOM = 'CUSTOM'             // 自定義範本
-}
-
-// 20 種核心寫作模組功能
-export enum ModuleFunction {
-  MAIN_DRAFT = 'MAIN_DRAFT',
-  CHAPTERS = 'CHAPTERS',
-  NOTES = 'NOTES',
-  WORLD_LORE = 'WORLD_LORE',
-  SERIES_BUILDER = 'SERIES_BUILDER',
-  VOLUMES = 'VOLUMES',
-  ARCS = 'ARCS',
-  CHARACTERS = 'CHARACTERS',
-  OUTLINE = 'OUTLINE',
-  SECTIONS = 'SECTIONS',
-  REFERENCES = 'REFERENCES',
-  SOURCES = 'SOURCES',
-  FINDINGS = 'FINDINGS',
-  IDEAS = 'IDEAS',
-  LOGS = 'LOGS',
-  ACTS = 'ACTS',
-  SCENES = 'SCENES',
-  DIALOGUE = 'DIALOGUE',
-  THESIS = 'THESIS',
-  ARGUMENTS = 'ARGUMENTS',
-  EVIDENCE = 'EVIDENCE',
-  ABSTRACT = 'ABSTRACT',
-  METHODOLOGY = 'METHODOLOGY',
-  CITATIONS = 'CITATIONS',
-  ISSUES = 'ISSUES'
+  NOVEL = 'NOVEL',              // 長篇小說 / 故事
+  BLOG = 'BLOG',               // 部落格 / Medium
+  DIARY = 'DIARY',              // 日記 / 隨手筆記
+  CUSTOM = 'CUSTOM',            // 自定義範本
+  LONG_FORM = 'LONG_FORM',      // 長篇作品
+  
+  // 卷軸範本庫內容
+  BUSINESS_PLAN = 'BUSINESS_PLAN', // 商業計畫書
+  SCREENPLAY = 'SCREENPLAY',       // 劇本 / 影視腳本
+  ACADEMIC = 'ACADEMIC',           // 學術論文
+  PRD = 'PRD',                     // 產品需求文件
+  COPYWRITING = 'COPYWRITING',     // 行銷文案
+  COURSE = 'COURSE',               // 教學課程
+  BOOK_OUTLINE = 'BOOK_OUTLINE'    // 書籍大綱
 }
 
 export enum PublicationStatus {
@@ -55,15 +29,6 @@ export enum PublicationStatus {
   REVIEWING = 'REVIEWING',
   ACCEPTED = 'ACCEPTED',
   PUBLISHED = 'PUBLISHED'
-}
-
-export enum ModuleType {
-  COLLECTION = 'COLLECTION',
-  BOARD = 'BOARD',
-  TIMELINE = 'TIMELINE',
-  MANUSCRIPT = 'MANUSCRIPT',
-  WORLD = 'WORLD',
-  CHARACTER = 'CHARACTER'
 }
 
 export enum UIMode {
@@ -103,15 +68,18 @@ export interface VersionSnapshot {
   milestoneName?: string;
 }
 
-export interface WritingModule {
+export interface StructureUnit {
   id: string;
-  function: ModuleFunction;
   title: string;
-  icon: string;
-  description: string;
+  content: string;
   order: number;
-  isInitial?: boolean;
+  wordCount: number;
+  lastEdited: number;
+  history?: VersionSnapshot[];
 }
+
+// Alias StructureUnit as Chapter for consistent usage across components
+export type Chapter = StructureUnit;
 
 export interface OutlineNode {
   id: string;
@@ -119,15 +87,17 @@ export interface OutlineNode {
   level: number;
 }
 
-export interface Chapter {
+export enum ModuleType {
+  NARRATIVE = 'NARRATIVE',
+  CHARACTER = 'CHARACTER',
+  RESEARCH = 'RESEARCH'
+}
+
+export interface WritingModule {
   id: string;
   title: string;
-  content: string;
+  icon: string;
   order: number;
-  history: VersionSnapshot[];
-  wordCount: number;
-  lastEdited: number;
-  publicationStatus?: PublicationStatus;
 }
 
 export interface UserStats {
@@ -155,17 +125,17 @@ export interface Project {
   progress: number;
   color: string;
   icon: string;
-  chapters: Chapter[];
+  chapters: Chapter[]; // 使用 Chapter alias
   modules: WritingModule[];
-  visualOutline?: OutlineNode[];
   createdAt: number;
   updatedAt: number;
   tags: string[];
-  isPinned?: boolean;
   settings: {
     typography: 'serif' | 'sans';
     fontSize: 'normal' | 'large';
-  }
+  };
+  isPinned?: boolean;
+  visualOutline?: OutlineNode[];
 }
 
 export interface AppState {

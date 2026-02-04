@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Project, WritingType, WritingModule, Chapter, ModuleFunction } from '../types';
+import { Project, WritingType, StructureUnit } from '../types';
 import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES } from '../constants';
 
 interface LibraryProps {
@@ -17,14 +17,14 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   
   const [formData, setFormData] = useState({
     name: '',
-    type: WritingType.LONG_FORM,
+    type: WritingType.NOVEL,
     targetWordCount: 5000,
     color: PROJECT_COLORS[4],
     icon: PROJECT_ICONS[0]
   });
 
   const resetForm = () => {
-    setFormData({ name: '', type: WritingType.LONG_FORM, targetWordCount: 5000, color: PROJECT_COLORS[4], icon: PROJECT_ICONS[0] });
+    setFormData({ name: '', type: WritingType.NOVEL, targetWordCount: 5000, color: PROJECT_COLORS[4], icon: PROJECT_ICONS[0] });
     setIsCreating(false);
     setIsTemplatesExpanded(false);
   };
@@ -34,29 +34,15 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
 
     const template = TEMPLATES[formData.type];
     
-    // 初始化寫作模組 Skeleton
-    const modules: WritingModule[] = template.skeleton.map((s, idx) => ({
-      id: `m-${Date.now()}-${idx}`,
-      function: s.function,
-      title: s.title,
-      icon: s.icon,
-      description: '',
+    // 根據範本主結構初始化 Structure Units
+    const initialUnits: StructureUnit[] = template.skeleton.map((title, idx) => ({
+      id: `u-${Date.now()}-${idx}`,
+      title: title,
+      content: '',
       order: idx + 1,
-      isInitial: true
+      wordCount: 0,
+      lastEdited: Date.now()
     }));
-
-    // 初始化預設章節
-    const initialChapters: Chapter[] = [
-      {
-        id: `c-${Date.now()}-1`,
-        title: '第 1 章 · Chapter 1',
-        content: '',
-        order: 1,
-        history: [],
-        wordCount: 0,
-        lastEdited: Date.now()
-      }
-    ];
 
     const newProject: Project = {
       id: `p-${Date.now()}`,
@@ -67,8 +53,8 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
       progress: 0,
       color: formData.color,
       icon: formData.icon,
-      chapters: initialChapters,
-      modules: modules,
+      chapters: initialUnits,
+      modules: [], // 基礎結構
       createdAt: Date.now(),
       updatedAt: Date.now(),
       tags: [],
@@ -77,19 +63,22 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
 
     onCreateProject(newProject);
     resetForm();
+    onSelectProject(newProject);
   };
 
-  const topParadigms = [
-    WritingType.LONG_FORM,
-    WritingType.NOVEL, // 右上區塊更改為小說創作
-    WritingType.ESSAY,
+  // 首頁固定 2x2 範本
+  const gridParadigms = [
+    WritingType.NOVEL,
+    WritingType.BLOG,
+    WritingType.DIARY,
     WritingType.CUSTOM 
   ];
 
-  const otherParadigms = (Object.keys(TEMPLATES) as WritingType[]).filter(t => !topParadigms.includes(t));
+  // 卷軸範本庫（其餘）
+  const scrollParadigms = (Object.keys(TEMPLATES) as WritingType[]).filter(t => !gridParadigms.includes(t));
 
   return (
-    <div className="px-8 space-y-12 pb-32">
+    <div className="px-8 space-y-12 pb-40">
       {/* Weather Widget */}
       <section>
         <div className="weather-card">
@@ -118,47 +107,46 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
           </div>
           <button 
             onClick={() => setIsCreating(true)}
-            className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-90 hover:scale-105 transition-all"
+            className="w-12 h-12 rounded-full bg-[#2563eb] flex items-center justify-center shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-90 hover:scale-105 transition-all"
           >
             <i className="fa-solid fa-plus text-white text-lg"></i>
           </button>
         </div>
         
-        <div className="stack-container relative min-h-[500px]">
+        <div className="stack-container relative">
           {projects.map((proj, idx) => (
             <div 
               key={proj.id} 
-              className="stack-card animate-in fade-in slide-in-from-bottom-4 duration-500"
+              className="stack-card animate-in fade-in slide-in-from-bottom-8 duration-500"
               style={{ 
                 zIndex: projects.length - idx,
                 backgroundColor: proj.color,
                 color: proj.color === '#000000' || proj.color === '#121212' || proj.color === '#1E293B' ? '#ffffff' : '#121212',
-                animationDelay: `${idx * 100}ms`
+                animationDelay: `${idx * 150}ms`
               }}
               onClick={() => onSelectProject(proj)}
             >
               <div className="flex flex-col h-full justify-between relative">
                 <div className="flex justify-between items-start">
-                  <div className="max-w-[80%]">
-                    <h3 className="text-4xl font-black tracking-tighter leading-[1] mb-2 pr-4">{proj.name}</h3>
+                  <div className="max-w-[75%]">
+                    <h3 className="text-[34px] font-black tracking-tighter leading-[1.05] mb-2 pr-4">{proj.name}</h3>
                     <div className="flex items-center space-x-2">
-                       <span className="text-[11px] font-black uppercase tracking-widest opacity-40">
+                       <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
                          {TEMPLATES[proj.writingType]?.label} • {proj.targetWordCount / 1000}K 目標
                        </span>
                     </div>
                   </div>
-                  <div className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center">
-                    <i className={`fa-solid ${proj.icon} opacity-60`}></i>
+                  <div className="w-10 h-10 rounded-full bg-black/5 flex items-center justify-center">
+                    <i className={`fa-solid ${proj.icon} text-lg opacity-40`}></i>
                   </div>
                 </div>
                 
-                <div className="mt-12">
-                  <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-widest opacity-40 mb-3">
-                    <span>{proj.metadata.toUpperCase()}</span>
-                    <span>{proj.progress}%</span>
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-[10px] font-black uppercase tracking-widest opacity-40">{proj.progress}%</div>
                   </div>
-                  <div className="progress-bar-container bg-black/5 h-2">
-                    <div className="progress-fill bg-black/30" style={{ width: `${proj.progress}%` }} />
+                  <div className="progress-bar-container">
+                    <div className="progress-fill bg-black/20" style={{ width: `${proj.progress}%` }} />
                   </div>
                 </div>
               </div>
@@ -195,7 +183,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                              <button 
                                 key={count} 
                                 onClick={() => setFormData({...formData, targetWordCount: count})}
-                                className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all ${formData.targetWordCount === count ? 'bg-[#7b61ff] text-white' : 'bg-white/5 text-gray-500 hover:bg-white/10'}`}
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black transition-all ${formData.targetWordCount === count ? 'bg-[#7b61ff] text-white shadow-[0_0_10px_#7b61ff]' : 'bg-white/5 text-gray-500 hover:bg-white/10'}`}
                              >
                                 {count / 1000}K
                              </button>
@@ -214,18 +202,18 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
               </header>
 
               <div className="flex-1 overflow-y-auto no-scrollbar px-10 pt-6 pb-40 space-y-10">
-                 {/* Top 2x2 Paradigms */}
+                 {/* 固定 2x2 矩陣範本 */}
                  <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-1">寫作範式 TEMPLATE PARADIGM</label>
                     <div className="grid grid-cols-2 gap-3">
-                       {topParadigms.map(type => {
+                       {gridParadigms.map(type => {
                           const t = TEMPLATES[type];
                           const active = formData.type === type;
                           return (
                             <button 
                               key={type} 
                               onClick={() => setFormData({...formData, type})} 
-                              className={`flex flex-col items-start p-5 rounded-[2.5rem] border transition-all h-36 justify-center text-left ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
+                              className={`flex flex-col items-start p-5 rounded-[2.5rem] border transition-all h-36 justify-center text-left relative ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-[0_10px_25px_rgba(123,97,255,0.4)]' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
                             >
                                <i className={`fa-solid ${t.icon} text-2xl mb-3 ${active ? 'text-white' : 'text-[#7b61ff]'}`}></i>
                                <span className="text-[11px] font-black uppercase tracking-widest leading-none">{t.label}</span>
@@ -236,17 +224,17 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </div>
                  </div>
 
-                 {/* Professional Scrolling Area */}
+                 {/* 卷軸範本庫 - 其餘專業範本 */}
                  <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest">其餘專業範本 SPECIALIZED</label>
                        <button onClick={() => setIsTemplatesExpanded(!isTemplatesExpanded)} className="text-[9px] font-black text-[#7b61ff] uppercase tracking-widest">
-                          {isTemplatesExpanded ? '收回' : '展開全部'}
+                          {isTemplatesExpanded ? '收起' : '展開全部'}
                        </button>
                     </div>
 
-                    <div className={`space-y-2 transition-all duration-500 ${isTemplatesExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none absolute h-0'}`}>
-                       {otherParadigms.map(type => {
+                    <div className={`space-y-2 transition-all duration-500 ${isTemplatesExpanded ? 'opacity-100 max-h-[1000px]' : 'opacity-0 max-h-0 overflow-hidden'}`}>
+                       {scrollParadigms.map(type => {
                           const t = TEMPLATES[type];
                           const active = formData.type === type;
                           return (
@@ -256,7 +244,9 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                                 className={`w-full flex items-center justify-between p-5 rounded-3xl border transition-all ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
                              >
                                 <div className="flex items-center space-x-4">
-                                   <i className={`fa-solid ${t.icon} text-lg`}></i>
+                                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${active ? 'bg-white/20' : 'bg-white/5'}`}>
+                                      <i className={`fa-solid ${t.icon} text-base`}></i>
+                                   </div>
                                    <div className="text-left">
                                       <h4 className="text-[10px] font-black uppercase tracking-widest leading-none">{t.label}</h4>
                                       <p className="text-[8px] font-bold opacity-40 mt-0.5">{t.enLabel}</p>
@@ -269,7 +259,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </div>
                  </div>
 
-                 {/* Visual Coding */}
+                 {/* 視覺編碼 VISUAL CODING */}
                  <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-1">視覺編碼 VISUAL CODING</label>
                     <div className="grid grid-cols-6 gap-3">

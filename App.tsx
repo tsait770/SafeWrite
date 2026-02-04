@@ -19,11 +19,11 @@ const App: React.FC = () => {
       {
         id: 'p1',
         name: 'The Solar Paradox',
-        writingType: WritingType.LONG_FORM,
+        writingType: WritingType.NOVEL,
         targetWordCount: 50000,
         metadata: 'Edited 10m ago',
         progress: 82,
-        color: PROJECT_COLORS[4],
+        color: '#FADE4B', // 預設黃色 (卡片 1)
         icon: 'fa-feather-pointed',
         chapters: [{ id: 'c1', title: '第 1 章 · Chapter 1', content: '故事開始於太陽不再升起的那一天...', order: 1, history: [], wordCount: 1250, lastEdited: Date.now() }],
         modules: [],
@@ -32,6 +32,54 @@ const App: React.FC = () => {
         updatedAt: Date.now() - 600000,
         tags: ['SCI-FI', 'SPACE'],
         isPinned: true
+      },
+      {
+        id: 'p2',
+        name: 'Market Insights 2024',
+        writingType: WritingType.BLOG,
+        targetWordCount: 10000,
+        metadata: 'Edited 2h ago',
+        progress: 45,
+        color: '#FF6B2C', // 預設橙色 (卡片 2)
+        icon: 'fa-pen-nib',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'sans', fontSize: 'normal' },
+        createdAt: Date.now() - 86400000 * 5,
+        updatedAt: Date.now() - 7200000,
+        tags: ['BUSINESS', 'TECH'],
+      },
+      {
+        id: 'p3',
+        name: 'Spring Notes',
+        writingType: WritingType.DIARY,
+        targetWordCount: 3000,
+        metadata: 'Edited yesterday',
+        progress: 15,
+        color: '#D4FF5F', // 預設萊姆綠 (卡片 3)
+        icon: 'fa-note-sticky',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'serif', fontSize: 'normal' },
+        createdAt: Date.now() - 86400000 * 2,
+        updatedAt: Date.now() - 86400000,
+        tags: ['PERSONAL'],
+      },
+      {
+        id: 'p4',
+        name: 'twet',
+        writingType: WritingType.COURSE, // 模擬截圖中的教學課程
+        targetWordCount: 5000,
+        metadata: 'Just created',
+        progress: 0,
+        color: '#B2A4FF', // 預設紫色 (卡片 4)
+        icon: 'fa-graduation-cap',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'sans', fontSize: 'normal' },
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        tags: ['EDUCATION'],
       }
     ],
     currentProject: null,
@@ -177,6 +225,9 @@ const App: React.FC = () => {
         isVisible={isBottomNavVisible}
       />
 
+      {activeOverlay === 'NONE' && (
+        <div />
+      )}
       {activeOverlay === 'TIMELINE' && (
         <Timeline 
           history={currentChapter?.history || []} 

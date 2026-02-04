@@ -1,5 +1,5 @@
 
-import { WritingType, ModuleFunction } from './types';
+import { WritingType } from './types';
 
 export const COLORS = {
   PRIMARY: '#1E293B',
@@ -16,8 +16,8 @@ export const PROJECT_COLORS = [
 ];
 
 export const PROJECT_ICONS = [
-  'fa-feather-pointed', 'fa-box-archive', 'fa-pen-clip', 'fa-paper-plane',
-  'fa-book-open', 'fa-diagram-project', 'fa-flask', 'fa-graduation-cap',
+  'fa-feather-pointed', 'fa-pen-nib', 'fa-book-open', 'fa-note-sticky',
+  'fa-paper-plane', 'fa-diagram-project', 'fa-flask', 'fa-graduation-cap',
   'fa-clapperboard', 'fa-layer-group'
 ];
 
@@ -26,108 +26,94 @@ export interface TemplateConfig {
   enLabel: string;
   icon: string;
   description: string;
-  skeleton: { function: ModuleFunction; title: string; icon: string }[];
+  skeleton: string[]; // 範本主結構清單
 }
 
 export const TEMPLATES: Record<WritingType, TemplateConfig> = {
-  [WritingType.LONG_FORM]: {
-    label: '長篇敘事', enLabel: 'LONG-FORM NARRATIVE', icon: 'fa-feather-pointed',
-    description: '市場最受歡迎架構，整合章節、世界觀與深度筆記。',
-    skeleton: [
-      { function: ModuleFunction.MAIN_DRAFT, title: '主草稿', icon: 'fa-file-lines' },
-      { function: ModuleFunction.CHAPTERS, title: '章節結構', icon: 'fa-list-ol' },
-      { function: ModuleFunction.NOTES, title: '備註筆記', icon: 'fa-sticky-note' },
-      { function: ModuleFunction.WORLD_LORE, title: '世界觀設定', icon: 'fa-globe' }
-    ]
-  },
-  [WritingType.ARCHIVE]: {
-    label: '個人資料庫', enLabel: 'PERSONAL ARCHIVE', icon: 'fa-box-archive',
-    description: '寫作者的第二大腦，收納靈感、紀錄與日常日誌。',
-    skeleton: [
-      { function: ModuleFunction.NOTES, title: '個人筆記', icon: 'fa-note-sticky' },
-      { function: ModuleFunction.IDEAS, title: '靈感捕捉', icon: 'fa-lightbulb' },
-      { function: ModuleFunction.LOGS, title: '創作日誌', icon: 'fa-calendar-day' }
-    ]
-  },
-  [WritingType.ESSAY]: {
-    label: '論說 / 觀點', enLabel: 'ESSAY & OPINION', icon: 'fa-pen-clip',
-    description: '部落格與專欄創作者首選，強調論證邏輯與證據鏈。',
-    skeleton: [
-      { function: ModuleFunction.THESIS, title: '核心論點', icon: 'fa-bullseye' },
-      { function: ModuleFunction.ARGUMENTS, title: '邏輯論證', icon: 'fa-scale-balanced' },
-      { function: ModuleFunction.EVIDENCE, title: '支持證據', icon: 'fa-link' }
-    ]
-  },
-  [WritingType.CREATOR]: {
-    label: '創作者電子報', enLabel: 'CREATOR / NEWSLETTER', icon: 'fa-paper-plane',
-    description: '針對定時發佈內容優化，管理期數與發佈備註。',
-    skeleton: [
-      { function: ModuleFunction.ISSUES, title: '單元期數', icon: 'fa-list-ol' },
-      { function: ModuleFunction.MAIN_DRAFT, title: '本期草稿', icon: 'fa-pen-nib' },
-      { function: ModuleFunction.NOTES, title: '發佈說明', icon: 'fa-clipboard-check' }
-    ]
-  },
   [WritingType.NOVEL]: {
-    label: '小說創作', enLabel: 'NOVEL WRITING', icon: 'fa-book-open',
-    description: '專業虛構寫作環境，支援三幕結構與角色弧線。',
-    skeleton: [
-      { function: ModuleFunction.ACTS, title: '幕結構', icon: 'fa-map' },
-      { function: ModuleFunction.CHAPTERS, title: '章節內容', icon: 'fa-book-bookmark' },
-      { function: ModuleFunction.CHARACTERS, title: '角色弧線', icon: 'fa-person-running' }
-    ]
+    label: '長篇敘事',
+    enLabel: 'Novel / Fiction',
+    icon: 'fa-feather-pointed',
+    description: '市場最受歡迎架構，整合章節、世界觀與深度筆記。',
+    skeleton: ['Chapter 1', '世界觀設定', '人物誌', '大綱']
   },
-  [WritingType.NON_FICTION]: {
-    label: '非虛構架構', enLabel: 'NON-FICTION FRAMEWORK', icon: 'fa-diagram-project',
-    description: '商業、教學或專業書籍，強調大綱引導。',
-    skeleton: [
-      { function: ModuleFunction.OUTLINE, title: '層級大綱', icon: 'fa-sitemap' },
-      { function: ModuleFunction.SECTIONS, title: '段落結構', icon: 'fa-align-left' },
-      { function: ModuleFunction.REFERENCES, title: '參考資料', icon: 'fa-book-atlas' }
-    ]
+  [WritingType.LONG_FORM]: {
+    label: '長篇創作',
+    enLabel: 'Long-form Writing',
+    icon: 'fa-book-open',
+    description: '適合進行大篇幅、多章節的專業創作。',
+    skeleton: ['Chapter 1', '前言', '背景研究']
   },
-  [WritingType.RESEARCH]: {
-    label: '研究導向寫作', enLabel: 'RESEARCH-DRIVEN', icon: 'fa-flask',
-    description: '深度調查與學術預研，管理資料來源與核心發現。',
-    skeleton: [
-      { function: ModuleFunction.SOURCES, title: '資料來源庫', icon: 'fa-database' },
-      { function: ModuleFunction.FINDINGS, title: '研究關鍵發現', icon: 'fa-magnifying-glass-chart' },
-      { function: ModuleFunction.MAIN_DRAFT, title: '報告草稿', icon: 'fa-file-export' }
-    ]
+  [WritingType.BLOG]: {
+    label: '部落格創作',
+    enLabel: 'Blog / Medium',
+    icon: 'fa-pen-nib',
+    description: '專為虛構寫作環境，支援三幕結構與角色弧線。',
+    skeleton: ['主要內容', 'SEO 關鍵字', '發佈說明']
   },
-  [WritingType.ACADEMIC]: {
-    label: '學術論文', enLabel: 'ACADEMIC PAPER', icon: 'fa-graduation-cap',
-    description: '嚴謹的論文結構模板，鎖定必要學術區塊。',
-    skeleton: [
-      { function: ModuleFunction.ABSTRACT, title: '摘要', icon: 'fa-star' },
-      { function: ModuleFunction.METHODOLOGY, title: '研究方法', icon: 'fa-flask-vial' },
-      { function: ModuleFunction.CITATIONS, title: '引用與參考', icon: 'fa-quote-left' }
-    ]
-  },
-  [WritingType.SCREENPLAY]: {
-    label: '影視劇本', enLabel: 'SCREENPLAY / TV PILOT', icon: 'fa-clapperboard',
-    description: '符合工業標準的場景對白管理。',
-    skeleton: [
-      { function: ModuleFunction.ACTS, title: '三幕劇幕次', icon: 'fa-clapperboard' },
-      { function: ModuleFunction.SCENES, title: '場景列表', icon: 'fa-location-dot' },
-      { function: ModuleFunction.DIALOGUE, title: '對白區塊', icon: 'fa-comment-dots' }
-    ]
-  },
-  [WritingType.SERIES]: {
-    label: '系列建構者', enLabel: 'SERIES / SAGA BUILDER', icon: 'fa-layer-group',
-    description: '跨作品宏觀管理，控制卷集與史詩弧線。',
-    skeleton: [
-      { function: ModuleFunction.VOLUMES, title: '卷集清單', icon: 'fa-books' },
-      { function: ModuleFunction.ARCS, title: '故事弧線', icon: 'fa-waveform' },
-      { function: ModuleFunction.CHARACTERS, title: '跨作品角色', icon: 'fa-users-gear' }
-    ]
+  [WritingType.DIARY]: {
+    label: '隨手筆記',
+    enLabel: 'Diary / Notes',
+    icon: 'fa-note-sticky',
+    description: '部落格與專欄創作者首選，強調論證邏輯與證據鏈。',
+    skeleton: ['今日紀事']
   },
   [WritingType.CUSTOM]: {
-    label: '自定義範本', enLabel: 'CUSTOM TEMPLATE', icon: 'fa-plus',
+    label: '自定義範本',
+    enLabel: 'Custom Template',
+    icon: 'fa-plus',
     description: '由您定義結構，靈活適配任何創作場景。',
-    skeleton: [
-      { function: ModuleFunction.MAIN_DRAFT, title: '主草稿', icon: 'fa-file-lines' },
-      { function: ModuleFunction.NOTES, title: '自定義筆記', icon: 'fa-note-sticky' }
-    ]
+    skeleton: ['主草稿']
+  },
+  // 卷軸範本庫
+  [WritingType.BUSINESS_PLAN]: {
+    label: '商業計畫書',
+    enLabel: 'Business Plan',
+    icon: 'fa-briefcase',
+    description: '創業首選：市場分析、產品定義與財務預測。',
+    skeleton: ['摘要', '市場分析', '產品 / 服務', '商業模式', '財務預測']
+  },
+  [WritingType.SCREENPLAY]: {
+    label: '影視腳本',
+    enLabel: 'Screenplay',
+    icon: 'fa-clapperboard',
+    description: '符合工業標準的場景、對白與行動描述管理。',
+    skeleton: ['標題頁', '分場', '對白', '行動描述']
+  },
+  [WritingType.ACADEMIC]: {
+    label: '學術論文',
+    enLabel: 'Academic Paper',
+    icon: 'fa-graduation-cap',
+    description: '嚴謹的論文結構模板，鎖定必要學術區塊。',
+    skeleton: ['Abstract', 'Introduction', 'Literature Review', 'Methodology', 'Results', 'Discussion', 'Conclusion']
+  },
+  [WritingType.PRD]: {
+    label: '產品需求文件',
+    enLabel: 'PRD / Spec',
+    icon: 'fa-gears',
+    description: '定義問題與需求列表，追蹤產品成功指標。',
+    skeleton: ['背景', '問題定義', '需求列表', '使用流程', '成功指標']
+  },
+  [WritingType.COPYWRITING]: {
+    label: '行銷文案',
+    enLabel: 'Copywriting',
+    icon: 'fa-bullhorn',
+    description: '針對定時發佈內容優化，Hook 到 CTA 一氣呵成。',
+    skeleton: ['Hook', 'Pain', 'Solution', 'Proof', 'CTA']
+  },
+  [WritingType.COURSE]: {
+    label: '教學課程',
+    enLabel: 'Course / Tutorial',
+    icon: 'fa-chalkboard-user',
+    description: '管理課程目標與單元教學內容。',
+    skeleton: ['課程目標', '單元列表', '教學內容', '練習 / 作業']
+  },
+  [WritingType.BOOK_OUTLINE]: {
+    label: '書籍大綱',
+    enLabel: 'Book Outline',
+    icon: 'fa-sitemap',
+    description: '書籍定位、目標讀者與跨章節出版規劃。',
+    skeleton: ['書籍定位', '目標讀者', '章節規劃', '出版目標']
   }
 };
 
