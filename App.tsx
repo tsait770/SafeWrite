@@ -67,7 +67,7 @@ const App: React.FC = () => {
       },
       {
         id: 'p4',
-        name: 'twet',
+        name: 'Meditative Healing Yoga',
         writingType: WritingType.COURSE,
         targetWordCount: 5000,
         metadata: 'Just created',
