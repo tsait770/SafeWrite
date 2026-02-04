@@ -19,11 +19,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const totalWords = project.chapters.reduce((acc, c) => acc + (c.wordCount || 0), 0);
   const writingDays = Math.max(1, Math.ceil((Date.now() - project.createdAt) / (1000 * 60 * 60 * 24)));
 
+  const handleOpenAdd = () => {
+    const nextNum = project.chapters.length + 1;
+    setNewTitle(`第 ${nextNum} 章 · Chapter ${nextNum}`);
+    setIsAddingChapter(true);
+  };
+
   const handleAdd = () => {
-    if (!newTitle.trim()) return;
+    const nextNum = project.chapters.length + 1;
+    const finalTitle = newTitle.trim() || `第 ${nextNum} 章 · Chapter ${nextNum}`;
     const newChapter: Chapter = {
       id: 'c-' + Date.now(),
-      title: newTitle,
+      title: finalTitle,
       content: '',
       order: project.chapters.length + 1,
       history: [],
@@ -120,14 +127,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
             </div>
          </section>
 
-         {/* Chapter Management - 重構為參考圖樣式 */}
+         {/* Chapter Management */}
          <section className="space-y-6">
             <div className="flex items-center justify-between px-2 mb-4">
                <div>
                   <h2 className="text-3xl font-black text-white tracking-tight">章節管理</h2>
                   <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mt-1">拖拽排序 · 點擊編輯</p>
                </div>
-               <button onClick={() => setIsAddingChapter(true)} className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
+               <button onClick={handleOpenAdd} className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
                   <i className="fa-solid fa-plus"></i>
                </button>
             </div>
@@ -145,6 +152,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                       draggable
                       onDragStart={() => onDragStart(idx)}
                       onDragOver={(e) => onDragOver(e, idx)}
+                      onDragEnd={() => setDraggedIdx(null)}
                       className={`group bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 flex items-center justify-between transition-all hover:bg-[#252528] ${draggedIdx === idx ? 'opacity-40 scale-95' : ''}`}
                     >
                        <div className="flex items-center space-x-6">
@@ -194,7 +202,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
 
       <div className="fixed bottom-32 left-8 right-8">
          <button 
-           onClick={() => project.chapters.length > 0 ? onEnterEditor(project.chapters[0].id) : setIsAddingChapter(true)}
+           onClick={() => project.chapters.length > 0 ? onEnterEditor(project.chapters[0].id) : handleOpenAdd()}
            className="w-full h-24 bg-white text-black font-black text-sm uppercase tracking-[0.4em] rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.4)] active:scale-95 transition-all flex items-center justify-center space-x-4"
          >
             <i className="fa-solid fa-bolt-lightning text-xl"></i>

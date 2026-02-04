@@ -35,14 +35,14 @@ export const TEMPLATES: Record<WritingType, TemplateConfig> = {
     enLabel: 'Novel / Fiction',
     icon: 'fa-feather-pointed',
     description: '市場最受歡迎架構，整合章節、世界觀與深度筆記。',
-    skeleton: ['Chapter 1', '世界觀設定', '人物誌', '大綱']
+    skeleton: ['第 1 章 · Chapter 1', '世界觀設定', '人物誌', '大綱']
   },
   [WritingType.LONG_FORM]: {
     label: '長篇創作',
     enLabel: 'Long-form Writing',
     icon: 'fa-book-open',
     description: '適合進行大篇幅、多章節的專業創作。',
-    skeleton: ['Chapter 1', '前言', '背景研究']
+    skeleton: ['第 1 章 · Chapter 1', '前言', '背景研究']
   },
   [WritingType.BLOG]: {
     label: '部落格創作',
