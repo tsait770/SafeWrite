@@ -1,18 +1,21 @@
 
 import React, { useState } from 'react';
-import { AppState, MembershipLevel, SupportedLanguage } from '../types';
+import { AppState, MembershipLevel, SupportedLanguage, AIPreferences } from '../types';
 import LanguageSelector from './LanguageSelector';
 import PrivacyModal from './PrivacyModal';
+import AIPreferencesPage from './AIPreferences';
 
 interface ProfileProps {
   state: AppState;
   onUpgrade: () => void;
   onLanguageChange: (lang: SupportedLanguage) => void;
+  onUpdateAIPreferences: (prefs: AIPreferences) => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange }) => {
+const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, onUpdateAIPreferences }) => {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isAIPreferencesOpen, setIsAIPreferencesOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const handleLanguageSelect = (lang: SupportedLanguage) => {
@@ -78,7 +81,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange })
             onClick={onUpgrade}
             className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl text-white font-bold text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center space-x-2"
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" /></svg>
+            <i className="fa-solid fa-bolt-lightning text-xs mr-2"></i>
             <span>獲得 90 天 PRO 試用</span>
           </button>
         )}
@@ -90,18 +93,36 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange })
         
         <div className="bg-slate-800/50 rounded-3xl overflow-hidden border border-slate-800">
           <button 
+            onClick={() => setIsAIPreferencesOpen(true)}
+            className="w-full flex items-center justify-between p-4 border-b border-slate-800 hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-slate-700/50 rounded-lg text-blue-400">
+                <i className="fa-solid fa-robot text-sm"></i>
+              </div>
+              <span className="text-sm font-medium text-slate-200">AI 助理偏好</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
+                {state.aiPreferences.provider === 'CUSTOM' ? 'Custom Active' : 'Default'}
+              </span>
+              <i className={`fa-solid fa-chevron-right text-slate-500 text-[10px] ${state.language === 'ar' ? 'rotate-180' : ''}`}></i>
+            </div>
+          </button>
+
+          <button 
             onClick={() => setIsSelectorOpen(true)}
             className="w-full flex items-center justify-between p-4 border-b border-slate-800 hover:bg-white/5 transition-colors"
           >
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-slate-700/50 rounded-lg text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5a18.022 18.022 0 01-3.827-5.802M12 9V5M8.5 10.5A11.248 11.248 0 015.67 5.904M21 21l-4.35-4.35M11 19a11 11 0 00-9.858-6.142" /></svg>
+                <i className="fa-solid fa-language text-sm"></i>
               </div>
               <span className="text-sm font-medium text-slate-200">介面語言 / Language</span>
             </div>
             <div className="flex items-center space-x-2">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">{currentLangName}</span>
-              <svg className={`w-4 h-4 text-slate-500 ${state.language === 'ar' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              <i className={`fa-solid fa-chevron-right text-slate-500 text-[10px] ${state.language === 'ar' ? 'rotate-180' : ''}`}></i>
             </div>
           </button>
 
@@ -111,33 +132,23 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange })
           >
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-slate-700/50 rounded-lg text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                <i className="fa-solid fa-shield-halved text-sm"></i>
               </div>
               <span className="text-sm font-medium text-slate-200">隱私權與法律資訊</span>
             </div>
-            <svg className={`w-4 h-4 text-slate-500 ${state.language === 'ar' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            <i className={`fa-solid fa-chevron-right text-slate-500 text-[10px] ${state.language === 'ar' ? 'rotate-180' : ''}`}></i>
           </button>
 
           <div className="flex items-center justify-between p-4 border-b border-slate-800">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-slate-700/50 rounded-lg text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                <i className="fa-solid fa-moon text-sm"></i>
               </div>
               <span className="text-sm font-medium text-slate-200">深色模式</span>
             </div>
             <div className="w-10 h-6 bg-blue-600 rounded-full flex items-center px-1">
               <div className={`w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${state.language === 'ar' ? '-translate-x-4' : 'translate-x-4'}`} />
             </div>
-          </div>
-
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-slate-700/50 rounded-lg text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-              </div>
-              <span className="text-sm font-medium text-slate-200">離線同步模式</span>
-            </div>
-            <span className="text-[10px] font-black text-green-500 uppercase tracking-[0.2em]">Active</span>
           </div>
         </div>
       </section>
@@ -157,6 +168,14 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange })
       <div className="text-center pb-10">
         <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.2em]">SafeWrite System v1.1.0-App</p>
       </div>
+
+      {isAIPreferencesOpen && (
+        <AIPreferencesPage 
+          preferences={state.aiPreferences}
+          onUpdate={onUpdateAIPreferences}
+          onClose={() => setIsAIPreferencesOpen(false)}
+        />
+      )}
 
       {isSelectorOpen && (
         <LanguageSelector 

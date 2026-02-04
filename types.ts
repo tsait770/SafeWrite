@@ -116,6 +116,14 @@ export type SupportedLanguage =
   | 'it' | 'nl' | 'sv' | 'tr' | 'ru' | 'ja' | 'ko' | 'th' | 'vi' 
   | 'id' | 'ms' | 'ar' | 'hi';
 
+export interface AIPreferences {
+  provider: 'DEFAULT' | 'CUSTOM';
+  customModel: string;
+  tone: 'CREATIVE' | 'ACADEMIC' | 'PROFESSIONAL' | 'CASUAL';
+  enableThinking: boolean;
+  thinkingBudget: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -149,6 +157,7 @@ export interface AppState {
   membership: MembershipLevel;
   stats: UserStats;
   language: SupportedLanguage;
+  aiPreferences: AIPreferences;
   editorSettings: {
     typewriterMode: boolean;
     previewMode: boolean;

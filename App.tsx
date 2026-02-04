@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, ModuleType, WritingModule, OutlineNode } from './types';
+import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, ModuleType, WritingModule, OutlineNode, AIPreferences } from './types';
 import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS } from './constants';
 import Library from './components/Library';
 import CaptureCenter from './components/CaptureCenter';
@@ -48,38 +48,6 @@ const App: React.FC = () => {
         createdAt: Date.now() - 86400000 * 5,
         updatedAt: Date.now() - 7200000,
         tags: ['BUSINESS', 'TECH'],
-      },
-      {
-        id: 'p3',
-        name: 'Spring Notes',
-        writingType: WritingType.DIARY,
-        targetWordCount: 3000,
-        metadata: 'Edited yesterday',
-        progress: 15,
-        color: '#D4FF5F',
-        icon: 'fa-note-sticky',
-        chapters: [],
-        modules: [],
-        settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 86400000 * 2,
-        updatedAt: Date.now() - 86400000,
-        tags: ['PERSONAL'],
-      },
-      {
-        id: 'p4',
-        name: 'Meditative Healing Yoga',
-        writingType: WritingType.COURSE,
-        targetWordCount: 5000,
-        metadata: 'Just created',
-        progress: 0,
-        color: '#B2A4FF',
-        icon: 'fa-graduation-cap',
-        chapters: [],
-        modules: [],
-        settings: { typography: 'sans', fontSize: 'normal' },
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        tags: ['EDUCATION'],
       }
     ],
     currentProject: null,
@@ -90,6 +58,13 @@ const App: React.FC = () => {
     theme: ThemeMode.NIGHT,
     membership: MembershipLevel.FREE,
     language: 'zh-TW',
+    aiPreferences: {
+      provider: 'DEFAULT',
+      customModel: 'gemini-3-pro-preview',
+      tone: 'CREATIVE',
+      enableThinking: true,
+      thinkingBudget: 32768
+    },
     stats: { 
       wordCount: 58210, 
       projectCount: 4, 
@@ -114,6 +89,10 @@ const App: React.FC = () => {
       projects: prev.projects.map(p => p.id === updated.id ? updated : p),
       currentProject: prev.currentProject?.id === updated.id ? updated : prev.currentProject
     }));
+  };
+
+  const handleUpdateAIPreferences = (prefs: AIPreferences) => {
+    setState(prev => ({ ...prev, aiPreferences: prefs }));
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -160,10 +139,7 @@ const App: React.FC = () => {
             className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center active:scale-95 transition-all overflow-visible group"
           >
              <div className="relative w-7 h-7 flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
-                {/* 精緻化左上角文件圖示 */}
                 <i className={`fa-solid fa-file absolute -top-[1.5px] -left-[1.5px] transition-all duration-500 ${state.appMode === AppMode.REPOSITORY ? 'text-white text-[13.5px] opacity-100 drop-shadow-[0_0_5px_rgba(255,255,255,0.2)]' : 'text-white/20 text-[11px]'}`}></i>
-                
-                {/* 精緻化右下角圓圈點圖示 */}
                 <div className={`absolute -bottom-[2px] -right-[2px] rounded-full border-[2.2px] flex items-center justify-center transition-all duration-500 cubic-bezier(0.19, 1, 0.22, 1) ${state.appMode === AppMode.CAPTURE ? 'w-[16px] h-[16px] border-[#D4FF5F] bg-[#D4FF5F]/10 scale-110 shadow-[0_0_15px_rgba(212,255,95,0.4)]' : 'w-[13px] h-[13px] border-white/30'}`}>
                    <div className={`rounded-full transition-all duration-500 ${state.appMode === AppMode.CAPTURE ? 'w-[5px] h-[5px] bg-[#D4FF5F] shadow-[0_0_8px_#D4FF5F] animate-pulse' : 'w-[4px] h-[4px] bg-white/30'}`}></div>
                 </div>
@@ -221,7 +197,12 @@ const App: React.FC = () => {
             </div>
           )
         ) : state.activeTab === AppTab.PROFILE ? (
-          <Profile state={state} onUpgrade={() => setActiveOverlay('EXPORT')} onLanguageChange={(l) => setState(prev => ({...prev, language: l}))} />
+          <Profile 
+            state={state} 
+            onUpgrade={() => setActiveOverlay('EXPORT')} 
+            onLanguageChange={(l) => setState(prev => ({...prev, language: l}))} 
+            onUpdateAIPreferences={handleUpdateAIPreferences}
+          />
         ) : null}
       </main>
 

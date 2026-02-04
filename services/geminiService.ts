@@ -26,20 +26,21 @@ export const geminiService = {
     });
     
     try {
-      return JSON.parse(response.text);
+      const text = response.text || "[]";
+      return JSON.parse(text);
     } catch (e) {
       return [{ text: response.text, confidence: 0.9 }];
     }
   },
 
-  // 結構圖譜分析：使用 Pro 模型 + 思考預算
+  // 結構圖譜分析：使用 Pro 模型 + 最大思考預算
   async analyzeProjectStructure(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `身為敘事架構專家，請分析以下文稿並提取關鍵結構節點（角色、敘事、研究）。\n\n${content}`,
       config: {
-        thinkingConfig: { thinkingBudget: 16000 },
+        thinkingConfig: { thinkingBudget: 32768 },
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -61,7 +62,8 @@ export const geminiService = {
         }
       }
     });
-    return JSON.parse(response.text);
+    const text = response.text || '{"nodes":[]}';
+    return JSON.parse(text);
   },
 
   async analyzeManuscript(content: string) {
@@ -69,7 +71,7 @@ export const geminiService = {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `身為資深編輯，請針對以下文本進行結構與語氣分析，並給予具體建議：\n\n${content}`,
-      config: { thinkingConfig: { thinkingBudget: 24000 } }
+      config: { thinkingConfig: { thinkingBudget: 32768 } }
     });
     return response.text;
   },
@@ -81,7 +83,7 @@ export const geminiService = {
       model: 'gemini-3-pro-preview',
       contents: `請詳細分析以下文稿內容並生成一份層級結構分明的大綱：\n\n${content}`,
       config: {
-        thinkingConfig: { thinkingBudget: 16000 }
+        thinkingConfig: { thinkingBudget: 32768 }
       }
     });
     return response.text;
@@ -94,9 +96,24 @@ export const geminiService = {
       model: 'gemini-3-pro-preview',
       contents: `身為文學評論家，請分析以下文稿中的主要角色、性格特徵、角色間的關係以及核心動機：\n\n${content}`,
       config: {
-        thinkingConfig: { thinkingBudget: 16000 }
+        thinkingConfig: { thinkingBudget: 32768 }
       }
     });
     return response.text;
+  },
+
+  // 測試 API 連線
+  async testConnection(apiKey: string, provider: string) {
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: "Hello, this is a connection test. Please respond with 'OK'.",
+      });
+      return response.text?.includes('OK');
+    } catch (e) {
+      console.error("Connection test failed", e);
+      return false;
+    }
   }
 };
