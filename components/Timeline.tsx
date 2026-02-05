@@ -43,6 +43,10 @@ const Timeline: React.FC<TimelineProps> = ({
     }
   };
 
+  const cleanupText = securitySettings.autoSnapshotCleanupDays === 'NEVER' 
+    ? '自動生成的快照將永久保留。' 
+    : `自動生成的快照將在 ${securitySettings.autoSnapshotCleanupDays} 天後進入循環清理程序。`;
+
   return (
     <div className="relative w-full h-full bg-[#0F0F10] shadow-2xl flex flex-col overflow-hidden text-slate-200">
       {/* Header Handle */}
@@ -177,7 +181,7 @@ const Timeline: React.FC<TimelineProps> = ({
             <i className="fa-solid fa-circle-info text-[10px]"></i>
           </div>
           <p className="text-[10px] text-slate-500 leading-relaxed uppercase tracking-widest font-medium">
-            提示：里程碑版本將永久保留。自動生成的快照將在 30 天後進入循環清理程序。
+            提示：里程碑版本將永久保留。{cleanupText}
           </p>
         </div>
         

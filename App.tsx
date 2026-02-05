@@ -64,7 +64,8 @@ const App: React.FC = () => {
       autoSnapshotEnabled: true,
       autoSnapshotMode: 'interval',
       autoSnapshotIntervalMinutes: 2,
-      autoSnapshotIdleSeconds: 30
+      autoSnapshotIdleSeconds: 30,
+      autoSnapshotCleanupDays: 30 // 預設 30 天
     },
     stats: { 
       wordCount: 58210, 

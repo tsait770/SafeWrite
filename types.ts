@@ -7,20 +7,18 @@ export enum MembershipLevel {
 
 // 核心寫作範本類型
 export enum WritingType {
-  NOVEL = 'NOVEL',              // 長篇小說 / 故事
-  BLOG = 'BLOG',               // 部落格 / Medium
-  DIARY = 'DIARY',              // 日記 / 隨手筆記
-  CUSTOM = 'CUSTOM',            // 自定義範本
-  LONG_FORM = 'LONG_FORM',      // 長篇作品
-  
-  // 卷軸範本庫內容
-  BUSINESS_PLAN = 'BUSINESS_PLAN', // 商業計畫書
-  SCREENPLAY = 'SCREENPLAY',       // 劇本 / 影視腳本
-  ACADEMIC = 'ACADEMIC',           // 學術論文
-  PRD = 'PRD',                     // 產品需求文件
-  COPYWRITING = 'COPYWRITING',     // 行銷文案
-  COURSE = 'COURSE',               // 教學課程
-  BOOK_OUTLINE = 'BOOK_OUTLINE'    // 書籍大綱
+  NOVEL = 'NOVEL',
+  BLOG = 'BLOG',
+  DIARY = 'DIARY',
+  CUSTOM = 'CUSTOM',
+  LONG_FORM = 'LONG_FORM',
+  BUSINESS_PLAN = 'BUSINESS_PLAN',
+  SCREENPLAY = 'SCREENPLAY',
+  ACADEMIC = 'ACADEMIC',
+  PRD = 'PRD',
+  COPYWRITING = 'COPYWRITING',
+  COURSE = 'COURSE',
+  BOOK_OUTLINE = 'BOOK_OUTLINE'
 }
 
 export enum PublicationStatus {
@@ -78,7 +76,6 @@ export interface StructureUnit {
   history?: VersionSnapshot[];
 }
 
-// Alias StructureUnit as Chapter for consistent usage across components
 export type Chapter = StructureUnit;
 
 export interface OutlineNode {
@@ -129,6 +126,7 @@ export interface SecuritySettings {
   autoSnapshotMode: 'interval' | 'idle';
   autoSnapshotIntervalMinutes: number;
   autoSnapshotIdleSeconds: number;
+  autoSnapshotCleanupDays: number | 'NEVER'; // 新增：清理週期
 }
 
 export interface Project {
@@ -140,7 +138,7 @@ export interface Project {
   progress: number;
   color: string;
   icon: string;
-  chapters: Chapter[]; // 使用 Chapter alias
+  chapters: Chapter[];
   modules: WritingModule[];
   createdAt: number;
   updatedAt: number;
