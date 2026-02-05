@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, ModuleType, WritingModule, OutlineNode, AIPreferences } from './types';
+import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, ModuleType, WritingModule, OutlineNode, AIPreferences, SecuritySettings } from './types';
 import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS } from './constants';
 import Library from './components/Library';
 import CaptureCenter from './components/CaptureCenter';
@@ -60,6 +60,12 @@ const App: React.FC = () => {
       enableThinking: true,
       thinkingBudget: 32768
     },
+    securitySettings: {
+      autoSnapshotEnabled: true,
+      autoSnapshotMode: 'interval',
+      autoSnapshotIntervalMinutes: 2,
+      autoSnapshotIdleSeconds: 30
+    },
     stats: { 
       wordCount: 58210, 
       projectCount: 4, 
@@ -82,14 +88,30 @@ const App: React.FC = () => {
   const [swipeProgress, setSwipeProgress] = useState(0); // 0 to 1
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number | null>(null);
-  const panelWidth = window.innerWidth * 0.85;
+
+  // 快照與計時器相關的 Refs
+  const lastSnapshotContentRef = useRef<string>('');
+  const idleTimerRef = useRef<number | null>(null);
+  const intervalTimerRef = useRef<number | null>(null);
+  
+  // 檢測是否為平板或桌面端
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isTabletOrDesktop = windowWidth >= 768;
+  const panelWidth = isTabletOrDesktop ? windowWidth / 3 : windowWidth * 0.85;
 
   const handleGlobalTouchStart = (e: React.TouchEvent) => {
     const x = e.touches[0].clientX;
     const screenWidth = window.innerWidth;
     
-    // 判斷是否從螢幕右側邊緣（最後 15%）開始，且處於寫作模式
-    if (state.activeTab === AppTab.WRITE && state.currentChapterId && x > screenWidth * 0.85 && activeOverlay === 'NONE') {
+    // 判斷是否從螢幕右側邊緣開始，且處於寫作模式
+    const edgeThreshold = isTabletOrDesktop ? screenWidth * 0.95 : screenWidth * 0.85;
+    if (state.activeTab === AppTab.WRITE && state.currentChapterId && x > edgeThreshold && activeOverlay === 'NONE') {
       touchStartX.current = x;
       setIsDragging(true);
     }
@@ -109,18 +131,15 @@ const App: React.FC = () => {
     
     setIsDragging(false);
     if (swipeProgress > 0.2) {
-      // 開啟面板
       setSwipeProgress(1);
       setActiveOverlay('TIMELINE');
     } else {
-      // 放回
       setSwipeProgress(0);
       setActiveOverlay('NONE');
     }
     touchStartX.current = null;
   };
 
-  // 監控 Overlay 狀態強制同步進度
   useEffect(() => {
     if (activeOverlay === 'TIMELINE') setSwipeProgress(1);
     else if (activeOverlay === 'NONE') setSwipeProgress(0);
@@ -138,6 +157,10 @@ const App: React.FC = () => {
     setState(prev => ({ ...prev, aiPreferences: prefs }));
   };
 
+  const handleUpdateSecuritySettings = (settings: SecuritySettings) => {
+    setState(prev => ({ ...prev, securitySettings: settings }));
+  };
+
   const handleDeleteProject = (projectId: string) => {
     setState(prev => ({
       ...prev,
@@ -150,6 +173,37 @@ const App: React.FC = () => {
   const handleEnterEditor = (chapterId: string) => {
     setState(prev => ({ ...prev, currentChapterId: chapterId, activeTab: AppTab.WRITE }));
   };
+
+  const createSnapshot = useCallback((type: SnapshotType) => {
+    setState(prev => {
+      if (!prev.currentProject || !prev.currentChapterId) return prev;
+      const chapter = prev.currentProject.chapters.find(c => c.id === prev.currentChapterId);
+      if (!chapter) return prev;
+
+      if (type === SnapshotType.AUTO && chapter.content === lastSnapshotContentRef.current) return prev;
+
+      const newSnapshot: VersionSnapshot = {
+        id: `v-${Date.now()}`,
+        timestamp: Date.now(),
+        content: chapter.content,
+        title: chapter.title,
+        type: type
+      };
+
+      lastSnapshotContentRef.current = chapter.content;
+
+      const updatedChapters = prev.currentProject.chapters.map(c => 
+        c.id === prev.currentChapterId ? { ...c, history: [newSnapshot, ...(c.history || [])] } : c
+      );
+
+      const updatedProject = { ...prev.currentProject, chapters: updatedChapters };
+      return {
+        ...prev,
+        projects: prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p),
+        currentProject: updatedProject
+      };
+    });
+  }, []);
 
   const handleUpdateContent = (newContent: string) => {
     setState(prev => {
@@ -164,34 +218,31 @@ const App: React.FC = () => {
         currentProject: updatedProject
       };
     });
+
+    if (state.securitySettings.autoSnapshotEnabled && state.securitySettings.autoSnapshotMode === 'idle') {
+      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = window.setTimeout(() => {
+        createSnapshot(SnapshotType.AUTO);
+      }, state.securitySettings.autoSnapshotIdleSeconds * 1000);
+    }
   };
 
+  useEffect(() => {
+    if (intervalTimerRef.current) window.clearInterval(intervalTimerRef.current);
+    
+    if (state.securitySettings.autoSnapshotEnabled && state.securitySettings.autoSnapshotMode === 'interval') {
+      intervalTimerRef.current = window.setInterval(() => {
+        createSnapshot(SnapshotType.AUTO);
+      }, state.securitySettings.autoSnapshotIntervalMinutes * 60000);
+    }
+
+    return () => {
+      if (intervalTimerRef.current) window.clearInterval(intervalTimerRef.current);
+    };
+  }, [state.securitySettings.autoSnapshotEnabled, state.securitySettings.autoSnapshotMode, state.securitySettings.autoSnapshotIntervalMinutes, createSnapshot]);
+
   const handleCreateMilestone = () => {
-    setState(prev => {
-      if (!prev.currentProject || !prev.currentChapterId) return prev;
-      const targetChapter = prev.currentProject.chapters.find(c => c.id === prev.currentChapterId);
-      if (!targetChapter) return prev;
-
-      const newSnapshot: VersionSnapshot = {
-        id: 'v-' + Date.now(),
-        timestamp: Date.now(),
-        content: targetChapter.content,
-        title: targetChapter.title,
-        type: SnapshotType.MILESTONE
-      };
-
-      const updatedChapters = prev.currentProject.chapters.map(c => 
-        c.id === prev.currentChapterId ? { ...c, history: [newSnapshot, ...(c.history || [])] } : c
-      );
-
-      const updatedProject = { ...prev.currentProject, chapters: updatedChapters };
-      return {
-        ...prev,
-        projects: prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p),
-        currentProject: updatedProject
-      };
-    });
-    alert('里程碑已標記！');
+    createSnapshot(SnapshotType.MILESTONE);
   };
 
   const handleRestoreSnapshot = (snapshot: VersionSnapshot) => {
@@ -305,6 +356,7 @@ const App: React.FC = () => {
             onUpgrade={() => setActiveOverlay('EXPORT')} 
             onLanguageChange={(l) => setState(prev => ({...prev, language: l}))} 
             onUpdateAIPreferences={handleUpdateAIPreferences}
+            onUpdateSecuritySettings={handleUpdateSecuritySettings}
           />
         ) : null}
       </main>
@@ -319,14 +371,14 @@ const App: React.FC = () => {
         }}
       >
         <div 
-          className="absolute inset-0 bg-black pointer-events-auto"
-          style={{ opacity: swipeProgress * 0.6 }}
+          className="absolute inset-0 bg-black/40 pointer-events-auto backdrop-blur-sm"
+          style={{ opacity: swipeProgress }}
           onClick={() => setActiveOverlay('NONE')}
         />
         <div 
-          className="absolute right-0 top-0 bottom-0 pointer-events-auto"
+          className="absolute right-0 top-0 bottom-0 pointer-events-auto shadow-[-20px_0_60px_rgba(0,0,0,0.5)]"
           style={{
-            width: '85%',
+            width: isTabletOrDesktop ? '33.333333%' : '85%',
             transform: `translateX(${(1 - swipeProgress) * 100}%)`,
             transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
@@ -338,9 +390,11 @@ const App: React.FC = () => {
               onRestore={handleRestoreSnapshot}
               onPreview={(s) => alert('Previewing snapshot from ' + new Date(s.timestamp).toLocaleTimeString())}
               onCreateMilestone={handleCreateMilestone}
-              onClearAuto={handleClearAutoSnapshots}
+              onClearSnapshots={handleClearAutoSnapshots}
               membership={state.membership}
               isNight={true}
+              securitySettings={state.securitySettings}
+              onUpdateSecuritySettings={handleUpdateSecuritySettings}
             />
           )}
         </div>

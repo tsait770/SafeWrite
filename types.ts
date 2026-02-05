@@ -124,6 +124,13 @@ export interface AIPreferences {
   thinkingBudget: number;
 }
 
+export interface SecuritySettings {
+  autoSnapshotEnabled: boolean;
+  autoSnapshotMode: 'interval' | 'idle';
+  autoSnapshotIntervalMinutes: number;
+  autoSnapshotIdleSeconds: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -158,6 +165,7 @@ export interface AppState {
   stats: UserStats;
   language: SupportedLanguage;
   aiPreferences: AIPreferences;
+  securitySettings: SecuritySettings;
   editorSettings: {
     typewriterMode: boolean;
     previewMode: boolean;

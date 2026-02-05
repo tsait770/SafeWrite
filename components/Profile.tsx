@@ -1,21 +1,24 @@
 
 import React, { useState } from 'react';
-import { AppState, MembershipLevel, SupportedLanguage, AIPreferences } from '../types';
+import { AppState, MembershipLevel, SupportedLanguage, AIPreferences, SecuritySettings } from '../types';
 import LanguageSelector from './LanguageSelector';
 import PrivacyModal from './PrivacyModal';
 import AIPreferencesPage from './AIPreferences';
+import SecuritySettingsPage from './SecuritySettingsPage';
 
 interface ProfileProps {
   state: AppState;
   onUpgrade: () => void;
   onLanguageChange: (lang: SupportedLanguage) => void;
   onUpdateAIPreferences: (prefs: AIPreferences) => void;
+  onUpdateSecuritySettings: (settings: SecuritySettings) => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, onUpdateAIPreferences }) => {
+const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, onUpdateAIPreferences, onUpdateSecuritySettings }) => {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAIPreferencesOpen, setIsAIPreferencesOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const handleLanguageSelect = (lang: SupportedLanguage) => {
@@ -39,7 +42,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
     'tr': 'Türkçe',
     'ru': 'Русский',
     'ja': '日本語',
-    'ko': '한국어',
+    'ko': '韓國語',
     'th': 'ไทย',
     'vi': 'Tiếng Việt',
     'id': 'Bahasa Indonesia',
@@ -111,6 +114,24 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
           </button>
 
           <button 
+            onClick={() => setIsSecurityOpen(true)}
+            className="w-full flex items-center justify-between p-4 border-b border-slate-800 hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-slate-700/50 rounded-lg text-indigo-400">
+                <i className="fa-solid fa-shield-halved text-sm"></i>
+              </div>
+              <span className="text-sm font-medium text-slate-200">安全與備份</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${state.securitySettings.autoSnapshotEnabled ? 'text-green-400' : 'text-slate-500'}`}>
+                {state.securitySettings.autoSnapshotEnabled ? 'ON' : 'OFF'}
+              </span>
+              <i className={`fa-solid fa-chevron-right text-slate-500 text-[10px] ${state.language === 'ar' ? 'rotate-180' : ''}`}></i>
+            </div>
+          </button>
+
+          <button 
             onClick={() => setIsSelectorOpen(true)}
             className="w-full flex items-center justify-between p-4 border-b border-slate-800 hover:bg-white/5 transition-colors"
           >
@@ -132,7 +153,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
           >
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-slate-700/50 rounded-lg text-slate-400">
-                <i className="fa-solid fa-shield-halved text-sm"></i>
+                <i className="fa-solid fa-file-contract text-sm"></i>
               </div>
               <span className="text-sm font-medium text-slate-200">隱私權與法律資訊</span>
             </div>
@@ -174,6 +195,14 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
           preferences={state.aiPreferences}
           onUpdate={onUpdateAIPreferences}
           onClose={() => setIsAIPreferencesOpen(false)}
+        />
+      )}
+
+      {isSecurityOpen && (
+        <SecuritySettingsPage
+          settings={state.securitySettings}
+          onUpdate={onUpdateSecuritySettings}
+          onClose={() => setIsSecurityOpen(false)}
         />
       )}
 
