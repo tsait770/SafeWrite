@@ -25,29 +25,24 @@ const App: React.FC = () => {
         progress: 82,
         color: '#FADE4B',
         icon: 'fa-feather-pointed',
-        chapters: [{ id: 'c1', title: '第 1 章 · Chapter 1', content: '故事開始於太陽不再升起的那一天...', order: 1, history: [], wordCount: 1250, lastEdited: Date.now() }],
+        chapters: [{ 
+          id: 'c1', 
+          title: '第 1 章 · Chapter 1', 
+          content: '故事開始於太陽不再升起的那一天...', 
+          order: 1, 
+          history: [
+            { id: 'v1', timestamp: Date.now() - 3600000, content: '初始草稿...', title: '第 1 章', type: SnapshotType.AUTO },
+            { id: 'v2', timestamp: Date.now() - 1800000, content: '故事開始於...', title: '第 1 章', type: SnapshotType.MILESTONE }
+          ], 
+          wordCount: 1250, 
+          lastEdited: Date.now() 
+        }],
         modules: [],
         settings: { typography: 'serif', fontSize: 'normal' },
         createdAt: Date.now() - 600000 * 24 * 12,
         updatedAt: Date.now() - 600000,
         tags: ['SCI-FI', 'SPACE'],
         isPinned: true
-      },
-      {
-        id: 'p2',
-        name: 'Market Insights 2024',
-        writingType: WritingType.BLOG,
-        targetWordCount: 10000,
-        metadata: 'Edited 2h ago',
-        progress: 45,
-        color: '#FF6B2C',
-        icon: 'fa-pen-nib',
-        chapters: [],
-        modules: [],
-        settings: { typography: 'sans', fontSize: 'normal' },
-        createdAt: Date.now() - 86400000 * 5,
-        updatedAt: Date.now() - 7200000,
-        tags: ['BUSINESS', 'TECH'],
       }
     ],
     currentProject: null,
@@ -115,6 +110,54 @@ const App: React.FC = () => {
         c.id === prev.currentChapterId ? { ...c, content: newContent, wordCount: newContent.length, lastEdited: Date.now() } : c
       );
       const updatedProject = { ...prev.currentProject, chapters, updatedAt: Date.now() };
+      return {
+        ...prev,
+        projects: prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p),
+        currentProject: updatedProject
+      };
+    });
+  };
+
+  const handleCreateMilestone = () => {
+    setState(prev => {
+      if (!prev.currentProject || !prev.currentChapterId) return prev;
+      const targetChapter = prev.currentProject.chapters.find(c => c.id === prev.currentChapterId);
+      if (!targetChapter) return prev;
+
+      const newSnapshot: VersionSnapshot = {
+        id: 'v-' + Date.now(),
+        timestamp: Date.now(),
+        content: targetChapter.content,
+        title: targetChapter.title,
+        type: SnapshotType.MILESTONE
+      };
+
+      const updatedChapters = prev.currentProject.chapters.map(c => 
+        c.id === prev.currentChapterId ? { ...c, history: [newSnapshot, ...(c.history || [])] } : c
+      );
+
+      const updatedProject = { ...prev.currentProject, chapters: updatedChapters };
+      return {
+        ...prev,
+        projects: prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p),
+        currentProject: updatedProject
+      };
+    });
+    alert('里程碑已標記！');
+  };
+
+  const handleRestoreSnapshot = (snapshot: VersionSnapshot) => {
+    handleUpdateContent(snapshot.content);
+    setActiveOverlay('NONE');
+  };
+
+  const handleClearAutoSnapshots = () => {
+    setState(prev => {
+      if (!prev.currentProject || !prev.currentChapterId) return prev;
+      const updatedChapters = prev.currentProject.chapters.map(c => 
+        c.id === prev.currentChapterId ? { ...c, history: (c.history || []).filter(h => h.type === SnapshotType.MILESTONE) } : c
+      );
+      const updatedProject = { ...prev.currentProject, chapters: updatedChapters };
       return {
         ...prev,
         projects: prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p),
@@ -207,6 +250,22 @@ const App: React.FC = () => {
       </main>
 
       <BottomNav activeTab={state.activeTab} onTabChange={(tab) => setState(prev => ({ ...prev, activeTab: tab }))} isVisible={isBottomNavVisible} />
+
+      {activeOverlay === 'TIMELINE' && currentChapter && (
+        <Timeline 
+          history={currentChapter.history || []}
+          onClose={() => setActiveOverlay('NONE')}
+          onRestore={handleRestoreSnapshot}
+          onPreview={(s) => alert('Previewing snapshot from ' + new Date(s.timestamp).toLocaleTimeString())}
+          onCreateMilestone={handleCreateMilestone}
+          onClearAuto={handleClearAutoSnapshots}
+          membership={state.membership}
+        />
+      )}
+
+      {activeOverlay === 'COLLABORATION' && (
+        <CollaborationPanel onClose={() => setActiveOverlay('NONE')} />
+      )}
     </div>
   );
 };
