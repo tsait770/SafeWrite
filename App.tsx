@@ -77,6 +77,54 @@ const App: React.FC = () => {
   });
 
   const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION'>('NONE');
+  
+  // 液態側滑狀態
+  const [swipeProgress, setSwipeProgress] = useState(0); // 0 to 1
+  const [isDragging, setIsDragging] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const panelWidth = window.innerWidth * 0.85;
+
+  const handleGlobalTouchStart = (e: React.TouchEvent) => {
+    const x = e.touches[0].clientX;
+    const screenWidth = window.innerWidth;
+    
+    // 判斷是否從螢幕右側邊緣（最後 15%）開始，且處於寫作模式
+    if (state.activeTab === AppTab.WRITE && state.currentChapterId && x > screenWidth * 0.85 && activeOverlay === 'NONE') {
+      touchStartX.current = x;
+      setIsDragging(true);
+    }
+  };
+
+  const handleGlobalTouchMove = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const currentX = e.touches[0].clientX;
+    const deltaX = touchStartX.current - currentX; // 向左滑動為正
+    
+    const progress = Math.min(Math.max(deltaX / panelWidth, 0), 1);
+    setSwipeProgress(progress);
+  };
+
+  const handleGlobalTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    
+    setIsDragging(false);
+    if (swipeProgress > 0.2) {
+      // 開啟面板
+      setSwipeProgress(1);
+      setActiveOverlay('TIMELINE');
+    } else {
+      // 放回
+      setSwipeProgress(0);
+      setActiveOverlay('NONE');
+    }
+    touchStartX.current = null;
+  };
+
+  // 監控 Overlay 狀態強制同步進度
+  useEffect(() => {
+    if (activeOverlay === 'TIMELINE') setSwipeProgress(1);
+    else if (activeOverlay === 'NONE') setSwipeProgress(0);
+  }, [activeOverlay]);
 
   const handleUpdateProject = (updated: Project) => {
     setState(prev => ({
@@ -167,10 +215,15 @@ const App: React.FC = () => {
   };
 
   const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
-  const isBottomNavVisible = activeOverlay === 'NONE' && (state.activeTab !== AppTab.WRITE || !currentChapter);
+  const isBottomNavVisible = (activeOverlay === 'NONE' && swipeProgress === 0) && (state.activeTab !== AppTab.WRITE || !currentChapter);
 
   return (
-    <div className="h-screen flex flex-col relative overflow-hidden bg-black text-white">
+    <div 
+      className="h-screen flex flex-col relative overflow-hidden bg-black text-white"
+      onTouchStart={handleGlobalTouchStart}
+      onTouchMove={handleGlobalTouchMove}
+      onTouchEnd={handleGlobalTouchEnd}
+    >
       {state.activeTab !== AppTab.WRITE && (
         <header className="fixed top-0 w-full z-[100] h-24 pt-[env(safe-area-inset-top,0px)] flex items-end justify-between px-8 pb-4 bg-black/60 backdrop-blur-3xl border-b border-white/5">
           <div className="flex flex-col">
@@ -191,7 +244,14 @@ const App: React.FC = () => {
         </header>
       )}
 
-      <main className={`flex-1 overflow-y-auto no-scrollbar ${(state.activeTab === AppTab.WRITE && currentChapter) ? 'p-0' : (state.activeTab === AppTab.WRITE ? 'p-0' : 'pt-24 pb-32')}`}>
+      <main 
+        style={{
+          transform: `scale(${1 - swipeProgress * 0.04})`,
+          filter: `blur(${swipeProgress * 4}px)`,
+          transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+        className={`flex-1 overflow-y-auto no-scrollbar ${(state.activeTab === AppTab.WRITE && currentChapter) ? 'p-0' : (state.activeTab === AppTab.WRITE ? 'p-0' : 'pt-24 pb-32')}`}
+      >
         {state.activeTab === AppTab.LIBRARY ? (
           state.appMode === AppMode.REPOSITORY ? (
             <Library 
@@ -251,17 +311,40 @@ const App: React.FC = () => {
 
       <BottomNav activeTab={state.activeTab} onTabChange={(tab) => setState(prev => ({ ...prev, activeTab: tab }))} isVisible={isBottomNavVisible} />
 
-      {activeOverlay === 'TIMELINE' && currentChapter && (
-        <Timeline 
-          history={currentChapter.history || []}
-          onClose={() => setActiveOverlay('NONE')}
-          onRestore={handleRestoreSnapshot}
-          onPreview={(s) => alert('Previewing snapshot from ' + new Date(s.timestamp).toLocaleTimeString())}
-          onCreateMilestone={handleCreateMilestone}
-          onClearAuto={handleClearAutoSnapshots}
-          membership={state.membership}
+      {/* 液態側滑容器：時光機面板 */}
+      <div 
+        className="fixed inset-0 z-[1000] pointer-events-none"
+        style={{
+          display: swipeProgress > 0 ? 'block' : 'none'
+        }}
+      >
+        <div 
+          className="absolute inset-0 bg-black pointer-events-auto"
+          style={{ opacity: swipeProgress * 0.6 }}
+          onClick={() => setActiveOverlay('NONE')}
         />
-      )}
+        <div 
+          className="absolute right-0 top-0 bottom-0 pointer-events-auto"
+          style={{
+            width: '85%',
+            transform: `translateX(${(1 - swipeProgress) * 100}%)`,
+            transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        >
+          {currentChapter && (
+            <Timeline 
+              history={currentChapter.history || []}
+              onClose={() => setActiveOverlay('NONE')}
+              onRestore={handleRestoreSnapshot}
+              onPreview={(s) => alert('Previewing snapshot from ' + new Date(s.timestamp).toLocaleTimeString())}
+              onCreateMilestone={handleCreateMilestone}
+              onClearAuto={handleClearAutoSnapshots}
+              membership={state.membership}
+              isNight={true}
+            />
+          )}
+        </div>
+      </div>
 
       {activeOverlay === 'COLLABORATION' && (
         <CollaborationPanel onClose={() => setActiveOverlay('NONE')} />
