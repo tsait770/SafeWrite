@@ -68,7 +68,8 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const base64Data = canvas.toDataURL('image/jpeg').split(',')[1];
+      const dataUrl = canvas.toDataURL('image/jpeg');
+      const base64Data = dataUrl.split(',')[1];
       try {
         const results = await geminiService.extractTextFromImage(base64Data);
         const blocks: OCRBlock[] = results.map((r: any, i: number) => ({
@@ -146,12 +147,10 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
 
     if (action === 'copy') {
       await navigator.clipboard.writeText(block.text);
-      // 簡單通知
       alert('已複製到剪貼簿');
       return;
     }
 
-    // AI Actions
     setOcrBlocks(prev => prev.map(b => b.id === id ? { ...b, isProcessing: true } : b));
     try {
       let resultText = '';
@@ -410,7 +409,7 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
                         onClick={() => setSelectedProjectId(null)}
                         className={`w-full p-6 rounded-[32px] border flex items-center justify-between transition-all ${selectedProjectId === null ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
                       >
-                         <div className="flex items-center space-x-4"><i className="fa-solid fa-box-archive text-xl"></i><span className="text-sm font-black uppercase tracking-widest">存入靈感筆記本 (獨立新專案)</span></div>
+                         <div className="flex items-center space-x-4"><i className="fa-solid fa-box-archive text-xl"></i><span className="text-sm font-black uppercase tracking-widest">存入靈感筆記本</span></div>
                          {selectedProjectId === null && <i className="fa-solid fa-circle-check"></i>}
                       </button>
                       
