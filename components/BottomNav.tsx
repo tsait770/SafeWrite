@@ -30,7 +30,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, isVisible
           className={`flex flex-col items-center justify-center space-y-1.5 w-20 transition-all ${activeTab === tab.id ? 'text-[#7b61ff] scale-110' : 'text-[#8e8e93]'}`}
         >
           <div className={`transition-all duration-300 ${activeTab === tab.id ? 'drop-shadow-[0_0_12px_rgba(123,97,255,0.5)]' : ''}`}>{tab.icon}</div>
-          <span className="text-[9px] font-black uppercase tracking-[0.2em]">{tab.label}</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]">{tab.label}</span>
           {activeTab === tab.id && <div className="w-1 h-1 rounded-full bg-[#7b61ff] mt-0.5 shadow-[0_0_8px_#7b61ff]"></div>}
         </button>
       ))}

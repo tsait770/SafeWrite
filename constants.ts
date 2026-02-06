@@ -224,4 +224,4 @@ export const TEMPLATES: Record<WritingType, TemplateConfig> = {
   }
 };
 
-export const PLACEHOLDER_TEXT = "寫作即是思考的延伸，請在此開始記錄...";
+export const PLACEHOLDER_TEXT = "寫作即是思考的延伸，請在此開始記錄內容與靈感。";
