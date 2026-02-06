@@ -10,11 +10,19 @@ interface CaptureCenterProps {
   onSaveToNotebook: (content: string) => void;
 }
 
+interface OCRBlock {
+  id: string;
+  text: string;
+  confidence: number;
+  isSelected: boolean;
+  isProcessing?: boolean;
+}
+
 type Mode = 'IDLE' | 'SCAN_SELECT' | 'CAMERA_ACTIVE' | 'VOICE_RECORDING' | 'QUICK_NOTE_INPUT';
 
 const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject, onSaveToNotebook }) => {
   const [mode, setMode] = useState<Mode>('IDLE');
-  const [capturedText, setCapturedText] = useState('');
+  const [ocrBlocks, setOcrBlocks] = useState<OCRBlock[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showDistribution, setShowDistribution] = useState(false);
   
@@ -63,8 +71,13 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
       const base64Data = canvas.toDataURL('image/jpeg').split(',')[1];
       try {
         const results = await geminiService.extractTextFromImage(base64Data);
-        const fullText = results.map((r: any) => r.text).join('\n');
-        setCapturedText(fullText);
+        const blocks: OCRBlock[] = results.map((r: any, i: number) => ({
+          id: `ocr-${Date.now()}-${i}`,
+          text: r.text,
+          confidence: r.confidence,
+          isSelected: true
+        }));
+        setOcrBlocks(blocks);
         setShowDistribution(true);
         stopCamera();
       } catch (e) {
@@ -75,8 +88,14 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
     }
   };
 
-  const handleQuickNoteFinish = () => {
-    if (capturedText.trim()) {
+  const handleQuickNoteFinish = (text: string) => {
+    if (text.trim()) {
+      setOcrBlocks([{
+        id: `note-${Date.now()}`,
+        text: text,
+        confidence: 1,
+        isSelected: true
+      }]);
       setMode('IDLE');
       setShowDistribution(true);
     }
@@ -84,9 +103,13 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
 
   const handleVoiceFinish = () => {
     setIsProcessing(true);
-    // 模擬 AI 轉錄過程
     setTimeout(() => {
-      setCapturedText("這是語音轉化後的文本示例。文字的力量在於流動與碰撞，捕捉這些閃現的靈感至關重要。");
+      setOcrBlocks([{
+        id: `voice-${Date.now()}`,
+        text: "這是語音轉化後的文本示例。文字的力量在於流動與碰撞，捕捉這些閃現的靈感至關重要。",
+        confidence: 0.95,
+        isSelected: true
+      }]);
       setIsProcessing(false);
       setMode('IDLE');
       setShowDistribution(true);
@@ -94,16 +117,55 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
   };
 
   const handleFinalSave = () => {
+    const selectedContent = ocrBlocks
+      .filter(b => b.isSelected)
+      .map(b => b.text)
+      .join('\n\n');
+
+    if (!selectedContent.trim()) {
+      alert('請至少選擇一個文字區塊進行分發');
+      return;
+    }
+
     if (selectedProjectId) {
-      onSaveToProject(selectedProjectId, capturedText, selectedChapterId || undefined);
+      onSaveToProject(selectedProjectId, selectedContent, selectedChapterId || undefined);
     } else {
-      onSaveToNotebook(capturedText);
+      onSaveToNotebook(selectedContent);
     }
     setShowDistribution(false);
-    setCapturedText('');
+    setOcrBlocks([]);
   };
 
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
+  const toggleBlockSelection = (id: string) => {
+    setOcrBlocks(prev => prev.map(b => b.id === id ? { ...b, isSelected: !b.isSelected } : b));
+  };
+
+  const handleBlockAction = async (id: string, action: 'copy' | 'summarize' | 'rewrite') => {
+    const block = ocrBlocks.find(b => b.id === id);
+    if (!block) return;
+
+    if (action === 'copy') {
+      await navigator.clipboard.writeText(block.text);
+      // 簡單通知
+      alert('已複製到剪貼簿');
+      return;
+    }
+
+    // AI Actions
+    setOcrBlocks(prev => prev.map(b => b.id === id ? { ...b, isProcessing: true } : b));
+    try {
+      let resultText = '';
+      if (action === 'summarize') {
+        resultText = await geminiService.summarizeText(block.text);
+      } else if (action === 'rewrite') {
+        resultText = await geminiService.rewriteText(block.text);
+      }
+      setOcrBlocks(prev => prev.map(b => b.id === id ? { ...b, text: resultText, isProcessing: false } : b));
+    } catch (e) {
+      alert('AI 處理失敗');
+      setOcrBlocks(prev => prev.map(b => b.id === id ? { ...b, isProcessing: false } : b));
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-black text-white px-8 pb-40 overflow-y-auto no-scrollbar">
@@ -137,7 +199,7 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
               </div>
             </button>
             <button 
-              onClick={() => { setCapturedText(''); setMode('QUICK_NOTE_INPUT'); }}
+              onClick={() => { setOcrBlocks([]); setMode('QUICK_NOTE_INPUT'); }}
               className="bg-[#FF6B2C] rounded-[44px] aspect-square p-8 flex flex-col justify-between items-start text-white shadow-[0_30px_60px_rgba(255,107,44,0.15)] active:scale-[0.98] transition-all"
             >
               <div className="flex justify-end w-full"><i className="fa-solid fa-pen-nib text-3xl"></i></div>
@@ -238,76 +300,166 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
               <div><h2 className="text-2xl font-black text-white">快速筆記</h2><p className="text-[10px] text-orange-500 font-black uppercase mt-1">DRAFT NOW</p></div>
               <button onClick={() => setMode('IDLE')} className="w-12 h-12 rounded-full bg-white/5 text-gray-400"><i className="fa-solid fa-xmark"></i></button>
            </header>
-           <textarea autoFocus value={capturedText} onChange={(e) => setCapturedText(e.target.value)} className="flex-1 bg-transparent border-none outline-none resize-none text-3xl font-bold text-white placeholder-white/5 font-serif-editor leading-relaxed" placeholder="在此輸入您閃現的靈感..." />
-           <footer className="pt-10"><button onClick={handleQuickNoteFinish} className="w-full py-7 bg-[#FF6B2C] rounded-[44px] text-white font-black text-sm uppercase tracking-[0.4em] active:scale-95 transition-all">進入分發中心</button></footer>
+           <textarea 
+             autoFocus 
+             className="flex-1 bg-transparent border-none outline-none resize-none text-3xl font-bold text-white placeholder-white/5 font-serif-editor leading-relaxed" 
+             placeholder="在此輸入您閃現的靈感..."
+             onKeyDown={(e) => {
+               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                 handleQuickNoteFinish((e.target as HTMLTextAreaElement).value);
+               }
+             }}
+           />
+           <footer className="pt-10">
+             <button 
+               onClick={(e) => {
+                 const text = (e.currentTarget.parentElement?.previousElementSibling as HTMLTextAreaElement).value;
+                 handleQuickNoteFinish(text);
+               }} 
+               className="w-full py-7 bg-[#FF6B2C] rounded-[44px] text-white font-black text-sm uppercase tracking-[0.4em] active:scale-95 transition-all"
+             >
+               進入分發中心
+             </button>
+           </footer>
         </div>
       )}
 
-      {/* 6. DISTRIBUTION HUB Modal (核心分發邏輯) */}
+      {/* 6. DISTRIBUTION HUB Modal (核心分發邏輯與片段處理) */}
       {showDistribution && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-8">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-8">
            <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl" onClick={() => setShowDistribution(false)} />
-           <div className="relative w-full max-w-lg bg-[#1C1C1E] rounded-[56px] border border-white/5 overflow-hidden shadow-3xl flex flex-col animate-in slide-in-from-bottom duration-500 max-h-[90vh]">
-              <header className="p-10 border-b border-white/5 flex justify-between items-center shrink-0">
-                 <div><h2 className="text-2xl font-black text-white">分發中心</h2><p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">DISTRIBUTION HUB</p></div>
-                 <button onClick={() => setShowDistribution(false)} className="w-12 h-12 rounded-full bg-white/5 text-gray-400"><i className="fa-solid fa-xmark"></i></button>
+           <div className="relative w-full max-w-2xl bg-[#1C1C1E] rounded-[56px] border border-white/5 overflow-hidden shadow-3xl flex flex-col animate-in slide-in-from-bottom duration-500 max-h-[92vh]">
+              <header className="p-8 sm:p-10 border-b border-white/5 flex justify-between items-center shrink-0">
+                 <div>
+                   <h2 className="text-2xl font-black text-white tracking-tight">靈感分發中心</h2>
+                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">CAPTURE & DISTRIBUTE</p>
+                 </div>
+                 <button onClick={() => setShowDistribution(false)} className="w-12 h-12 rounded-full bg-white/5 text-gray-400 hover:text-white transition-colors"><i className="fa-solid fa-xmark"></i></button>
               </header>
-              <main className="p-10 overflow-y-auto no-scrollbar flex-1 space-y-10">
-                 <div className="bg-black/40 rounded-[32px] p-8 border border-white/5 font-serif-editor text-xl leading-relaxed text-gray-300">
-                    {capturedText || "尚未輸入內容..."}
+              
+              <main className="flex-1 overflow-y-auto no-scrollbar p-6 sm:p-10 space-y-10">
+                 {/* OCR Blocks Display */}
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-center px-2">
+                      <h5 className="text-[10px] font-black text-gray-600 uppercase tracking-widest">擷取到的片段 EXTRACTED SEGMENTS</h5>
+                      <span className="text-[9px] text-blue-500 font-bold uppercase tracking-widest">共 {ocrBlocks.length} 個區塊</span>
+                    </div>
+                    
+                    <div className="space-y-4">
+                       {ocrBlocks.map((block) => (
+                         <div 
+                           key={block.id} 
+                           className={`relative group bg-black/30 rounded-[32px] border transition-all overflow-hidden ${block.isSelected ? 'border-blue-500/40 bg-blue-600/5' : 'border-white/5 hover:border-white/10'}`}
+                         >
+                           <div className="p-6 sm:p-8 flex items-start space-x-4">
+                              <button 
+                                onClick={() => toggleBlockSelection(block.id)}
+                                className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all mt-1 shrink-0 ${block.isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-white/10'}`}
+                              >
+                                 {block.isSelected && <i className="fa-solid fa-check text-[10px]"></i>}
+                              </button>
+                              
+                              <div className="flex-1 space-y-4">
+                                 {block.isProcessing ? (
+                                   <div className="py-4 flex items-center space-x-3 text-blue-500">
+                                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                                      <span className="text-[10px] font-black uppercase tracking-widest animate-pulse">Gemini 正在重構中...</span>
+                                   </div>
+                                 ) : (
+                                   <p className="text-lg font-serif-editor leading-relaxed text-gray-300 transition-colors group-hover:text-white">
+                                     {block.text}
+                                   </p>
+                                 )}
+                                 
+                                 <div className="flex items-center space-x-2 pt-2 opacity-0 group-hover:opacity-100 transition-all">
+                                    <button 
+                                      onClick={() => handleBlockAction(block.id, 'copy')}
+                                      className="px-4 py-2 bg-white/5 rounded-xl text-[9px] font-black text-gray-400 hover:text-white hover:bg-white/10 flex items-center space-x-2 uppercase tracking-widest"
+                                    >
+                                       <i className="fa-solid fa-copy"></i>
+                                       <span>複製</span>
+                                    </button>
+                                    <button 
+                                      onClick={() => handleBlockAction(block.id, 'summarize')}
+                                      className="px-4 py-2 bg-blue-500/10 rounded-xl text-[9px] font-black text-blue-400 hover:text-white hover:bg-blue-600 flex items-center space-x-2 uppercase tracking-widest"
+                                    >
+                                       <i className="fa-solid fa-compress"></i>
+                                       <span>AI 摘要</span>
+                                    </button>
+                                    <button 
+                                      onClick={() => handleBlockAction(block.id, 'rewrite')}
+                                      className="px-4 py-2 bg-purple-500/10 rounded-xl text-[9px] font-black text-purple-400 hover:text-white hover:bg-purple-600 flex items-center space-x-2 uppercase tracking-widest"
+                                    >
+                                       <i className="fa-solid fa-wand-sparkles"></i>
+                                       <span>AI 改寫</span>
+                                    </button>
+                                 </div>
+                              </div>
+                           </div>
+                         </div>
+                       ))}
+                    </div>
                  </div>
 
-                 <div className="space-y-4">
+                 {/* Destination Selection */}
+                 <div className="space-y-6 pt-6 border-t border-white/5">
                     <h5 className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">存儲目標 DESTINATION</h5>
-                    <button 
-                      onClick={() => setSelectedProjectId(null)}
-                      className={`w-full p-6 rounded-[32px] border flex items-center justify-between transition-all ${selectedProjectId === null ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white/5 border-white/5 text-gray-400'}`}
-                    >
-                       <div className="flex items-center space-x-4"><i className="fa-solid fa-box-archive text-xl"></i><span className="text-sm font-black uppercase tracking-widest">存入靈感筆記本</span></div>
-                       {selectedProjectId === null && <i className="fa-solid fa-circle-check"></i>}
-                    </button>
                     
-                    {projects.map(p => (
-                      <div key={p.id} className="space-y-3">
-                        <button 
-                          onClick={() => setSelectedProjectId(p.id)}
-                          className={`w-full p-6 rounded-[32px] border flex items-center justify-between transition-all ${selectedProjectId === p.id ? 'bg-white/10 border-white/20 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}
-                        >
-                           <div className="flex items-center space-x-4">
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: p.color }}><i className={`fa-solid ${p.icon} text-black text-xs`}></i></div>
-                              <span className="text-sm font-black">{p.name}</span>
-                           </div>
-                           {selectedProjectId === p.id && <i className="fa-solid fa-chevron-down text-xs opacity-40"></i>}
-                        </button>
-                        
-                        {selectedProjectId === p.id && (
-                          <div className="pl-6 pr-2 py-2 space-y-2 animate-in slide-in-from-top-2 duration-300">
-                             <h6 className="text-[9px] font-black text-gray-600 uppercase tracking-widest px-2">選擇章節 CHAPTER</h6>
-                             <div className="flex flex-wrap gap-2">
-                               {p.chapters.map(c => (
-                                 <button 
-                                  key={c.id} 
-                                  onClick={() => setSelectedChapterId(c.id === selectedChapterId ? null : c.id)}
-                                  className={`px-5 py-3 rounded-2xl text-[10px] font-black transition-all border ${selectedChapterId === c.id ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-md' : 'bg-white/5 border-white/5 text-gray-500'}`}
-                                 >
-                                   {c.title}
-                                 </button>
-                               ))}
-                               <button 
-                                 onClick={() => setSelectedChapterId(null)}
-                                 className={`px-5 py-3 rounded-2xl text-[10px] font-black border transition-all ${selectedChapterId === null ? 'bg-white/20 border-white/40 text-white' : 'bg-white/5 border-white/5 text-gray-500'}`}
-                               >
-                                 + 新建章節
-                               </button>
+                    <div className="grid grid-cols-1 gap-4">
+                      <button 
+                        onClick={() => setSelectedProjectId(null)}
+                        className={`w-full p-6 rounded-[32px] border flex items-center justify-between transition-all ${selectedProjectId === null ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10'}`}
+                      >
+                         <div className="flex items-center space-x-4"><i className="fa-solid fa-box-archive text-xl"></i><span className="text-sm font-black uppercase tracking-widest">存入靈感筆記本 (獨立新專案)</span></div>
+                         {selectedProjectId === null && <i className="fa-solid fa-circle-check"></i>}
+                      </button>
+                      
+                      {projects.map(p => (
+                        <div key={p.id} className="space-y-3">
+                          <button 
+                            onClick={() => setSelectedProjectId(p.id)}
+                            className={`w-full p-6 rounded-[32px] border flex items-center justify-between transition-all ${selectedProjectId === p.id ? 'bg-white/10 border-white/20 text-white shadow-xl' : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10'}`}
+                          >
+                             <div className="flex items-center space-x-4">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: p.color }}><i className={`fa-solid ${p.icon} text-black text-xs`}></i></div>
+                                <span className="text-sm font-black">{p.name}</span>
                              </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                             {selectedProjectId === p.id && <i className="fa-solid fa-chevron-down text-xs opacity-40"></i>}
+                          </button>
+                          
+                          {selectedProjectId === p.id && (
+                            <div className="pl-6 pr-2 py-2 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                               <h6 className="text-[9px] font-black text-gray-600 uppercase tracking-widest px-2">選擇章節 CHAPTER</h6>
+                               <div className="flex flex-wrap gap-2">
+                                 {p.chapters.map(c => (
+                                   <button 
+                                    key={c.id} 
+                                    onClick={() => setSelectedChapterId(c.id === selectedChapterId ? null : c.id)}
+                                    className={`px-5 py-3 rounded-2xl text-[10px] font-black transition-all border ${selectedChapterId === c.id ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-md' : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10'}`}
+                                   >
+                                     {c.title}
+                                   </button>
+                                 ))}
+                                 <button 
+                                   onClick={() => setSelectedChapterId(null)}
+                                   className={`px-5 py-3 rounded-2xl text-[10px] font-black border transition-all ${selectedChapterId === null ? 'bg-white/20 border-white/40 text-white shadow-md' : 'bg-white/5 border-white/5 text-gray-500 hover:bg-white/10'}`}
+                                 >
+                                   + 建立新章節並存入
+                                 </button>
+                               </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                  </div>
               </main>
-              <footer className="p-10 shrink-0">
-                 <button onClick={handleFinalSave} className="w-full py-7 bg-[#D4FF5F] text-black font-black text-sm uppercase tracking-[0.4em] rounded-[32px] shadow-2xl active:scale-[0.97] transition-all">
+
+              <footer className="p-8 sm:p-10 shrink-0 bg-[#0F0F10] border-t border-white/5">
+                 <button 
+                   onClick={handleFinalSave} 
+                   className="w-full py-7 bg-[#D4FF5F] text-black font-black text-sm uppercase tracking-[0.4em] rounded-[32px] shadow-[0_20px_50px_rgba(212,255,95,0.2)] active:scale-[0.97] hover:scale-[1.01] transition-all"
+                 >
                     完 成 並 分 發 內 容
                  </button>
               </footer>

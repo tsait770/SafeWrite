@@ -62,7 +62,6 @@ export const geminiService = {
     return URL.createObjectURL(blob);
   },
 
-  // Fix: Add analyzeManuscript method for editor feedback
   async analyzeManuscript(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
@@ -72,7 +71,6 @@ export const geminiService = {
     return response.text || "分析結果為空。";
   },
 
-  // Fix: Add scanOutline method for visual outline extraction
   async scanOutline(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
@@ -82,7 +80,6 @@ export const geminiService = {
     return response.text || "大綱提取為空。";
   },
 
-  // Fix: Add analyzeCharacters method for character profiling
   async analyzeCharacters(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
@@ -92,7 +89,24 @@ export const geminiService = {
     return response.text || "角色分析為空。";
   },
 
-  // Fix: Add analyzeProjectStructure method for narrative graph visualization
+  async summarizeText(content: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `請簡要總結以下內容，保留核心要點：\n\n${content}`,
+    });
+    return response.text || content;
+  },
+
+  async rewriteText(content: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `請潤色並改寫以下內容，使其語氣更生動且通順：\n\n${content}`,
+    });
+    return response.text || content;
+  },
+
   async analyzeProjectStructure(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
