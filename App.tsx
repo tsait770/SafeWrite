@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings } from './types';
+import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings, BackupSettings } from './types';
 import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS, TEMPLATE_STRUCTURE_MAP } from './constants';
 import Library from './components/Library';
 import CaptureCenter from './components/CaptureCenter';
@@ -24,7 +24,7 @@ const App: React.FC = () => {
         targetWordCount: 50000,
         metadata: 'EDITED 10M AGO',
         progress: 82,
-        color: '#FADE4B', // 太陽黃
+        color: '#FADE4B', 
         icon: 'fa-feather-pointed',
         chapters: [{ 
           id: 'c1', 
@@ -54,7 +54,7 @@ const App: React.FC = () => {
         targetWordCount: 10000,
         metadata: 'EDITED 2H AGO',
         progress: 35,
-        color: '#FF6B2C', // 活力橘
+        color: '#FF6B2C', 
         icon: 'fa-pen-nib',
         chapters: [],
         modules: [],
@@ -72,7 +72,7 @@ const App: React.FC = () => {
         targetWordCount: 5000,
         metadata: 'EDITED 1D AGO',
         progress: 95,
-        color: '#D4FF5F', // 螢光綠
+        color: '#D4FF5F', 
         icon: 'fa-note-sticky',
         chapters: [],
         modules: [],
@@ -90,7 +90,7 @@ const App: React.FC = () => {
         targetWordCount: 20000,
         metadata: 'EDITED 3D AGO',
         progress: 12,
-        color: '#B2A4FF', // 夢幻紫
+        color: '#B2A4FF', 
         icon: 'fa-clapperboard',
         chapters: [],
         modules: [],
@@ -111,10 +111,14 @@ const App: React.FC = () => {
     language: 'zh-TW',
     aiPreferences: {
       provider: 'DEFAULT',
+      selectedModel: 'gemini-3-pro-preview',
       customModel: 'gemini-3-pro-preview',
       tone: 'CREATIVE',
       enableThinking: true,
-      thinkingBudget: 32768
+      thinkingBudget: 32768,
+      budgetLimit: 10,
+      currentUsage: 2.45,
+      onLimitAction: 'NOTIFY'
     },
     securitySettings: {
       autoSnapshotEnabled: true,
@@ -122,6 +126,13 @@ const App: React.FC = () => {
       autoSnapshotIntervalMinutes: 2,
       autoSnapshotIdleSeconds: 30,
       autoSnapshotCleanupDays: 30 
+    },
+    backupSettings: {
+      googleDriveConnected: false,
+      backupFolder: '/SafeWrite/Backups',
+      isEncrypted: true,
+      lastBackupTime: null,
+      status: 'IDLE'
     },
     stats: { 
       wordCount: 58210, 
@@ -156,7 +167,6 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Lazy Migration for StructureType
   useEffect(() => {
     setState(prev => {
         const needsUpdate = prev.projects.some(p => !p.structureType);
@@ -228,6 +238,10 @@ const App: React.FC = () => {
 
   const handleUpdateSecuritySettings = (settings: SecuritySettings) => {
     setState(prev => ({ ...prev, securitySettings: settings }));
+  };
+
+  const handleUpdateBackupSettings = (settings: BackupSettings) => {
+    setState(prev => ({ ...prev, backupSettings: settings }));
   };
 
   const handleDeleteProject = (projectId: string) => {
@@ -426,6 +440,7 @@ const App: React.FC = () => {
             onLanguageChange={(l) => setState(prev => ({...prev, language: l}))} 
             onUpdateAIPreferences={handleUpdateAIPreferences}
             onUpdateSecuritySettings={handleUpdateSecuritySettings}
+            onUpdateBackupSettings={handleUpdateBackupSettings}
           />
         ) : null}
       </main>

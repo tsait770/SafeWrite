@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AppState, MembershipLevel, SupportedLanguage, AIPreferences, SecuritySettings } from '../types';
+import { AppState, MembershipLevel, SupportedLanguage, AIPreferences, SecuritySettings, BackupSettings } from '../types';
 import LanguageSelector from './LanguageSelector';
 import PrivacyModal from './PrivacyModal';
 import AIPreferencesPage from './AIPreferences';
@@ -12,9 +12,10 @@ interface ProfileProps {
   onLanguageChange: (lang: SupportedLanguage) => void;
   onUpdateAIPreferences: (prefs: AIPreferences) => void;
   onUpdateSecuritySettings: (settings: SecuritySettings) => void;
+  onUpdateBackupSettings: (settings: BackupSettings) => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, onUpdateAIPreferences, onUpdateSecuritySettings }) => {
+const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, onUpdateAIPreferences, onUpdateSecuritySettings, onUpdateBackupSettings }) => {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAIPreferencesOpen, setIsAIPreferencesOpen] = useState(false);
@@ -25,6 +26,15 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
     onLanguageChange(lang);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 2000);
+  };
+
+  const toggleGDrive = () => {
+    onUpdateBackupSettings({
+      ...state.backupSettings,
+      googleDriveConnected: !state.backupSettings.googleDriveConnected,
+      status: state.backupSettings.googleDriveConnected ? 'IDLE' : 'SYNCING',
+      lastBackupTime: state.backupSettings.googleDriveConnected ? state.backupSettings.lastBackupTime : Date.now()
+    });
   };
 
   const currentLangName = {
@@ -88,6 +98,64 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
             <span>獲得 90 天 PRO 試用</span>
           </button>
         )}
+      </section>
+
+      {/* NEW: Data Backup & Sync Card (Google Drive) */}
+      <section className="space-y-4">
+        <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">資料備份與同步 DATA BACKUP</h2>
+        <div className="bg-[#1C1C1E] p-6 rounded-[2.5rem] border border-white/5 space-y-6 shadow-xl">
+           <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${state.backupSettings.googleDriveConnected ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-500'}`}>
+                    <i className="fa-brands fa-google-drive text-xl"></i>
+                 </div>
+                 <div>
+                    <h4 className="text-sm font-bold text-white">Google Drive 連結</h4>
+                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mt-1">
+                      {state.backupSettings.googleDriveConnected ? 'CONNECTED' : 'NOT CONNECTED'}
+                    </p>
+                 </div>
+              </div>
+              <button 
+                onClick={toggleGDrive}
+                className={`w-14 h-8 rounded-full flex items-center px-1 transition-colors ${state.backupSettings.googleDriveConnected ? 'bg-blue-600' : 'bg-white/10'}`}
+              >
+                <div className={`w-6 h-6 bg-white rounded-full shadow-sm transition-transform ${state.backupSettings.googleDriveConnected ? 'translate-x-6' : 'translate-x-0'}`} />
+              </button>
+           </div>
+
+           {state.backupSettings.googleDriveConnected && (
+             <div className="pt-6 border-t border-white/5 space-y-4 animate-in fade-in duration-500">
+                <div className="flex justify-between items-center px-1">
+                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">備份資料夾</span>
+                   <span className="text-[10px] font-black text-blue-400">{state.backupSettings.backupFolder}</span>
+                </div>
+                <div className="flex items-center justify-between px-1">
+                   <div className="flex items-center space-x-2">
+                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">端對端加密</span>
+                      <i className="fa-solid fa-lock text-[8px] text-green-500/60"></i>
+                   </div>
+                   <button 
+                     onClick={() => onUpdateBackupSettings({...state.backupSettings, isEncrypted: !state.backupSettings.isEncrypted})}
+                     className={`w-10 h-6 rounded-full flex items-center px-1 transition-colors ${state.backupSettings.isEncrypted ? 'bg-green-600/20' : 'bg-white/5'}`}
+                   >
+                     <div className={`w-4 h-4 bg-white rounded-full transition-transform ${state.backupSettings.isEncrypted ? 'translate-x-4' : 'translate-x-0'}`} />
+                   </button>
+                </div>
+                <div className="flex justify-between items-center px-1 pt-2">
+                   <div className="flex items-center space-x-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${state.backupSettings.status === 'SYNCING' ? 'bg-blue-500 animate-pulse' : 'bg-green-500'}`}></div>
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        {state.backupSettings.status === 'SYNCING' ? '正在同步中...' : '備份已完成'}
+                      </span>
+                   </div>
+                   <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
+                     最後同步: {state.backupSettings.lastBackupTime ? new Date(state.backupSettings.lastBackupTime).toLocaleString() : 'N/A'}
+                   </span>
+                </div>
+             </div>
+           )}
+        </div>
       </section>
 
       {/* Settings List */}

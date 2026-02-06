@@ -21,6 +21,72 @@ export const PROJECT_ICONS = [
   'fa-clapperboard', 'fa-layer-group'
 ];
 
+export const AI_MODEL_GROUPS = [
+  {
+    name: 'Google (Gemini)',
+    models: [
+      { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', isRecommended: true },
+      { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' },
+      { id: 'gemini-3-deep-think', name: 'Gemini 3 Deep Think' },
+      { id: 'gemini-2.5-pro-preview', name: 'Gemini 2.5 Pro' },
+      { id: 'gemini-2.5-flash-preview', name: 'Gemini 2.5 Flash' },
+      { id: 'gemini-2.5-flash-lite-preview', name: 'Gemini 2.5 Flash-Lite' },
+      { id: 'gemini-2.0-pro-preview', name: 'Gemini 2.0 Pro' },
+      { id: 'gemini-2.0-flash-preview', name: 'Gemini 2.0 Flash' },
+      { id: 'gemini-1.5-pro-preview', name: 'Gemini 1.5 Pro' },
+      { id: 'gemini-1.5-flash-preview', name: 'Gemini 1.5 Flash' }
+    ]
+  },
+  {
+    name: 'OpenAI',
+    models: [
+      { id: 'gpt-5', name: 'GPT-5' },
+      { id: 'gpt-4.1', name: 'GPT-4.1' },
+      { id: 'gpt-4', name: 'GPT-4' }
+    ]
+  },
+  {
+    name: 'Anthropic',
+    models: [
+      { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet' },
+      { id: 'claude-3-opus', name: 'Claude 3 Opus' },
+      { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet' }
+    ]
+  },
+  {
+    name: 'Microsoft / Azure OpenAI',
+    models: [
+      { id: 'azure-gpt-4.1', name: 'Azure GPT-4.1' },
+      { id: 'azure-gpt-4', name: 'Azure GPT-4' },
+      { id: 'azure-gpt-35-turbo', name: 'Azure GPT-35 Turbo' }
+    ]
+  },
+  {
+    name: 'Mistral AI',
+    models: [
+      { id: 'mistral-large', name: 'Mistral Large' }
+    ]
+  },
+  {
+    name: 'Meta',
+    models: [
+      { id: 'llama-3-70b', name: 'LLaMA 3 70B' }
+    ]
+  },
+  {
+    name: 'Cohere',
+    models: [
+      { id: 'command-r-plus', name: 'Command R+' }
+    ]
+  },
+  {
+    name: '常用開源 / 企業模型',
+    models: [
+      { id: 'falcon-180b', name: 'Falcon 180B' }
+    ]
+  }
+];
+
 export const STRUCTURE_DEFINITIONS: Record<StructureType, StructureDefinition> = {
   [StructureType.CHAPTER]: {
     type: StructureType.CHAPTER,
@@ -68,7 +134,7 @@ export interface TemplateConfig {
   enLabel: string;
   icon: string;
   description: string;
-  skeleton: string[]; // Still used for initial pre-fill if any
+  skeleton: string[]; 
 }
 
 export const TEMPLATES: Record<WritingType, TemplateConfig> = {
@@ -77,7 +143,7 @@ export const TEMPLATES: Record<WritingType, TemplateConfig> = {
     enLabel: 'Novel / Fiction',
     icon: 'fa-feather-pointed',
     description: '市場最受歡迎架構，整合章節、世界觀與深度筆記。',
-    skeleton: [] // Now handled by structure logic
+    skeleton: [] 
   },
   [WritingType.LONG_FORM]: {
     label: '長篇創作',

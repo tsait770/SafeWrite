@@ -5,7 +5,6 @@ export enum MembershipLevel {
   PREMIUM = 'PREMIUM'
 }
 
-// 核心寫作範本類型
 export enum WritingType {
   NOVEL = 'NOVEL',
   BLOG = 'BLOG',
@@ -35,27 +34,9 @@ export interface StructureDefinition {
   allowManualOrder: boolean;
 }
 
-export enum PublicationStatus {
-  DRAFT = 'DRAFT',
-  SUBMITTED = 'SUBMITTED',
-  REVIEWING = 'REVIEWING',
-  ACCEPTED = 'ACCEPTED',
-  PUBLISHED = 'PUBLISHED'
-}
-
-export enum UIMode {
-  FOCUS = 'FOCUS',
-  MANAGEMENT = 'MANAGEMENT'
-}
-
 export enum AppMode {
   REPOSITORY = 'REPOSITORY',
   CAPTURE = 'CAPTURE'
-}
-
-export enum ThemeMode {
-  DAY = 'DAY',
-  NIGHT = 'NIGHT'
 }
 
 export enum AppTab {
@@ -63,6 +44,32 @@ export enum AppTab {
   PROJECT_DETAIL = 'PROJECT_DETAIL',
   WRITE = 'WRITE',
   PROFILE = 'PROFILE'
+}
+
+// Added UIMode enum
+export enum UIMode {
+  MANAGEMENT = 'MANAGEMENT',
+  FOCUS = 'FOCUS'
+}
+
+// Added ThemeMode enum
+export enum ThemeMode {
+  LIGHT = 'LIGHT',
+  NIGHT = 'NIGHT'
+}
+
+// Added PublicationStatus enum
+export enum PublicationStatus {
+  SUBMITTED = 'SUBMITTED',
+  REVIEWING = 'REVIEWING',
+  ACCEPTED = 'ACCEPTED'
+}
+
+// Added OutlineNode interface
+export interface OutlineNode {
+  id: string;
+  label: string;
+  level: number;
 }
 
 export enum SnapshotType {
@@ -84,26 +91,15 @@ export interface StructureUnit {
   id: string;
   title: string;
   content: string;
-  order: number; // Used as position
+  order: number;
   wordCount: number;
   lastEdited: number;
   createdAt: number;
   history?: VersionSnapshot[];
 }
 
+// Added Chapter type alias for compatibility
 export type Chapter = StructureUnit;
-
-export interface OutlineNode {
-  id: string;
-  label: string;
-  level: number;
-}
-
-export enum ModuleType {
-  NARRATIVE = 'NARRATIVE',
-  CHARACTER = 'CHARACTER',
-  RESEARCH = 'RESEARCH'
-}
 
 export interface WritingModule {
   id: string;
@@ -131,9 +127,14 @@ export type SupportedLanguage =
 export interface AIPreferences {
   provider: 'DEFAULT' | 'CUSTOM';
   customModel: string;
+  selectedModel: string;
   tone: 'CREATIVE' | 'ACADEMIC' | 'PROFESSIONAL' | 'CASUAL';
   enableThinking: boolean;
   thinkingBudget: number;
+  customBaseUrl?: string;
+  budgetLimit: number;
+  currentUsage: number;
+  onLimitAction: 'STOP' | 'SWITCH' | 'NOTIFY';
 }
 
 export interface SecuritySettings {
@@ -144,11 +145,19 @@ export interface SecuritySettings {
   autoSnapshotCleanupDays: number | 'NEVER';
 }
 
+export interface BackupSettings {
+  googleDriveConnected: boolean;
+  backupFolder: string;
+  isEncrypted: boolean;
+  lastBackupTime: number | null;
+  status: 'IDLE' | 'SYNCING' | 'ERROR';
+}
+
 export interface Project {
   id: string;
   name: string;
   writingType: WritingType;
-  structureType: StructureType; // New: linking template to structure
+  structureType: StructureType;
   targetWordCount: number;
   metadata: string;
   progress: number;
@@ -180,8 +189,12 @@ export interface AppState {
   language: SupportedLanguage;
   aiPreferences: AIPreferences;
   securitySettings: SecuritySettings;
+  backupSettings: BackupSettings;
   editorSettings: {
     typewriterMode: boolean;
     previewMode: boolean;
   };
 }
+
+export type ImageSize = '1K' | '2K' | '4K';
+export type VideoAspectRatio = '16:9' | '9:16';

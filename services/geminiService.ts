@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type, Modality } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 const getAIClient = () => {
   const apiKey = process.env.API_KEY;
@@ -8,39 +8,97 @@ const getAIClient = () => {
 };
 
 export const geminiService = {
-  // OCR 文字提取：使用 Flash 模型處理圖片
-  async extractTextFromImage(base64Data: string) {
+  // 生成影像 (gemini-3-pro-image-preview)
+  async generateImage(prompt: string, size: '1K' | '2K' | '4K' = '1K') {
     const ai = getAIClient();
-    const imagePart = {
-      inlineData: {
-        mimeType: 'image/jpeg',
-        data: base64Data,
-      },
-    };
-    const prompt = "請提取圖片中的所有文字。將文字劃分為邏輯段落（Segments），並以 JSON 陣列格式回傳：[{'text': '內容', 'confidence': 0.98}]。僅回傳 JSON。";
-    
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: { parts: [imagePart, { text: prompt }] },
-      config: { responseMimeType: "application/json" }
+      model: 'gemini-3-pro-image-preview',
+      contents: { parts: [{ text: prompt }] },
+      config: {
+        imageConfig: {
+          aspectRatio: "1:1",
+          imageSize: size
+        }
+      }
     });
-    
-    try {
-      const text = response.text || "[]";
-      return JSON.parse(text);
-    } catch (e) {
-      return [{ text: response.text, confidence: 0.9 }];
+
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+      }
     }
+    throw new Error("No image data returned from model");
   },
 
-  // 結構圖譜分析：使用 Pro 模型 + 最大思考預算
+  // 生成影片 (veo-3.1-fast-generate-preview)
+  async generateVideo(prompt: string, aspectRatio: '16:9' | '9:16', base64Image?: string) {
+    const ai = getAIClient();
+    let operation = await ai.models.generateVideos({
+      model: 'veo-3.1-fast-generate-preview',
+      prompt: prompt,
+      ...(base64Image ? {
+        image: {
+          imageBytes: base64Image,
+          mimeType: 'image/png'
+        }
+      } : {}),
+      config: {
+        numberOfVideos: 1,
+        resolution: '720p',
+        aspectRatio: aspectRatio
+      }
+    });
+
+    while (!operation.done) {
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      operation = await ai.operations.getVideosOperation({ operation });
+    }
+
+    const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+    if (!downloadLink) throw new Error("Video generation failed: No download link");
+    
+    const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+    const blob = await response.blob();
+    return URL.createObjectURL(blob);
+  },
+
+  // Fix: Add analyzeManuscript method for editor feedback
+  async analyzeManuscript(content: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: `請作為資深編輯，對以下文稿進行深度點評。分析其節奏、語言風格及結構：\n\n${content}`,
+    });
+    return response.text || "分析結果為空。";
+  },
+
+  // Fix: Add scanOutline method for visual outline extraction
+  async scanOutline(content: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: `請從以下文稿中提取視覺化大綱。以條列式呈現，區分層級：\n\n${content}`,
+    });
+    return response.text || "大綱提取為空。";
+  },
+
+  // Fix: Add analyzeCharacters method for character profiling
+  async analyzeCharacters(content: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: `請分析以下文稿中的主要角色心理建模。描述其性格特徵、動機及成長弧線：\n\n${content}`,
+    });
+    return response.text || "角色分析為空。";
+  },
+
+  // Fix: Add analyzeProjectStructure method for narrative graph visualization
   async analyzeProjectStructure(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `身為敘事架構專家，請分析以下文稿並提取關鍵結構節點（角色、敘事、研究）。\n\n${content}`,
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 },
+      contents: `請分析以下文稿的敘事結構、角色關係及研究重點。並以 JSON 格式回傳 nodes 陣列，每個 node 包含 id, label, type (CHARACTER, NARRATIVE, RESEARCH)：\n\n${content}`,
+      config: { 
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -52,67 +110,56 @@ export const geminiService = {
                 properties: {
                   id: { type: Type.STRING },
                   label: { type: Type.STRING },
-                  type: { type: Type.STRING, description: "NARRATIVE, CHARACTER, or RESEARCH" },
-                  description: { type: Type.STRING }
+                  type: { type: Type.STRING, description: 'CHARACTER, NARRATIVE, or RESEARCH' }
                 },
-                required: ["id", "label", "type"]
+                required: ['id', 'label', 'type']
               }
             }
-          }
+          },
+          required: ['nodes']
         }
       }
     });
-    const text = response.text || '{"nodes":[]}';
-    return JSON.parse(text);
+    try {
+      return JSON.parse(response.text || '{"nodes": []}');
+    } catch (e) {
+      console.error("Failed to parse JSON for project structure:", e);
+      return { nodes: [] };
+    }
   },
 
-  async analyzeManuscript(content: string) {
+  async extractTextFromImage(base64Data: string) {
     const ai = getAIClient();
+    const imagePart = {
+      inlineData: {
+        mimeType: 'image/jpeg',
+        data: base64Data,
+      },
+    };
+    const prompt = "請提取圖片中的所有文字。將文字劃分為邏輯段落，並以 JSON 陣列格式回傳：[{'text': '內容', 'confidence': 0.98}]。僅回傳 JSON。";
+    
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: `身為資深編輯，請針對以下文本進行結構與語氣分析，並給予具體建議：\n\n${content}`,
-      config: { thinkingConfig: { thinkingBudget: 32768 } }
+      model: 'gemini-3-flash-preview',
+      contents: { parts: [imagePart, { text: prompt }] },
+      config: { responseMimeType: "application/json" }
     });
-    return response.text;
+    
+    try {
+      return JSON.parse(response.text || "[]");
+    } catch (e) {
+      return [{ text: response.text, confidence: 0.9 }];
+    }
   },
 
-  // 提取大綱：分析文稿並生成結構化大綱
-  async scanOutline(content: string) {
-    const ai = getAIClient();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: `請詳細分析以下文稿內容並生成一份層級結構分明的大綱：\n\n${content}`,
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  },
-
-  // 角色分析：分析文稿中的角色發展與動機
-  async analyzeCharacters(content: string) {
-    const ai = getAIClient();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: `身為文學評論家，請分析以下文稿中的主要角色、性格特徵、角色間的關係以及核心動機：\n\n${content}`,
-      config: {
-        thinkingConfig: { thinkingBudget: 32768 }
-      }
-    });
-    return response.text;
-  },
-
-  // 測試 API 連線
   async testConnection(apiKey: string, provider: string) {
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: "Hello, this is a connection test. Please respond with 'OK'.",
+        contents: "Hello, connection test. Respond with 'OK'.",
       });
       return response.text?.includes('OK');
     } catch (e) {
-      console.error("Connection test failed", e);
       return false;
     }
   }
