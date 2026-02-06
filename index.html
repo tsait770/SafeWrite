@@ -52,30 +52,30 @@
         .stack-container {
             display: flex;
             flex-direction: column;
-            padding-bottom: 80px;
+            padding-bottom: 200px;
             margin-top: 10px;
         }
         
         .stack-card {
-            border-radius: 48px;
-            padding: 40px 36px;
+            border-radius: 44px; /* Updated per requirements */
+            padding: 36px 40px;
             transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
             cursor: pointer;
-            box-shadow: 0 40px 80px rgba(0,0,0,0.3);
-            margin-bottom: -160px; /* Balanced peeking spacing */
-            height: 250px; /* Fixed height for consistent stack */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+            margin-bottom: -150px; /* Enhanced peaking depth */
+            height: 260px; /* Fixed height for consistent stack */
         }
 
         .stack-card:hover {
-            transform: translateY(-50px) scale(1.02);
+            transform: translateY(-60px) scale(1.03);
             z-index: 100 !important;
-            box-shadow: 0 60px 100px rgba(0,0,0,0.5);
+            box-shadow: 0 50px 100px rgba(0,0,0,0.6);
         }
 
         .stack-card:active {
-            transform: translateY(-45px) scale(0.98);
+            transform: translateY(-55px) scale(0.99);
         }
 
         .stack-card:last-child {
@@ -113,18 +113,18 @@
             transition: all 0.3s ease;
         }
 
-        /* Progress Bar - Dark on Light */
+        /* Progress Bar - Optimized Visuals */
         .progress-bar-container {
-            height: 6px;
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 3px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 2px;
             width: 100%;
             overflow: hidden;
         }
         .progress-fill {
             height: 100%;
-            border-radius: 3px;
-            transition: width 1s ease-in-out;
+            border-radius: 2px;
+            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* Weather Card */
@@ -135,7 +135,7 @@
           padding: 28px;
           background: radial-gradient(178.94% 106.41% at 26.42% 106.41%, #FFF7B1 0%, rgba(255, 255, 255, 0) 71.88%), #FFFFFF;
           box-shadow: 0px 40px 60px rgba(0, 0, 0, 0.2);
-          border-radius: 40px;
+          border-radius: 44px;
           overflow: hidden;
         }
         .weather-container { width: 250px; height: 250px; position: absolute; right: -35px; top: -50px; display: flex; align-items: center; justify-content: center; transform: scale(0.7); pointer-events: none; }

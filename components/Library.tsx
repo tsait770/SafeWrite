@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
-import { Project, WritingType, StructureUnit } from '../types';
-import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES } from '../constants';
+import React, { useState, useEffect } from 'react';
+import { Project, WritingType, StructureUnit, StructureType } from '../types';
+import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES, TEMPLATE_STRUCTURE_MAP, STRUCTURE_DEFINITIONS } from '../constants';
 
 interface LibraryProps {
   projects: Project[];
@@ -24,6 +24,13 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
     icon: PROJECT_ICONS[0]
   });
 
+  // 監聽點擊外部以關閉選單
+  useEffect(() => {
+    const handleGlobalClick = () => setActiveMenuId(null);
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
+
   const resetForm = () => {
     setFormData({ name: '', type: WritingType.NOVEL, targetWordCount: 5000, color: PROJECT_COLORS[4], icon: PROJECT_ICONS[0] });
     setIsCreating(false);
@@ -33,29 +40,34 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const handleCreate = () => {
     if (!formData.name.trim()) return;
 
-    const template = TEMPLATES[formData.type];
+    const structType = TEMPLATE_STRUCTURE_MAP[formData.type] || StructureType.FREE;
+    const def = STRUCTURE_DEFINITIONS[structType];
     
-    // 根據範本主結構初始化 Structure Units
-    const initialUnits: StructureUnit[] = template.skeleton.map((title, idx) => ({
-      id: `u-${Date.now()}-${idx}`,
-      title: title,
-      content: '',
-      order: idx + 1,
-      wordCount: 0,
-      lastEdited: Date.now()
-    }));
+    const initialUnits: StructureUnit[] = [];
+    if (structType !== StructureType.FREE) {
+        initialUnits.push({
+            id: `u-${Date.now()}-0`,
+            title: def.autoNumbering ? def.defaultNamingRule(1) : (structType === StructureType.BLOCK ? '未命名區塊' : '第一部分'),
+            content: '',
+            order: 1,
+            wordCount: 0,
+            lastEdited: Date.now(),
+            createdAt: Date.now()
+        });
+    }
 
     const newProject: Project = {
       id: `p-${Date.now()}`,
       name: formData.name,
       writingType: formData.type,
+      structureType: structType,
       targetWordCount: formData.targetWordCount,
       metadata: '剛剛建立',
       progress: 0,
       color: formData.color,
       icon: formData.icon,
       chapters: initialUnits,
-      modules: [], // 基礎結構
+      modules: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
       tags: [],
@@ -85,13 +97,15 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
         p.id === project.id ? { ...p, name: newName.trim(), updatedAt: Date.now() } : p
       );
       onUpdateProjects(updatedProjects);
+    } else if (newName === '') {
+      alert('專案名稱不能為空');
     }
     setActiveMenuId(null);
   };
 
   const handleDelete = (e: React.MouseEvent, project: Project) => {
     e.stopPropagation();
-    if (window.confirm(`確定要刪除「${project.name}」嗎？此操作無法復原。`)) {
+    if (window.confirm(`確定要刪除專案「${project.name}」嗎？此動作無法復原。`)) {
       const updatedProjects = projects.filter(p => p.id !== project.id);
       onUpdateProjects(updatedProjects);
     }
@@ -104,7 +118,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
     return a.isPinned ? -1 : 1;
   });
 
-  // 首頁固定 2x2 範本
   const gridParadigms = [
     WritingType.NOVEL,
     WritingType.BLOG,
@@ -112,12 +125,10 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
     WritingType.CUSTOM 
   ];
 
-  // 卷軸範本庫（其餘）
   const scrollParadigms = (Object.keys(TEMPLATES) as WritingType[]).filter(t => !gridParadigms.includes(t));
 
   return (
     <div className="px-8 space-y-12 pb-40">
-      {/* Weather Widget */}
       <section>
         <div className="weather-card">
           <div className="weather-container">
@@ -136,7 +147,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
         </div>
       </section>
 
-      {/* Repository Section */}
       <section>
         <div className="flex items-center justify-between mb-8">
           <div className="flex flex-col">
@@ -160,25 +170,24 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                 zIndex: sortedProjects.length - idx,
                 backgroundColor: proj.color,
                 color: proj.color === '#000000' || proj.color === '#121212' || proj.color === '#1E293B' ? '#ffffff' : '#121212',
-                animationDelay: `${idx * 150}ms`
+                animationDelay: `${idx * 100}ms`
               }}
               onClick={() => onSelectProject(proj)}
             >
-              <div className="flex flex-col h-full justify-between relative">
-                <div className="flex justify-between items-start">
-                  <div className="max-w-[70%]">
-                    <div className="flex items-center space-x-2 mb-1">
+              <div className="flex flex-col h-full relative">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="max-w-[80%]">
+                    <div className="flex items-center space-x-3 mb-1.5">
                       {proj.isPinned && <i className="fa-solid fa-thumbtack text-xs opacity-60"></i>}
-                      <h3 className="text-[34px] font-black tracking-tighter leading-[1.05] truncate">{proj.name}</h3>
+                      <h3 className="text-[34px] font-black tracking-tighter leading-none truncate">{proj.name}</h3>
                     </div>
                     <div className="flex items-center space-x-2">
-                       <span className="text-[10px] font-black uppercase tracking-widest opacity-40">
-                         {TEMPLATES[proj.writingType]?.label} • {proj.targetWordCount / 1000}K 目標
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                         {proj.tags && proj.tags.length > 0 ? `${proj.tags[0]} • ` : ''}{TEMPLATES[proj.writingType]?.label}
                        </span>
                     </div>
                   </div>
                   
-                  {/* Overflow Menu Button */}
                   <div className="relative">
                     <button 
                       onClick={(e) => {
@@ -192,14 +201,14 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
 
                     {activeMenuId === proj.id && (
                       <div 
-                        className="absolute right-0 top-12 w-36 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl z-[200] p-1 animate-in fade-in zoom-in duration-200"
+                        className="absolute right-0 top-12 w-40 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl z-[200] p-1 animate-in fade-in zoom-in duration-200"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button 
                           onClick={(e) => handleTogglePin(e, proj)}
                           className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/5 text-left transition-colors"
                         >
-                          <i className={`fa-solid fa-thumbtack text-[11px] ${proj.isPinned ? 'text-[#D4FF5F]' : 'text-gray-500'}`}></i>
+                          <i className={`fa-solid fa-thumbtack text-[11px] ${proj.isPinned ? 'text-[#D4FF5F]' : 'text-gray-400'}`}></i>
                           <span className="text-[11px] font-black text-white uppercase tracking-wider">{proj.isPinned ? '取消置頂' : '置頂專案'}</span>
                         </button>
                         <button 
@@ -221,9 +230,14 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                   </div>
                 </div>
                 
-                <div className="mb-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-[10px] font-black uppercase tracking-widest opacity-40">{proj.progress}%</div>
+                <div className="mt-auto pb-2">
+                  <div className="flex justify-between items-end mb-3">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
+                      {proj.metadata || 'JUST NOW'}
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.25em] opacity-40">
+                      {proj.progress}%
+                    </div>
                   </div>
                   <div className="progress-bar-container">
                     <div className="progress-fill bg-black/20" style={{ width: `${proj.progress}%` }} />
@@ -282,7 +296,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
               </header>
 
               <div className="flex-1 overflow-y-auto no-scrollbar px-10 pt-6 pb-40 space-y-10">
-                 {/* 固定 2x2 矩陣範本 */}
                  <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-1">寫作範式 TEMPLATE PARADIGM</label>
                     <div className="grid grid-cols-2 gap-3">
@@ -304,7 +317,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </div>
                  </div>
 
-                 {/* 卷軸範本庫 - 其餘專業範本 */}
                  <div className="space-y-4">
                     <div className="flex items-center justify-between px-1">
                        <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest">其餘專業範本 SPECIALIZED</label>
@@ -339,7 +351,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </div>
                  </div>
 
-                 {/* 視覺編碼 VISUAL CODING */}
                  <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-1">視覺編碼 VISUAL CODING</label>
                     <div className="grid grid-cols-6 gap-3">
@@ -351,13 +362,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
               </div>
 
               <div className="absolute bottom-0 inset-x-0 p-10 bg-gradient-to-t from-[#0F0F10] via-[#0F0F10] to-transparent">
-                 <button 
-                    onClick={handleCreate} 
-                    disabled={!formData.name.trim()} 
-                    className={`w-full py-7 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-[0.97] ${!formData.name.trim() ? 'bg-gray-800 opacity-40' : 'bg-[#7b61ff] shadow-[0_20px_50px_rgba(123,97,255,0.3)]'}`}
-                 >
-                    啟 動 智 慧 倉 庫
-                 </button>
+                 <button onClick={handleCreate} disabled={!formData.name.trim()} className={`w-full py-7 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-2xl transition-all active:scale-[0.97] ${!formData.name.trim() ? 'bg-gray-800 opacity-40' : 'bg-[#7b61ff] shadow-[0_20px_50px_rgba(123,97,255,0.3)]'}`}>啟 動 智 慧 倉 庫</button>
               </div>
            </div>
         </div>

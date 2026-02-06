@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, ModuleType, WritingModule, OutlineNode, AIPreferences, SecuritySettings } from './types';
-import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS } from './constants';
+import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings } from './types';
+import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS, TEMPLATE_STRUCTURE_MAP } from './constants';
 import Library from './components/Library';
 import CaptureCenter from './components/CaptureCenter';
 import Profile from './components/Profile';
@@ -20,10 +20,11 @@ const App: React.FC = () => {
         id: 'p1',
         name: 'The Solar Paradox',
         writingType: WritingType.NOVEL,
+        structureType: StructureType.CHAPTER,
         targetWordCount: 50000,
-        metadata: 'Edited 10m ago',
+        metadata: 'EDITED 10M AGO',
         progress: 82,
-        color: '#FADE4B',
+        color: '#FADE4B', // 太陽黃
         icon: 'fa-feather-pointed',
         chapters: [{ 
           id: 'c1', 
@@ -35,7 +36,8 @@ const App: React.FC = () => {
             { id: 'v2', timestamp: Date.now() - 1800000, content: '故事開始於...', title: '第 1 章', type: SnapshotType.MILESTONE }
           ], 
           wordCount: 1250, 
-          lastEdited: Date.now() 
+          lastEdited: Date.now(),
+          createdAt: Date.now() - 3600000
         }],
         modules: [],
         settings: { typography: 'serif', fontSize: 'normal' },
@@ -43,6 +45,60 @@ const App: React.FC = () => {
         updatedAt: Date.now() - 600000,
         tags: ['SCI-FI', 'SPACE'],
         isPinned: true
+      },
+      {
+        id: 'p2',
+        name: 'Vibrant Horizons',
+        writingType: WritingType.BLOG,
+        structureType: StructureType.SECTION,
+        targetWordCount: 10000,
+        metadata: 'EDITED 2H AGO',
+        progress: 35,
+        color: '#FF6B2C', // 活力橘
+        icon: 'fa-pen-nib',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'sans', fontSize: 'normal' },
+        createdAt: Date.now() - 86400000,
+        updatedAt: Date.now() - 7200000,
+        tags: ['TECH', 'WEB3'],
+        isPinned: false
+      },
+      {
+        id: 'p3',
+        name: 'Neon Thoughts',
+        writingType: WritingType.DIARY,
+        structureType: StructureType.FREE,
+        targetWordCount: 5000,
+        metadata: 'EDITED 1D AGO',
+        progress: 95,
+        color: '#D4FF5F', // 螢光綠
+        icon: 'fa-note-sticky',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'serif', fontSize: 'normal' },
+        createdAt: Date.now() - 172800000,
+        updatedAt: Date.now() - 86400000,
+        tags: ['PERSONAL'],
+        isPinned: false
+      },
+      {
+        id: 'p4',
+        name: 'Dreamy Sequences',
+        writingType: WritingType.SCREENPLAY,
+        structureType: StructureType.CHAPTER,
+        targetWordCount: 20000,
+        metadata: 'EDITED 3D AGO',
+        progress: 12,
+        color: '#B2A4FF', // 夢幻紫
+        icon: 'fa-clapperboard',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'serif', fontSize: 'normal' },
+        createdAt: Date.now() - 259200000,
+        updatedAt: Date.now() - 259200000,
+        tags: ['FILM'],
+        isPinned: false
       }
     ],
     currentProject: null,
@@ -65,7 +121,7 @@ const App: React.FC = () => {
       autoSnapshotMode: 'interval',
       autoSnapshotIntervalMinutes: 2,
       autoSnapshotIdleSeconds: 30,
-      autoSnapshotCleanupDays: 30 // 預設 30 天
+      autoSnapshotCleanupDays: 30 
     },
     stats: { 
       wordCount: 58210, 
@@ -85,22 +141,35 @@ const App: React.FC = () => {
 
   const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION'>('NONE');
   
-  // 液態側滑狀態
-  const [swipeProgress, setSwipeProgress] = useState(0); // 0 to 1
+  const [swipeProgress, setSwipeProgress] = useState(0); 
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
-  // 快照與計時器相關的 Refs
   const lastSnapshotContentRef = useRef<string>('');
   const idleTimerRef = useRef<number | null>(null);
   const intervalTimerRef = useRef<number | null>(null);
   
-  // 檢測是否為平板或桌面端
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Lazy Migration for StructureType
+  useEffect(() => {
+    setState(prev => {
+        const needsUpdate = prev.projects.some(p => !p.structureType);
+        if (!needsUpdate) return prev;
+        
+        const updatedProjects = prev.projects.map(p => {
+            if (!p.structureType) {
+                return { ...p, structureType: TEMPLATE_STRUCTURE_MAP[p.writingType] || StructureType.FREE };
+            }
+            return p;
+        });
+        return { ...prev, projects: updatedProjects };
+    });
   }, []);
 
   const isTabletOrDesktop = windowWidth >= 768;
@@ -110,7 +179,6 @@ const App: React.FC = () => {
     const x = e.touches[0].clientX;
     const screenWidth = window.innerWidth;
     
-    // 判斷是否從螢幕右側邊緣開始，且處於寫作模式
     const edgeThreshold = isTabletOrDesktop ? screenWidth * 0.95 : screenWidth * 0.85;
     if (state.activeTab === AppTab.WRITE && state.currentChapterId && x > edgeThreshold && activeOverlay === 'NONE') {
       touchStartX.current = x;
@@ -121,7 +189,7 @@ const App: React.FC = () => {
   const handleGlobalTouchMove = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const currentX = e.touches[0].clientX;
-    const deltaX = touchStartX.current - currentX; // 向左滑動為正
+    const deltaX = touchStartX.current - currentX; 
     
     const progress = Math.min(Math.max(deltaX / panelWidth, 0), 1);
     setSwipeProgress(progress);
@@ -364,7 +432,6 @@ const App: React.FC = () => {
 
       <BottomNav activeTab={state.activeTab} onTabChange={(tab) => setState(prev => ({ ...prev, activeTab: tab }))} isVisible={isBottomNavVisible} />
 
-      {/* 液態側滑容器：時光機面板 */}
       <div 
         className="fixed inset-0 z-[1000] pointer-events-none"
         style={{

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Project, Chapter, WritingModule } from '../types';
-import { TEMPLATES } from '../constants';
+import { Project, Chapter, WritingModule, StructureType } from '../types';
+import { TEMPLATES, STRUCTURE_DEFINITIONS } from '../constants';
 
 interface ProjectDetailProps {
   project: Project;
@@ -19,6 +19,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const structDef = STRUCTURE_DEFINITIONS[project.structureType] || STRUCTURE_DEFINITIONS[StructureType.FREE];
+
   const totalWords = project.chapters.reduce((acc, c) => acc + (c.wordCount || 0), 0);
   const writingDays = Math.max(1, Math.ceil((Date.now() - project.createdAt) / (1000 * 60 * 60 * 24)));
 
@@ -33,30 +35,45 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   }, []);
 
   const handleOpenAdd = () => {
-    const nextNum = project.chapters.length + 1;
-    setNewTitle(`第 ${nextNum} 章 · Chapter ${nextNum}`);
+    if (structDef.autoNumbering) {
+      const nextPos = project.chapters.length + 1;
+      setNewTitle(structDef.defaultNamingRule(nextPos));
+    } else {
+      setNewTitle('');
+    }
     setIsAddingChapter(true);
   };
 
   const handleAdd = () => {
-    const nextNum = project.chapters.length + 1;
-    const finalTitle = newTitle.trim() || `第 ${nextNum} 章 · Chapter ${nextNum}`;
-    const newChapter: Chapter = {
-      id: 'c-' + Date.now(),
+    const nextPos = project.chapters.length + 1;
+    let finalTitle = newTitle.trim();
+    
+    if (structDef.autoNumbering && !finalTitle) {
+      finalTitle = structDef.defaultNamingRule(nextPos);
+    } else if (!structDef.autoNumbering && !finalTitle) {
+      finalTitle = project.structureType === StructureType.BLOCK ? '未命名區塊' : '新內容';
+    }
+
+    const newUnit: Chapter = {
+      id: 'u-' + Date.now(),
       title: finalTitle,
       content: '',
-      order: project.chapters.length + 1,
+      order: nextPos,
       history: [],
       wordCount: 0,
-      lastEdited: Date.now()
+      lastEdited: Date.now(),
+      createdAt: Date.now()
     };
-    onUpdateProject({ ...project, chapters: [...project.chapters, newChapter] });
+    
+    onUpdateProject({ ...project, chapters: [...project.chapters, newUnit] });
     setNewTitle('');
     setIsAddingChapter(false);
   };
 
   const handleDeleteChapter = (id: string) => {
-    onUpdateProject({ ...project, chapters: project.chapters.filter(c => c.id !== id) });
+    const remaining = project.chapters.filter(c => c.id !== id);
+    const reordered = remaining.map((c, i) => ({ ...c, order: i + 1 }));
+    onUpdateProject({ ...project, chapters: reordered });
   };
 
   const handleTogglePin = () => {
@@ -67,13 +84,15 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const handleEditProject = () => {
     const newName = window.prompt('請輸入新的專案名稱：', project.name);
     if (newName && newName.trim()) {
-      onUpdateProject({ ...project, name: newName.trim() });
+      onUpdateProject({ ...project, name: newName.trim(), updatedAt: Date.now() });
+    } else if (newName === '') {
+      alert('專案名稱不能為空');
     }
     setIsMenuOpen(false);
   };
 
   const handleDeleteProjectConfirm = () => {
-    if (window.confirm('確定要刪除整個專案嗎？此操作無法復原。')) {
+    if (window.confirm(`確定要刪除專案「${project.name}」嗎？此動作無法復原。`)) {
       onDeleteProject(project.id);
     }
     setIsMenuOpen(false);
@@ -95,6 +114,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
     onUpdateProject({ ...project, chapters: orderedChapters });
     setDraggedIdx(idx);
   };
+
+  const shouldHideList = project.structureType === StructureType.FREE;
 
   return (
     <div className="flex flex-col h-full animate-in slide-in-from-right duration-500 overflow-y-auto no-scrollbar pb-40">
@@ -127,11 +148,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                 <div className="absolute right-0 top-14 w-48 bg-[#1C1C1E] border border-white/10 rounded-3xl shadow-3xl z-[100] p-2 animate-in fade-in zoom-in duration-200">
                   <button onClick={handleTogglePin} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
                     <i className={`fa-solid fa-thumbtack ${project.isPinned ? 'text-[#D4FF5F]' : 'text-gray-500'}`}></i>
-                    <span className="text-[11px] font-black uppercase tracking-widest text-white">{project.isPinned ? '取消置頂' : '新增置頂'}</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white">{project.isPinned ? '取消置頂' : '置頂專案'}</span>
                   </button>
                   <button onClick={handleEditProject} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
                     <i className="fa-solid fa-pen-to-square text-blue-400"></i>
-                    <span className="text-[11px] font-black uppercase tracking-widest text-white">編輯專案</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white">編輯名稱</span>
                   </button>
                   <div className="h-px bg-white/5 my-1 mx-2" />
                   <button onClick={handleDeleteProjectConfirm} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-red-500/10 text-left transition-colors">
@@ -143,7 +164,6 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
             </div>
          </div>
 
-         {/* Stats Panel */}
          <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">總字數統計</p>
@@ -173,32 +193,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
       </header>
 
       <main className="px-8 space-y-12">
-         {/* Skeleton Modules Showcase */}
-         <section className="space-y-6">
-            <h2 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] px-2">智慧架構 SKELETON</h2>
-            <div className="grid grid-cols-2 gap-3">
-               {project.modules.length === 0 ? (
-                  <div className="col-span-2 py-8 text-center bg-white/5 rounded-[2.5rem] border border-dashed border-white/10 opacity-30">
-                    <p className="text-[9px] font-black uppercase tracking-widest">尚無自定義模組</p>
-                  </div>
-               ) : (
-                  project.modules.map((m) => (
-                    <div key={m.id} className="p-5 bg-white/5 border border-white/5 rounded-[2.5rem] flex flex-col items-center justify-center space-y-3 opacity-80 hover:opacity-100 transition-opacity">
-                       <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400">
-                          <i className={`fa-solid ${m.icon}`}></i>
-                       </div>
-                       <span className="text-[9px] font-black text-white uppercase tracking-widest">{m.title}</span>
-                    </div>
-                  ))
-               )}
-            </div>
-         </section>
-
-         {/* Chapter Management */}
-         <section className="space-y-6">
+         {!shouldHideList && (
+          <section className="space-y-6">
             <div className="flex items-center justify-between px-2 mb-4">
                <div>
-                  <h2 className="text-3xl font-black text-white tracking-tight">章節管理</h2>
+                  <h2 className="text-3xl font-black text-white tracking-tight">
+                    {project.structureType === StructureType.CHAPTER ? '章節管理' : project.structureType === StructureType.SECTION ? '節點列表' : '內容區塊'}
+                  </h2>
                   <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mt-1">拖拽排序 · 點擊編輯</p>
                </div>
                <button onClick={handleOpenAdd} className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
@@ -213,37 +214,38 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                      <p className="text-[10px] font-black uppercase tracking-widest">目前尚無內容，請點擊新增</p>
                   </div>
                ) : (
-                  project.chapters.map((chapter, idx) => (
+                  project.chapters.map((unit, idx) => (
                     <div 
-                      key={chapter.id} 
-                      draggable
-                      onDragStart={() => onDragStart(idx)}
-                      onDragOver={(e) => onDragOver(e, idx)}
+                      key={unit.id} 
+                      draggable={structDef.allowManualOrder}
+                      onDragStart={() => structDef.allowManualOrder && onDragStart(idx)}
+                      onDragOver={(e) => structDef.allowManualOrder && onDragOver(e, idx)}
                       onDragEnd={() => setDraggedIdx(null)}
                       className={`group bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 flex items-center justify-between transition-all hover:bg-[#252528] ${draggedIdx === idx ? 'opacity-40 scale-95' : ''}`}
                     >
                        <div className="flex items-center space-x-6">
-                          <button className="text-gray-700 hover:text-white transition-colors cursor-grab active:cursor-grabbing">
-                            <i className="fa-solid fa-ellipsis-vertical text-xl opacity-30"></i>
-                            <i className="fa-solid fa-ellipsis-vertical text-xl opacity-30 -ml-2"></i>
-                          </button>
+                          {structDef.allowManualOrder && (
+                            <button className="text-gray-700 hover:text-white transition-colors cursor-grab active:cursor-grabbing">
+                              <i className="fa-solid fa-grip-lines text-xl opacity-30"></i>
+                            </button>
+                          )}
                           <div className="flex flex-col">
-                             <h4 className="text-xl font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">{chapter.title}</h4>
+                             <h4 className="text-xl font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">{unit.title}</h4>
                              <p className="text-[11px] text-gray-600 font-black uppercase tracking-widest mt-1">
-                               {chapter.wordCount} 字
+                               {unit.wordCount} 字
                              </p>
                           </div>
                        </div>
                        
                        <div className="flex items-center space-x-4">
-                          <button onClick={(e) => { e.stopPropagation(); onEnterEditor(chapter.id); }} className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all">
+                          <button onClick={(e) => { e.stopPropagation(); onEnterEditor(unit.id); }} className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 transition-all">
                              <i className="fa-solid fa-pen text-lg"></i>
                           </button>
-                          <button onClick={(e) => { e.stopPropagation(); handleDeleteChapter(chapter.id); }} className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all">
-                             <i className="fa-solid fa-trash-can text-lg"></i>
+                          <button onClick={(e) => { e.stopPropagation(); handleDeleteChapter(unit.id); }} className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all">
+                             <i className="fa-solid fa-trash text-lg"></i>
                           </button>
                           <button 
-                            onClick={() => onEnterEditor(chapter.id)}
+                            onClick={() => onEnterEditor(unit.id)}
                             className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-xl shadow-[0_10px_20px_rgba(37,99,235,0.3)] active:scale-95 transition-all"
                           >
                              <i className="fa-solid fa-play ml-1"></i>
@@ -256,26 +258,31 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
 
             {isAddingChapter && (
                <div className="bg-[#1C1C1E] p-8 rounded-[40px] border border-blue-600/50 animate-in slide-in-from-top-4 shadow-2xl">
-                  <label className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-2 block">輸入章節名稱</label>
-                  <input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="例如：第 2 章 · Chapter 2..." className="w-full bg-transparent text-2xl font-black outline-none text-white mb-6 border-b border-white/10 pb-2 focus:border-blue-600 transition-colors" />
+                  <label className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-2 block">
+                    {structDef.autoNumbering ? '確認標題' : '輸入標題'}
+                  </label>
+                  <input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="在此輸入名稱..." className="w-full bg-transparent text-2xl font-black outline-none text-white mb-6 border-b border-white/10 pb-2 focus:border-blue-600 transition-colors" />
                   <div className="flex justify-end space-x-4">
                      <button onClick={() => setIsAddingChapter(false)} className="text-xs font-black text-gray-500 uppercase tracking-widest">取消</button>
                      <button onClick={handleAdd} className="bg-blue-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">確認建立</button>
                   </div>
                </div>
             )}
-         </section>
-      </main>
+          </section>
+         )}
 
-      <div className="fixed bottom-32 left-8 right-8">
-         <button 
-           onClick={() => project.chapters.length > 0 ? onEnterEditor(project.chapters[0].id) : handleOpenAdd()}
-           className="w-full h-24 bg-white text-black font-black text-sm uppercase tracking-[0.4em] rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.4)] active:scale-95 transition-all flex items-center justify-center space-x-4"
-         >
-            <i className="fa-solid fa-bolt-lightning text-xl"></i>
-            <span>進入創作流主機</span>
-         </button>
-      </div>
+         {shouldHideList && (
+           <div className="py-20 flex flex-col items-center">
+              <div className="w-32 h-32 bg-[#1C1C1E] rounded-[48px] flex items-center justify-center border border-white/5 shadow-2xl mb-12">
+                 <i className="fa-solid fa-note-sticky text-[#D4FF5F] text-5xl"></i>
+              </div>
+              <h2 className="text-3xl font-black text-white tracking-tight mb-4">隨手寫作模式</h2>
+              <p className="text-[#8E8E93] text-[14px] leading-relaxed max-w-xs text-center font-medium">
+                此範本採用無章節自由書寫模式。您的所有思緒將被保存在單一主文稿中。
+              </p>
+           </div>
+         )}
+      </main>
     </div>
   );
 };

@@ -21,6 +21,20 @@ export enum WritingType {
   BOOK_OUTLINE = 'BOOK_OUTLINE'
 }
 
+export enum StructureType {
+  CHAPTER = 'CHAPTER',
+  SECTION = 'SECTION',
+  BLOCK = 'BLOCK',
+  FREE = 'FREE'
+}
+
+export interface StructureDefinition {
+  type: StructureType;
+  autoNumbering: boolean;
+  defaultNamingRule: (index: number) => string;
+  allowManualOrder: boolean;
+}
+
 export enum PublicationStatus {
   DRAFT = 'DRAFT',
   SUBMITTED = 'SUBMITTED',
@@ -70,9 +84,10 @@ export interface StructureUnit {
   id: string;
   title: string;
   content: string;
-  order: number;
+  order: number; // Used as position
   wordCount: number;
   lastEdited: number;
+  createdAt: number;
   history?: VersionSnapshot[];
 }
 
@@ -126,19 +141,20 @@ export interface SecuritySettings {
   autoSnapshotMode: 'interval' | 'idle';
   autoSnapshotIntervalMinutes: number;
   autoSnapshotIdleSeconds: number;
-  autoSnapshotCleanupDays: number | 'NEVER'; // 新增：清理週期
+  autoSnapshotCleanupDays: number | 'NEVER';
 }
 
 export interface Project {
   id: string;
   name: string;
   writingType: WritingType;
+  structureType: StructureType; // New: linking template to structure
   targetWordCount: number;
   metadata: string;
   progress: number;
   color: string;
   icon: string;
-  chapters: Chapter[];
+  chapters: StructureUnit[];
   modules: WritingModule[];
   createdAt: number;
   updatedAt: number;
