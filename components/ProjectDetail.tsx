@@ -134,7 +134,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                   )}
                </div>
                <h1 className="text-3xl font-black tracking-tight">{project.name}</h1>
-               <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">{TEMPLATES[project.writingType]?.label}</p>
+               <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1">{TEMPLATES[project.writingType]?.label}</p>
             </div>
             <div className="relative" ref={menuRef}>
               <button 
@@ -148,16 +148,16 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                 <div className="absolute right-0 top-14 w-48 bg-[#1C1C1E] border border-white/10 rounded-3xl shadow-3xl z-[100] p-2 animate-in fade-in zoom-in duration-200">
                   <button onClick={handleTogglePin} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
                     <i className={`fa-solid fa-thumbtack ${project.isPinned ? 'text-[#D4FF5F]' : 'text-gray-500'}`}></i>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">取消置頂</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white">{project.isPinned ? '取消置頂' : '置頂專案'}</span>
                   </button>
                   <button onClick={handleEditProject} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
                     <i className="fa-solid fa-pen-to-square text-blue-400"></i>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">編輯名稱</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white">編輯名稱</span>
                   </button>
                   <div className="h-px bg-white/5 my-1 mx-2" />
                   <button onClick={handleDeleteProjectConfirm} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-red-500/10 text-left transition-colors">
                     <i className="fa-solid fa-trash-can text-red-500"></i>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500">刪除專案</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-red-500">刪除專案</span>
                   </button>
                 </div>
               )}
@@ -166,18 +166,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
 
          <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
-               <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">總字數統計</p>
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">總字數統計</p>
                <div className="flex items-baseline space-x-2">
                  <p className="text-2xl font-black text-white">{totalWords.toLocaleString()}</p>
-                 <span className="text-[10px] text-gray-600 font-black uppercase tracking-[0.2em]">/ {project.targetWordCount.toLocaleString()}</span>
+                 <span className="text-[9px] text-gray-600">/ {project.targetWordCount.toLocaleString()}</span>
                </div>
             </div>
             <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
-               <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">創作天數</p>
-               <p className="text-2xl font-black text-[#D4FF5F] tracking-tighter">{writingDays} DAYS</p>
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">創作天數</p>
+               <p className="text-2xl font-black text-[#D4FF5F]">{writingDays} DAYS</p>
             </div>
             <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
-               <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">當前進度</p>
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">當前進度</p>
                <div className="flex items-center space-x-3">
                   <p className="text-2xl font-black text-[#7b61ff]">{Math.min(100, Math.floor((totalWords / project.targetWordCount) * 100))}%</p>
                   <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -186,8 +186,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                </div>
             </div>
             <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
-               <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">架構模組數</p>
-               <p className="text-2xl font-black text-white tracking-tighter">{project.modules.length} NODES</p>
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">架構模組數</p>
+               <p className="text-2xl font-black text-white">{project.modules.length} NODES</p>
             </div>
          </div>
       </header>
@@ -200,7 +200,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                   <h2 className="text-3xl font-black text-white tracking-tight">
                     {project.structureType === StructureType.CHAPTER ? '章節管理' : project.structureType === StructureType.SECTION ? '節點列表' : '內容區塊'}
                   </h2>
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mt-1">拖拽排序 · 點擊編輯</p>
+                  <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mt-1">拖拽排序 · 點擊編輯</p>
                </div>
                <button onClick={handleOpenAdd} className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl shadow-[0_10px_25px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
                   <i className="fa-solid fa-plus"></i>
@@ -211,7 +211,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                {project.chapters.length === 0 ? (
                   <div className="py-20 text-center border border-dashed border-white/5 rounded-[40px] opacity-30">
                      <i className="fa-solid fa-feather-pointed text-4xl mb-4"></i>
-                     <p className="text-[10px] font-black uppercase tracking-[0.2em]">目前尚無內容，請點擊新增</p>
+                     <p className="text-[10px] font-black uppercase tracking-widest">目前尚無內容，請點擊新增</p>
                   </div>
                ) : (
                   project.chapters.map((unit, idx) => (
@@ -231,7 +231,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                           )}
                           <div className="flex flex-col">
                              <h4 className="text-xl font-black text-white group-hover:text-blue-400 transition-colors tracking-tight">{unit.title}</h4>
-                             <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] mt-1">
+                             <p className="text-[11px] text-gray-600 font-black uppercase tracking-widest mt-1">
                                {unit.wordCount} 字
                              </p>
                           </div>
@@ -258,13 +258,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
 
             {isAddingChapter && (
                <div className="bg-[#1C1C1E] p-8 rounded-[40px] border border-blue-600/50 animate-in slide-in-from-top-4 shadow-2xl">
-                  <label className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] mb-2 block">
+                  <label className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-2 block">
                     {structDef.autoNumbering ? '確認標題' : '輸入標題'}
                   </label>
                   <input autoFocus value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="在此輸入名稱..." className="w-full bg-transparent text-2xl font-black outline-none text-white mb-6 border-b border-white/10 pb-2 focus:border-blue-600 transition-colors" />
                   <div className="flex justify-end space-x-4">
-                     <button onClick={() => setIsAddingChapter(false)} className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">取消</button>
-                     <button onClick={handleAdd} className="bg-blue-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all">確認建立</button>
+                     <button onClick={() => setIsAddingChapter(false)} className="text-xs font-black text-gray-500 uppercase tracking-widest">取消</button>
+                     <button onClick={handleAdd} className="bg-blue-600 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all">確認建立</button>
                   </div>
                </div>
             )}
@@ -277,7 +277,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                  <i className="fa-solid fa-note-sticky text-[#D4FF5F] text-5xl"></i>
               </div>
               <h2 className="text-3xl font-black text-white tracking-tight mb-4">隨手寫作模式</h2>
-              <p className="text-[#8E8E93] text-[10px] font-black uppercase tracking-[0.2em] leading-relaxed max-w-xs text-center">
+              <p className="text-[#8E8E93] text-[14px] leading-relaxed max-w-xs text-center font-medium">
                 此範本採用無章節自由書寫模式。您的所有思緒將被保存在單一主文稿中。
               </p>
            </div>

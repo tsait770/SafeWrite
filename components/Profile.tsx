@@ -74,12 +74,14 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
 
   return (
     <div className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500" dir={state.language === 'ar' ? 'rtl' : 'ltr'}>
+      {/* Toast Notification */}
       {showToast && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[300] bg-blue-600 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl animate-in fade-in slide-in-from-top-4 duration-300">
           Success: Language Updated
         </div>
       )}
 
+      {/* User Status Card */}
       <section className="bg-[#1E293B] p-8 rounded-[44px] border border-slate-800 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
         <div className="flex items-center space-x-6 mb-8 relative z-10">
@@ -92,7 +94,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
               <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg ${state.membership === MembershipLevel.PREMIUM ? 'bg-amber-500 text-slate-950' : state.membership === MembershipLevel.PRO ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 border border-white/5'}`}>
                 {state.membership}
               </span>
-              <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">
+              <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.25em]">
                 持續創作 124 天
               </span>
             </div>
@@ -120,6 +122,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
         </div>
       </section>
 
+      {/* NEW: Data Backup & Sync Card (Google Drive) */}
       <section className="space-y-4">
         <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">資料備份與同步 DATA BACKUP</h2>
         <div className="bg-[#1C1C1E] p-6 rounded-[2.5rem] border border-white/5 space-y-6 shadow-xl">
@@ -130,7 +133,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
                  </div>
                  <div>
                     <h4 className="text-sm font-bold text-white">Google Drive 連結</h4>
-                    <p className="text-[10px] text-gray-500 uppercase font-black tracking-[0.2em] mt-1">
+                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mt-1">
                       {state.backupSettings.googleDriveConnected ? 'CONNECTED' : 'NOT CONNECTED'}
                     </p>
                  </div>
@@ -146,12 +149,12 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
            {state.backupSettings.googleDriveConnected && (
              <div className="pt-6 border-t border-white/5 space-y-4 animate-in fade-in duration-500">
                 <div className="flex justify-between items-center px-1">
-                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">備份資料夾</span>
-                   <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">{state.backupSettings.backupFolder}</span>
+                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">備份資料夾</span>
+                   <span className="text-[10px] font-black text-blue-400">{state.backupSettings.backupFolder}</span>
                 </div>
                 <div className="flex items-center justify-between px-1">
                    <div className="flex items-center space-x-2">
-                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">端對端加密</span>
+                      <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">端對端加密</span>
                       <i className="fa-solid fa-lock text-[8px] text-green-500/60"></i>
                    </div>
                    <button 
@@ -164,11 +167,11 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
                 <div className="flex justify-between items-center px-1 pt-2">
                    <div className="flex items-center space-x-2">
                       <div className={`w-1.5 h-1.5 rounded-full ${state.backupSettings.status === 'SYNCING' ? 'bg-blue-500 animate-pulse' : 'bg-green-500'}`}></div>
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                         {state.backupSettings.status === 'SYNCING' ? '正在同步中...' : '備份已完成'}
                       </span>
                    </div>
-                   <span className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">
+                   <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">
                      最後同步: {state.backupSettings.lastBackupTime ? new Date(state.backupSettings.lastBackupTime).toLocaleString() : 'N/A'}
                    </span>
                 </div>
@@ -177,6 +180,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
         </div>
       </section>
 
+      {/* Settings List */}
       <section className="space-y-3">
         <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">偏好設定 SETTINGS</h2>
         
@@ -278,10 +282,11 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
         </div>
       </section>
 
+      {/* Cloud & Support */}
       <section className="bg-slate-900/40 p-5 rounded-3xl border border-dashed border-slate-700">
         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">雲端連線 CLOUD STATUS</h3>
-        <p className="text-[10px] text-slate-500 leading-relaxed mb-4 font-medium uppercase tracking-[0.2em]">
-          作品目前由本地 INDEXEDDB 提供離線防護。升級至 PRO 以啟動即時雙向加密同步。
+        <p className="text-[10px] text-slate-500 leading-relaxed mb-4">
+          作品目前由本地 IndexedDB 提供離線防護。升級至 PRO 以啟動即時雙向加密同步。
         </p>
         <div className="flex items-center space-x-2">
           <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
