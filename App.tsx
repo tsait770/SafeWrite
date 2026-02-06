@@ -63,42 +63,6 @@ const App: React.FC = () => {
         updatedAt: Date.now() - 7200000,
         tags: ['TECH', 'WEB3'],
         isPinned: false
-      },
-      {
-        id: 'p3',
-        name: 'Neon Thoughts',
-        writingType: WritingType.DIARY,
-        structureType: StructureType.FREE,
-        targetWordCount: 5000,
-        metadata: 'EDITED 1D AGO',
-        progress: 95,
-        color: '#D4FF5F', 
-        icon: 'fa-note-sticky',
-        chapters: [],
-        modules: [],
-        settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 172800000,
-        updatedAt: Date.now() - 86400000,
-        tags: ['PERSONAL'],
-        isPinned: false
-      },
-      {
-        id: 'p4',
-        name: 'Dreamy Sequences',
-        writingType: WritingType.SCREENPLAY,
-        structureType: StructureType.CHAPTER,
-        targetWordCount: 20000,
-        metadata: 'EDITED 3D AGO',
-        progress: 12,
-        color: '#B2A4FF', 
-        icon: 'fa-clapperboard',
-        chapters: [],
-        modules: [],
-        settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 259200000,
-        updatedAt: Date.now() - 259200000,
-        tags: ['FILM'],
-        isPinned: false
       }
     ],
     currentProject: null,
@@ -151,7 +115,6 @@ const App: React.FC = () => {
   });
 
   const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION'>('NONE');
-  
   const [swipeProgress, setSwipeProgress] = useState(0); 
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -159,70 +122,6 @@ const App: React.FC = () => {
   const lastSnapshotContentRef = useRef<string>('');
   const idleTimerRef = useRef<number | null>(null);
   const intervalTimerRef = useRef<number | null>(null);
-  
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    setState(prev => {
-        const needsUpdate = prev.projects.some(p => !p.structureType);
-        if (!needsUpdate) return prev;
-        
-        const updatedProjects = prev.projects.map(p => {
-            if (!p.structureType) {
-                return { ...p, structureType: TEMPLATE_STRUCTURE_MAP[p.writingType] || StructureType.FREE };
-            }
-            return p;
-        });
-        return { ...prev, projects: updatedProjects };
-    });
-  }, []);
-
-  const isTabletOrDesktop = windowWidth >= 768;
-  const panelWidth = isTabletOrDesktop ? windowWidth / 3 : windowWidth * 0.85;
-
-  const handleGlobalTouchStart = (e: React.TouchEvent) => {
-    const x = e.touches[0].clientX;
-    const screenWidth = window.innerWidth;
-    
-    const edgeThreshold = isTabletOrDesktop ? screenWidth * 0.95 : screenWidth * 0.85;
-    if (state.activeTab === AppTab.WRITE && state.currentChapterId && x > edgeThreshold && activeOverlay === 'NONE') {
-      touchStartX.current = x;
-      setIsDragging(true);
-    }
-  };
-
-  const handleGlobalTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    const currentX = e.touches[0].clientX;
-    const deltaX = touchStartX.current - currentX; 
-    
-    const progress = Math.min(Math.max(deltaX / panelWidth, 0), 1);
-    setSwipeProgress(progress);
-  };
-
-  const handleGlobalTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    
-    setIsDragging(false);
-    if (swipeProgress > 0.2) {
-      setSwipeProgress(1);
-      setActiveOverlay('TIMELINE');
-    } else {
-      setSwipeProgress(0);
-      setActiveOverlay('NONE');
-    }
-    touchStartX.current = null;
-  };
-
-  useEffect(() => {
-    if (activeOverlay === 'TIMELINE') setSwipeProgress(1);
-    else if (activeOverlay === 'NONE') setSwipeProgress(0);
-  }, [activeOverlay]);
 
   const handleUpdateProject = (updated: Project) => {
     setState(prev => ({
@@ -232,29 +131,90 @@ const App: React.FC = () => {
     }));
   };
 
-  const handleUpdateAIPreferences = (prefs: AIPreferences) => {
-    setState(prev => ({ ...prev, aiPreferences: prefs }));
+  const handleSaveToProject = (projectId: string, content: string, chapterId?: string) => {
+    setState(prev => {
+      const projects = [...prev.projects];
+      const pIdx = projects.findIndex(p => p.id === projectId);
+      if (pIdx === -1) return prev;
+
+      const project = { ...projects[pIdx] };
+      let targetChapterId = chapterId;
+
+      // 如果有指定章節，則插入章節；否則插入第一個章節或建立新章節
+      if (chapterId) {
+        project.chapters = project.chapters.map(c => 
+          c.id === chapterId ? { ...c, content: c.content + "\n\n" + content, wordCount: (c.content + content).length, lastEdited: Date.now() } : c
+        );
+      } else {
+        if (project.chapters.length > 0) {
+          const first = project.chapters[0];
+          targetChapterId = first.id;
+          project.chapters[0] = { ...first, content: first.content + "\n\n" + content, wordCount: (first.content + content).length, lastEdited: Date.now() };
+        } else {
+          const newChap: Chapter = {
+            id: 'c-' + Date.now(),
+            title: '未命名章節',
+            content: content,
+            order: 1,
+            wordCount: content.length,
+            lastEdited: Date.now(),
+            createdAt: Date.now()
+          };
+          project.chapters.push(newChap);
+          targetChapterId = newChap.id;
+        }
+      }
+
+      project.updatedAt = Date.now();
+      projects[pIdx] = project;
+
+      return {
+        ...prev,
+        projects,
+        currentProject: project,
+        currentChapterId: targetChapterId,
+        activeTab: AppTab.WRITE,
+        appMode: AppMode.REPOSITORY
+      };
+    });
   };
 
-  const handleUpdateSecuritySettings = (settings: SecuritySettings) => {
-    setState(prev => ({ ...prev, securitySettings: settings }));
-  };
+  const handleCreateNoteFromCapture = (content: string) => {
+    const newId = 'p-' + Date.now();
+    const newNote: Project = {
+      id: newId,
+      name: '靈感筆記 ' + new Date().toLocaleDateString(),
+      writingType: WritingType.DIARY,
+      structureType: StructureType.FREE,
+      targetWordCount: 1000,
+      metadata: '剛剛建立',
+      progress: 0,
+      color: PROJECT_COLORS[2],
+      icon: 'fa-note-sticky',
+      chapters: [{
+        id: 'c-' + Date.now(),
+        title: '隨手記',
+        content: content,
+        order: 1,
+        wordCount: content.length,
+        lastEdited: Date.now(),
+        createdAt: Date.now()
+      }],
+      modules: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      tags: ['CAPTURED'],
+      settings: { typography: 'serif', fontSize: 'normal' }
+    };
 
-  const handleUpdateBackupSettings = (settings: BackupSettings) => {
-    setState(prev => ({ ...prev, backupSettings: settings }));
-  };
-
-  const handleDeleteProject = (projectId: string) => {
     setState(prev => ({
       ...prev,
-      projects: prev.projects.filter(p => p.id !== projectId),
-      currentProject: null,
-      activeTab: AppTab.LIBRARY
+      projects: [newNote, ...prev.projects],
+      currentProject: newNote,
+      currentChapterId: newNote.chapters[0].id,
+      activeTab: AppTab.WRITE,
+      appMode: AppMode.REPOSITORY
     }));
-  };
-
-  const handleEnterEditor = (chapterId: string) => {
-    setState(prev => ({ ...prev, currentChapterId: chapterId, activeTab: AppTab.WRITE }));
   };
 
   const createSnapshot = useCallback((type: SnapshotType) => {
@@ -262,9 +222,7 @@ const App: React.FC = () => {
       if (!prev.currentProject || !prev.currentChapterId) return prev;
       const chapter = prev.currentProject.chapters.find(c => c.id === prev.currentChapterId);
       if (!chapter) return prev;
-
       if (type === SnapshotType.AUTO && chapter.content === lastSnapshotContentRef.current) return prev;
-
       const newSnapshot: VersionSnapshot = {
         id: `v-${Date.now()}`,
         timestamp: Date.now(),
@@ -272,13 +230,10 @@ const App: React.FC = () => {
         title: chapter.title,
         type: type
       };
-
       lastSnapshotContentRef.current = chapter.content;
-
       const updatedChapters = prev.currentProject.chapters.map(c => 
         c.id === prev.currentChapterId ? { ...c, history: [newSnapshot, ...(c.history || [])] } : c
       );
-
       const updatedProject = { ...prev.currentProject, chapters: updatedChapters };
       return {
         ...prev,
@@ -301,63 +256,17 @@ const App: React.FC = () => {
         currentProject: updatedProject
       };
     });
-
     if (state.securitySettings.autoSnapshotEnabled && state.securitySettings.autoSnapshotMode === 'idle') {
       if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = window.setTimeout(() => {
-        createSnapshot(SnapshotType.AUTO);
-      }, state.securitySettings.autoSnapshotIdleSeconds * 1000);
+      idleTimerRef.current = window.setTimeout(() => createSnapshot(SnapshotType.AUTO), state.securitySettings.autoSnapshotIdleSeconds * 1000);
     }
-  };
-
-  useEffect(() => {
-    if (intervalTimerRef.current) window.clearInterval(intervalTimerRef.current);
-    
-    if (state.securitySettings.autoSnapshotEnabled && state.securitySettings.autoSnapshotMode === 'interval') {
-      intervalTimerRef.current = window.setInterval(() => {
-        createSnapshot(SnapshotType.AUTO);
-      }, state.securitySettings.autoSnapshotIntervalMinutes * 60000);
-    }
-
-    return () => {
-      if (intervalTimerRef.current) window.clearInterval(intervalTimerRef.current);
-    };
-  }, [state.securitySettings.autoSnapshotEnabled, state.securitySettings.autoSnapshotMode, state.securitySettings.autoSnapshotIntervalMinutes, createSnapshot]);
-
-  const handleCreateMilestone = () => {
-    createSnapshot(SnapshotType.MILESTONE);
-  };
-
-  const handleRestoreSnapshot = (snapshot: VersionSnapshot) => {
-    handleUpdateContent(snapshot.content);
-    setActiveOverlay('NONE');
-  };
-
-  const handleClearAutoSnapshots = () => {
-    setState(prev => {
-      if (!prev.currentProject || !prev.currentChapterId) return prev;
-      const updatedChapters = prev.currentProject.chapters.map(c => 
-        c.id === prev.currentChapterId ? { ...c, history: (c.history || []).filter(h => h.type === SnapshotType.MILESTONE) } : c
-      );
-      const updatedProject = { ...prev.currentProject, chapters: updatedChapters };
-      return {
-        ...prev,
-        projects: prev.projects.map(p => p.id === updatedProject.id ? updatedProject : p),
-        currentProject: updatedProject
-      };
-    });
   };
 
   const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
   const isBottomNavVisible = (activeOverlay === 'NONE' && swipeProgress === 0) && (state.activeTab !== AppTab.WRITE || !currentChapter);
 
   return (
-    <div 
-      className="h-screen flex flex-col relative overflow-hidden bg-black text-white"
-      onTouchStart={handleGlobalTouchStart}
-      onTouchMove={handleGlobalTouchMove}
-      onTouchEnd={handleGlobalTouchEnd}
-    >
+    <div className="h-screen flex flex-col relative overflow-hidden bg-black text-white">
       {state.activeTab !== AppTab.WRITE && (
         <header className="fixed top-0 w-full z-[100] h-24 pt-[env(safe-area-inset-top,0px)] flex items-end justify-between px-8 pb-4 bg-black/60 backdrop-blur-3xl border-b border-white/5">
           <div className="flex flex-col">
@@ -378,14 +287,7 @@ const App: React.FC = () => {
         </header>
       )}
 
-      <main 
-        style={{
-          transform: `scale(${1 - swipeProgress * 0.04})`,
-          filter: `blur(${swipeProgress * 4}px)`,
-          transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
-        }}
-        className={`flex-1 overflow-y-auto no-scrollbar ${(state.activeTab === AppTab.WRITE && currentChapter) ? 'p-0' : (state.activeTab === AppTab.WRITE ? 'p-0' : 'pt-24 pb-32')}`}
-      >
+      <main className={`flex-1 overflow-y-auto no-scrollbar ${(state.activeTab === AppTab.WRITE && currentChapter) ? 'p-0' : (state.activeTab === AppTab.WRITE ? 'p-0' : 'pt-24 pb-32')}`}>
         {state.activeTab === AppTab.LIBRARY ? (
           state.appMode === AppMode.REPOSITORY ? (
             <Library 
@@ -395,7 +297,11 @@ const App: React.FC = () => {
               onUpdateProjects={(p) => setState(prev => ({...prev, projects: p}))}
             />
           ) : (
-            <CaptureCenter projects={state.projects} onSaveToProject={(pid, content) => {}} />
+            <CaptureCenter 
+              projects={state.projects} 
+              onSaveToProject={handleSaveToProject} 
+              onSaveToNotebook={handleCreateNoteFromCapture}
+            />
           )
         ) : state.activeTab === AppTab.PROJECT_DETAIL ? (
           <ProjectDetail 
@@ -403,8 +309,8 @@ const App: React.FC = () => {
             onBack={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))}
             onOpenModule={() => {}}
             onUpdateProject={handleUpdateProject}
-            onDeleteProject={handleDeleteProject}
-            onEnterEditor={handleEnterEditor}
+            onDeleteProject={(id) => setState(prev => ({...prev, projects: prev.projects.filter(p => p.id !== id), activeTab: AppTab.LIBRARY}))}
+            onEnterEditor={(id) => setState(prev => ({...prev, currentChapterId: id, activeTab: AppTab.WRITE}))}
           />
         ) : state.activeTab === AppTab.WRITE ? (
           currentChapter ? (
@@ -420,72 +326,24 @@ const App: React.FC = () => {
               membership={state.membership}
             />
           ) : (
-            <div className="h-full flex flex-col items-center justify-center p-10 text-center bg-black">
-               <div className="w-28 h-28 bg-[#1C1C1E] rounded-[36px] flex items-center justify-center border border-white/5 shadow-2xl mb-12">
-                  <i className="fa-solid fa-feather-pointed text-[#3b82f6] text-4xl"></i>
-               </div>
-               <h2 className="text-2xl font-black text-white tracking-tight mb-4">尚未選擇作品</h2>
-               <p className="text-[#8E8E93] text-[13px] leading-[1.6] max-w-[240px] font-medium mx-auto">
-                  請先從書架選擇一個現有作品，或在書架中建立新專案以開始寫作。
-               </p>
-               <button onClick={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))} className="mt-14 w-full max-w-[180px] py-4 bg-[#2563eb] rounded-[24px] text-white font-black text-[11px] uppercase tracking-[0.3em] shadow-[0_10px_30px_rgba(37,99,235,0.25)]">
-                 返回書架
-               </button>
+            <div className="h-full flex flex-col items-center justify-center p-10 bg-black">
+               <h2 className="text-2xl font-black text-white mb-4">尚未選擇作品</h2>
+               <button onClick={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))} className="mt-8 px-8 py-4 bg-blue-600 rounded-2xl text-white font-black uppercase tracking-widest">返回書架</button>
             </div>
           )
         ) : state.activeTab === AppTab.PROFILE ? (
           <Profile 
             state={state} 
-            onUpgrade={() => setActiveOverlay('EXPORT')} 
+            onUpgrade={() => {}} 
             onLanguageChange={(l) => setState(prev => ({...prev, language: l}))} 
-            onUpdateAIPreferences={handleUpdateAIPreferences}
-            onUpdateSecuritySettings={handleUpdateSecuritySettings}
-            onUpdateBackupSettings={handleUpdateBackupSettings}
+            onUpdateAIPreferences={(prefs) => setState(prev => ({...prev, aiPreferences: prefs}))}
+            onUpdateSecuritySettings={(s) => setState(prev => ({...prev, securitySettings: s}))}
+            onUpdateBackupSettings={(b) => setState(prev => ({...prev, backupSettings: b}))}
           />
         ) : null}
       </main>
 
       <BottomNav activeTab={state.activeTab} onTabChange={(tab) => setState(prev => ({ ...prev, activeTab: tab }))} isVisible={isBottomNavVisible} />
-
-      <div 
-        className="fixed inset-0 z-[1000] pointer-events-none"
-        style={{
-          display: swipeProgress > 0 ? 'block' : 'none'
-        }}
-      >
-        <div 
-          className="absolute inset-0 bg-black/40 pointer-events-auto backdrop-blur-sm"
-          style={{ opacity: swipeProgress }}
-          onClick={() => setActiveOverlay('NONE')}
-        />
-        <div 
-          className="absolute right-0 top-0 bottom-0 pointer-events-auto shadow-[-20px_0_60px_rgba(0,0,0,0.5)]"
-          style={{
-            width: isTabletOrDesktop ? '33.333333%' : '85%',
-            transform: `translateX(${(1 - swipeProgress) * 100}%)`,
-            transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}
-        >
-          {currentChapter && (
-            <Timeline 
-              history={currentChapter.history || []}
-              onClose={() => setActiveOverlay('NONE')}
-              onRestore={handleRestoreSnapshot}
-              onPreview={(s) => alert('Previewing snapshot from ' + new Date(s.timestamp).toLocaleTimeString())}
-              onCreateMilestone={handleCreateMilestone}
-              onClearSnapshots={handleClearAutoSnapshots}
-              membership={state.membership}
-              isNight={true}
-              securitySettings={state.securitySettings}
-              onUpdateSecuritySettings={handleUpdateSecuritySettings}
-            />
-          )}
-        </div>
-      </div>
-
-      {activeOverlay === 'COLLABORATION' && (
-        <CollaborationPanel onClose={() => setActiveOverlay('NONE')} />
-      )}
     </div>
   );
 };
