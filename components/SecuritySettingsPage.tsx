@@ -17,6 +17,7 @@ const SecuritySettingsPage: React.FC<SecuritySettingsPageProps> = ({ settings, o
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // 新增 240 選項
   const retentionOptions: (number | 'NEVER')[] = [30, 60, 90, 120, 180, 240, 360, 'NEVER'];
 
   return (

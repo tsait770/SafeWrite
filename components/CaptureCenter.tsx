@@ -1,248 +1,218 @@
-import React, { useState, useRef } from 'react';
-import { Project, ImageSize, VideoAspectRatio } from '../types';
-import { geminiService } from '../services/geminiService';
+
+import React, { useState } from 'react';
+import { Project } from '../types';
+
+interface CaptureItem {
+  id: string;
+  title: string;
+  excerpt: string;
+  time: string;
+  type: 'SCAN' | 'VOICE' | 'NOTE';
+  icon: string;
+  color: string;
+}
 
 interface CaptureCenterProps {
   projects: Project[];
   onSaveToProject: (projectId: string, content: string) => void;
 }
 
-type CaptureTab = 'SCAN' | 'IMAGE' | 'VIDEO';
-
 const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject }) => {
-  const [activeTab, setActiveTab] = useState<CaptureTab>('SCAN');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
-  const [resultUrl, setResultUrl] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState('');
-  
-  // Image Generation Settings
-  const [imageSize, setImageSize] = useState<ImageSize>('1K');
-  
-  // Video Generation Settings
-  const [aspectRatio, setAspectRatio] = useState<VideoAspectRatio>('16:9');
-  const [videoSourceImage, setVideoSourceImage] = useState<string | null>(null);
+  const [showSaveOptions, setShowSaveOptions] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const recentCaptures: CaptureItem[] = [
+    { 
+      id: '1', 
+      title: 'Research Paper Snippet', 
+      excerpt: '"The methodology for the quantum entan...', 
+      time: '2H AGO', 
+      type: 'SCAN', 
+      icon: 'fa-file-lines', 
+      color: 'bg-green-900/40 text-[#D4FF5F]' 
+    },
+    { 
+      id: '2', 
+      title: 'Meeting Recording', 
+      excerpt: '02:44 Audio Log', 
+      time: 'YESTERDAY', 
+      type: 'VOICE', 
+      icon: 'fa-microphone', 
+      color: 'bg-purple-900/40 text-[#B2A4FF]' 
+    },
+    { 
+      id: '3', 
+      title: 'Whiteboard Session', 
+      excerpt: '3 images attached • Project: Neon Shado...', 
+      time: '3 DAYS AGO', 
+      type: 'NOTE', 
+      icon: 'fa-image', 
+      color: 'bg-orange-900/40 text-[#FF6B2C]' 
+    },
+  ];
 
-  const checkAndOpenKeySelector = async () => {
-    // @ts-ignore
-    const hasKey = await window.aistudio.hasSelectedApiKey();
-    if (!hasKey) {
-      // @ts-ignore
-      await window.aistudio.openSelectKey();
-      // Assume success as per instructions
-    }
-  };
-
-  const handleImageGen = async () => {
-    if (!prompt.trim()) return;
+  const handleAction = (type: string) => {
     setIsProcessing(true);
-    setStatusMessage('正在描繪您的想像...');
-    try {
-      await checkAndOpenKeySelector();
-      const url = await geminiService.generateImage(prompt, imageSize);
-      setResultUrl(url);
-      setStatusMessage('創作完成');
-    } catch (e) {
-      console.error(e);
-      setStatusMessage('生成失敗，請檢查金鑰或嘗試更換提示詞');
-    } finally {
+    setTimeout(() => {
       setIsProcessing(false);
-    }
-  };
-
-  const handleVideoGen = async () => {
-    if (!prompt.trim() && !videoSourceImage) return;
-    setIsProcessing(true);
-    setStatusMessage('正在演算時空...這可能需要幾分鐘');
-    try {
-      await checkAndOpenKeySelector();
-      const base64Img = videoSourceImage ? videoSourceImage.split(',')[1] : undefined;
-      const url = await geminiService.generateVideo(prompt, aspectRatio, base64Img);
-      setResultUrl(url);
-      setStatusMessage('影片演算完成');
-    } catch (e) {
-      console.error(e);
-      setStatusMessage('演算失敗，請確保使用付費金鑰');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => setVideoSourceImage(reader.result as string);
-      reader.readAsDataURL(file);
-    }
+      setShowSaveOptions(`來自 ${type} 的擷取內容片段...`);
+    }, 1500);
   };
 
   return (
-    <div className="px-8 space-y-10 animate-in fade-in duration-700">
-      {/* Tab Switcher */}
-      <div className="flex bg-white/5 p-1.5 rounded-[32px] border border-white/5">
-        {[
-          { id: 'SCAN', label: '文件掃描', icon: 'fa-expand' },
-          { id: 'IMAGE', label: '影像創作', icon: 'fa-image' },
-          { id: 'VIDEO', label: '影片演算', icon: 'fa-movie' }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => { setActiveTab(tab.id as CaptureTab); setResultUrl(null); }}
-            className={`flex-1 flex items-center justify-center space-x-3 py-4 rounded-[26px] text-[11px] font-black uppercase tracking-widest transition-all duration-500 ${activeTab === tab.id ? 'bg-[#2563eb] text-white shadow-xl' : 'text-gray-500 hover:text-white'}`}
-          >
-            <i className={`fa-solid ${tab.icon}`}></i>
-            <span>{tab.label}</span>
-          </button>
-        ))}
+    <div className="px-8 flex flex-col space-y-10 animate-in fade-in duration-700 pb-32">
+      {/* 頂部格柵佈局 */}
+      <div className="grid grid-cols-2 gap-5 pt-4">
+        {/* Scan Document - 螢光綠大卡片 */}
+        <div 
+          onClick={() => handleAction('SCAN')}
+          className="col-span-2 h-[340px] bg-[#D4FF5F] rounded-[44px] p-10 flex flex-col justify-between shadow-[0_40px_80px_rgba(212,255,95,0.15)] active:scale-[0.98] transition-all cursor-pointer relative overflow-hidden group"
+        >
+          <div className="flex justify-between items-start">
+            <div className="w-16 h-16 bg-black/5 rounded-2xl flex items-center justify-center text-black border border-black/5">
+              <i className="fa-solid fa-expand text-3xl"></i>
+            </div>
+            <span className="text-[44px] font-black text-black tracking-tighter opacity-80">SCAN</span>
+          </div>
+          <div>
+            <h3 className="text-4xl font-black text-black tracking-tighter leading-none mb-3">Scan<br/>Document</h3>
+            <p className="text-[11px] font-black text-black/40 uppercase tracking-[0.3em]">PRO OCR ENGINE</p>
+          </div>
+          <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-black/5 rounded-full blur-3xl opacity-50" />
+        </div>
+
+        {/* Voice Note - 夢幻紫 */}
+        <div 
+          onClick={() => handleAction('VOICE')}
+          className="h-[220px] bg-[#B2A4FF] rounded-[44px] p-8 flex flex-col justify-between shadow-[0_30px_60px_rgba(178,164,255,0.15)] active:scale-[0.98] transition-all cursor-pointer group"
+        >
+          <div className="flex justify-end">
+            <i className="fa-solid fa-microphone text-white/50 text-3xl"></i>
+          </div>
+          <div>
+            <h4 className="text-2xl font-black text-white tracking-tighter leading-none mb-2">Voice<br/>Note</h4>
+            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">TRANSCRIBE</p>
+          </div>
+        </div>
+
+        {/* Quick Note - 活力橘 */}
+        <div 
+          onClick={() => handleAction('NOTE')}
+          className="h-[220px] bg-[#FF6B2C] rounded-[44px] p-8 flex flex-col justify-between shadow-[0_30px_60px_rgba(255,107,44,0.15)] active:scale-[0.98] transition-all cursor-pointer group"
+        >
+          <div className="flex justify-end">
+            <i className="fa-solid fa-feather-pointed text-white/50 text-3xl"></i>
+          </div>
+          <div>
+            <h4 className="text-2xl font-black text-white tracking-tighter leading-none mb-2">Quick<br/>Note</h4>
+            <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">DRAFT NOW</p>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-8">
-        {activeTab === 'SCAN' && (
-          <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-            <div className="p-12 bg-gradient-to-br from-[#D4FF5F]/10 to-transparent border border-[#D4FF5F]/20 rounded-[44px] flex flex-col items-center text-center">
-              <div className="w-24 h-24 bg-[#D4FF5F] rounded-[32px] flex items-center justify-center text-black shadow-3xl mb-8">
-                <i className="fa-solid fa-expand text-4xl"></i>
-              </div>
-              <h3 className="text-3xl font-black text-white tracking-tighter mb-4">專業 OCR 掃描</h3>
-              <p className="text-[15px] text-gray-500 font-medium leading-relaxed max-w-xs">將手寫稿或書籍轉化為結構化文本</p>
-            </div>
-            <button className="w-full py-8 bg-[#D4FF5F] text-black font-black text-sm uppercase tracking-[0.5em] rounded-[36px] shadow-3xl active:scale-95 transition-all">
-              開 始 掃 描
-            </button>
-          </div>
-        )}
+      {/* 最近擷取列表 */}
+      <section className="space-y-6 pt-4">
+        <div className="flex items-center justify-between px-2">
+          <h2 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-[0.3em]">RECENT CAPTURES</h2>
+          <button className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-4 py-2 rounded-full hover:bg-blue-500/20 transition-all">VIEW ALL</button>
+        </div>
 
-        {activeTab === 'IMAGE' && (
-          <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-[#1C1C1E] p-10 rounded-[44px] border border-white/5 space-y-8 shadow-3xl">
-              <div className="space-y-4">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] px-2">影像提示詞 PROMPT</label>
-                <textarea 
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="描繪您腦海中的畫面..."
-                  className="w-full h-32 bg-black/40 rounded-[28px] p-6 text-white text-base font-medium border border-white/5 outline-none focus:border-blue-600 transition-all resize-none"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] px-2">輸出尺寸 SIZE</label>
-                <div className="flex gap-3">
-                  {(['1K', '2K', '4K'] as ImageSize[]).map(size => (
-                    <button
-                      key={size}
-                      onClick={() => setImageSize(size)}
-                      className={`flex-1 py-4 rounded-2xl text-[11px] font-black tracking-widest border transition-all ${imageSize === size ? 'bg-blue-600 border-blue-600 text-white shadow-xl' : 'bg-white/5 border-white/5 text-gray-500'}`}
-                    >
-                      {size}
-                    </button>
-                  ))}
+        <div className="space-y-4">
+          {recentCaptures.map(item => (
+            <div 
+              key={item.id} 
+              className="bg-[#1C1C1E] p-6 rounded-[36px] border border-white/5 flex items-center justify-between group active:bg-white/5 transition-all"
+            >
+              <div className="flex items-center space-x-6">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-xl ${item.color}`}>
+                  <i className={`fa-solid ${item.icon}`}></i>
                 </div>
-              </div>
-
-              {resultUrl && (
-                <div className="relative group rounded-[32px] overflow-hidden border border-white/10 shadow-3xl">
-                  <img src={resultUrl} className="w-full h-auto" alt="Generated" />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button onClick={() => window.open(resultUrl)} className="px-6 py-3 bg-white text-black font-black rounded-full text-[10px] uppercase tracking-widest">
-                      查看原始圖
-                    </button>
+                <div className="flex flex-col">
+                  <div className="flex items-center space-x-3">
+                    <h4 className="text-[15px] font-bold text-white tracking-tight">{item.title}</h4>
+                    <span className="text-[9px] font-black text-gray-600 uppercase tracking-widest">{item.time}</span>
                   </div>
+                  <p className="text-[11px] text-gray-500 font-medium mt-1 truncate max-w-[180px]">{item.excerpt}</p>
                 </div>
-              )}
-
-              <button 
-                onClick={handleImageGen}
-                disabled={isProcessing || !prompt}
-                className={`w-full py-7 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] transition-all flex items-center justify-center space-x-4 ${isProcessing ? 'bg-gray-800' : 'bg-blue-600 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95'}`}
-              >
-                {isProcessing ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : <i className="fa-solid fa-wand-magic-sparkles"></i>}
-                <span>{isProcessing ? statusMessage : '生 成 影 像'}</span>
-              </button>
+              </div>
+              <i className="fa-solid fa-chevron-right text-xs text-gray-700 group-hover:text-white transition-colors"></i>
             </div>
-            <p className="text-center text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-              影像由 Nano Banana Pro 驅動，需提供付費金鑰
-            </p>
+          ))}
+        </div>
+      </section>
+
+      {/* 底部功能按鈕 */}
+      <div className="pt-6 pb-12">
+        <button 
+          onClick={() => handleAction('GENERAL')}
+          className="w-full py-7 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[44px] text-white font-black text-sm uppercase tracking-[0.4em] shadow-[0_25px_50px_rgba(37,99,235,0.2)] flex items-center justify-center space-x-5 active:scale-95 transition-all"
+        >
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+            <i className="fa-solid fa-plus text-sm"></i>
           </div>
-        )}
-
-        {activeTab === 'VIDEO' && (
-          <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-[#1C1C1E] p-10 rounded-[44px] border border-white/5 space-y-8 shadow-3xl">
-              <div className="space-y-4">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] px-2">參考影像 (可選)</label>
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full aspect-video bg-black/40 rounded-[28px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center cursor-pointer hover:border-orange-600/40 transition-all overflow-hidden relative"
-                >
-                  {videoSourceImage ? (
-                    <img src={videoSourceImage} className="w-full h-full object-cover" alt="Source" />
-                  ) : (
-                    <>
-                      <i className="fa-solid fa-cloud-arrow-up text-3xl text-gray-700 mb-4"></i>
-                      <p className="text-[11px] font-black text-gray-600 uppercase tracking-widest">點擊或拖放照片</p>
-                    </>
-                  )}
-                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] px-2">動態提示詞 PROMPT</label>
-                <textarea 
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="描述影像該如何律動..."
-                  className="w-full h-32 bg-black/40 rounded-[28px] p-6 text-white text-base font-medium border border-white/5 outline-none focus:border-orange-600 transition-all resize-none"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] px-2">影片比例 RATIO</label>
-                <div className="flex gap-3">
-                  {(['16:9', '9:16'] as VideoAspectRatio[]).map(ratio => (
-                    <button
-                      key={ratio}
-                      onClick={() => setAspectRatio(ratio)}
-                      className={`flex-1 py-4 rounded-2xl text-[11px] font-black tracking-widest border transition-all ${aspectRatio === ratio ? 'bg-[#FF6B2C] border-[#FF6B2C] text-white shadow-xl' : 'bg-white/5 border-white/5 text-gray-500'}`}
-                    >
-                      {ratio === '16:9' ? '橫向 16:9' : '縱向 9:16'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {resultUrl && (
-                <div className="rounded-[32px] overflow-hidden border border-white/10 shadow-3xl bg-black">
-                  <video src={resultUrl} controls className="w-full aspect-video" />
-                </div>
-              )}
-
-              <button 
-                onClick={handleVideoGen}
-                disabled={isProcessing || (!prompt && !videoSourceImage)}
-                className={`w-full py-7 rounded-[32px] text-white font-black text-sm uppercase tracking-[0.4em] transition-all flex items-center justify-center space-x-4 ${isProcessing ? 'bg-gray-800' : 'bg-[#FF6B2C] shadow-[0_20px_50px_rgba(255,107,44,0.4)] active:scale-95'}`}
-              >
-                {isProcessing ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : <i className="fa-solid fa-clapperboard"></i>}
-                <span>{isProcessing ? statusMessage : '演 算 影 片'}</span>
-              </button>
-            </div>
-            <div className="p-8 bg-blue-600/5 border border-blue-600/10 rounded-[36px] flex items-center space-x-6">
-               <i className="fa-solid fa-circle-info text-blue-500 text-xl"></i>
-               <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
-                 影像演算由 Veo 驅動。請務必選取已啟用計費功能的 Google API 金鑰，並預留約 2-5 分鐘處理時間。
-               </p>
-            </div>
-          </div>
-        )}
+          <span>START CAPTURE</span>
+        </button>
       </div>
+
+      {/* 擷取後分發選單 Modal */}
+      {showSaveOptions && (
+        <div className="fixed inset-0 z-[1000] flex items-end justify-center p-6 animate-in fade-in duration-300">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={() => setShowSaveOptions(null)} />
+          <div className="relative w-full max-w-lg bg-[#1C1C1E] rounded-[44px] p-10 flex flex-col space-y-8 animate-in slide-in-from-bottom duration-500 shadow-3xl border border-white/10">
+            <div className="text-center">
+              <h3 className="text-2xl font-black text-white tracking-tight mb-2">擷取成功</h3>
+              <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">請選擇儲存目的地</p>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-4">
+              <button className="w-full p-6 bg-white/5 hover:bg-white/10 rounded-3xl text-[12px] font-black uppercase tracking-[0.2em] text-white border border-white/5 transition-all flex items-center space-x-4">
+                <i className="fa-solid fa-box-archive text-blue-400 text-lg"></i>
+                <span>存入靈感筆記本</span>
+              </button>
+              
+              <div className="relative py-2 flex items-center">
+                <div className="flex-grow h-px bg-white/5"></div>
+                <span className="mx-4 text-[9px] font-black text-gray-700 uppercase tracking-widest">或 插入專案</span>
+                <div className="flex-grow h-px bg-white/5"></div>
+              </div>
+              
+              <div className="max-h-56 overflow-y-auto no-scrollbar space-y-3">
+                {projects.map(p => (
+                  <button 
+                    key={p.id}
+                    onClick={() => {
+                      onSaveToProject(p.id, showSaveOptions);
+                      setShowSaveOptions(null);
+                    }}
+                    className="w-full p-5 rounded-3xl bg-black/40 border border-white/5 flex items-center justify-between hover:border-blue-500/50 transition-all group"
+                  >
+                    <div className="flex items-center space-x-5">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: p.color }}>
+                        <i className={`fa-solid ${p.icon} text-black text-sm`}></i>
+                      </div>
+                      <span className="text-sm font-bold text-white">{p.name}</span>
+                    </div>
+                    <i className="fa-solid fa-plus-circle text-gray-700 group-hover:text-blue-500"></i>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button onClick={() => setShowSaveOptions(null)} className="w-full py-4 text-[11px] font-black text-gray-600 uppercase tracking-widest hover:text-white transition-colors">暫不儲存</button>
+          </div>
+        </div>
+      )}
+
+      {/* 處理中遮罩 */}
+      {isProcessing && (
+        <div className="fixed inset-0 z-[2000] bg-black/90 backdrop-blur-3xl flex flex-col items-center justify-center animate-in fade-in duration-300">
+          <div className="relative w-24 h-24 mb-10">
+            <div className="absolute inset-0 border-4 border-blue-600/20 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h2 className="text-2xl font-black text-white tracking-tighter animate-pulse">精準救贖創作思緒...</h2>
+          <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.4em] mt-3">ALGORITHMIC REDEMPTION ACTIVE</p>
+        </div>
+      )}
     </div>
   );
 };
