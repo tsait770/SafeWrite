@@ -25,17 +25,15 @@ const Editor: React.FC<EditorProps> = ({
   onModeToggle, 
   onOpenTimeline,
   onOpenCollaboration,
-  isRestored = false,
   onBack,
-  onUpdateOutline,
-  membership = MembershipLevel.FREE
+  onUpdateOutline
 }) => {
   const [content, setContent] = useState(chapter.content);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   
-  // UI 獨立控制狀態
+  // UI 獨立控制狀態：實作「按下即消失」
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isToolbarVisible, setIsToolbarVisible] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -49,7 +47,7 @@ const Editor: React.FC<EditorProps> = ({
     setContent(chapter.content);
   }, [chapter.content]);
 
-  // 監控捲動進度：僅在預覽/閱讀模式下啟用
+  // 監控捲動進度
   useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
@@ -72,15 +70,14 @@ const Editor: React.FC<EditorProps> = ({
     setContent(newContent);
     onUpdateContent(newContent);
     
-    // 進入書寫狀態：偵測到輸入即刻關閉所有 UI
-    if (!isTyping) {
-      setIsTyping(true);
-      setIsHeaderVisible(false);
-      setIsToolbarVisible(false);
-    }
+    // 書寫狀態智能判斷：輸入即鎖定 (絕對淨化狀態)
+    if (!isTyping) setIsTyping(true);
+    setIsHeaderVisible(false);
+    setIsToolbarVisible(false);
 
     if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
     typingTimerRef.current = window.setTimeout(() => {
+      // 停頓 2 秒即解除鎖定
       setIsTyping(false);
     }, 2000);
 
@@ -90,25 +87,21 @@ const Editor: React.FC<EditorProps> = ({
 
   const isImmersive = uiMode === UIMode.FOCUS || isPreviewMode;
 
-  // 線性操作：切換至預覽模式
+  // 沉浸式切換邏輯：按下即消失
   const handleTogglePreview = () => {
-    const next = !isPreviewMode;
-    setIsPreviewMode(next);
-    // 按下瞬間 UI 同步消失
+    setIsPreviewMode(prev => !prev);
     setIsHeaderVisible(false);
     setIsToolbarVisible(false);
   };
 
-  // 線性操作：切換至專注模式
   const handleToggleFocus = () => {
     const nextMode = uiMode === UIMode.FOCUS ? UIMode.MANAGEMENT : UIMode.FOCUS;
     onModeToggle(nextMode);
-    // 按下瞬間 UI 同步消失
     setIsHeaderVisible(false);
     setIsToolbarVisible(false);
   };
 
-  // 手勢偵測邏輯：判斷下滑與上滑
+  // 線性手勢定義 (Linear Gesture Mapping)
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartRef.current = e.touches[0].clientY;
   };
@@ -120,11 +113,11 @@ const Editor: React.FC<EditorProps> = ({
     const threshold = 50; 
 
     if (deltaY > threshold) {
-      // 下滑：視為尋求「頂部導航/閱讀模式」
+      // 下滑 (Swipe Down)：尋求導向，喚出頂部，收合底部
       setIsHeaderVisible(true);
       setIsToolbarVisible(false);
     } else if (deltaY < -threshold) {
-      // 上滑：視為尋求「底部排版工具列」
+      // 上滑 (Swipe Up)：尋求工具，喚出底部，收合頂部
       setIsToolbarVisible(true);
       setIsHeaderVisible(false);
     }
@@ -133,7 +126,7 @@ const Editor: React.FC<EditorProps> = ({
   };
 
   const handleContentClick = () => {
-    // 點擊內容區塊作為「總控開關」：在沉浸模式下切換顯示
+    // 在沉浸模式且非書寫狀態下，點擊內容區塊切換邊緣 UI
     if (isImmersive && !isTyping) {
       const nextState = !isHeaderVisible;
       setIsHeaderVisible(nextState);
@@ -156,8 +149,7 @@ const Editor: React.FC<EditorProps> = ({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      
-      {/* 眼睛閱讀模式進度條 (還原模組優點) */}
+      {/* 眼睛閱讀模式進度條 */}
       {isPreviewMode && (
         <div className="fixed top-0 left-0 w-full h-[env(safe-area-inset-top,4px)] bg-white/5 z-[150] pointer-events-none">
           <div 
@@ -174,7 +166,7 @@ const Editor: React.FC<EditorProps> = ({
       >
         <div className="h-16 px-6 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <button onClick={onBack} className="w-10 h-10 rounded-full flex items-center justify-center text-[#8E8E93] active:bg-white/10">
+            <button onClick={onBack} className="w-10 h-10 rounded-full flex items-center justify-center text-[#8E8E93] active:bg-white/10 transition-colors">
                <i className="fa-solid fa-chevron-left"></i>
             </button>
             <div className="flex flex-col">
