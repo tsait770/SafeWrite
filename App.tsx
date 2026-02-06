@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings, BackupSettings } from './types';
+import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings, BackupSettings, CreditCard } from './types';
 import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS, TEMPLATE_STRUCTURE_MAP } from './constants';
 import Library from './components/Library';
 import CaptureCenter from './components/CaptureCenter';
@@ -12,6 +12,8 @@ import ProfessionalPublicationCenter from './components/ProfessionalPublicationC
 import StructureGraph from './components/StructureGraph';
 import ProjectDetail from './components/ProjectDetail';
 import CollaborationPanel from './components/CollaborationPanel';
+import SubscriptionPlans from './components/SubscriptionPlans';
+import CheckoutModal from './components/CheckoutModal';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>({
@@ -73,6 +75,9 @@ const App: React.FC = () => {
     theme: ThemeMode.NIGHT,
     membership: MembershipLevel.FREE,
     language: 'zh-TW',
+    savedCards: [
+      { id: 'card-1', number: '9759 2484 5269 6576', expiry: '12/24', name: 'BRUCE WAYNE', type: 'MASTERCARD', cvv: '***' }
+    ],
     aiPreferences: {
       provider: 'DEFAULT',
       selectedModel: 'gemini-3-pro-preview',
@@ -114,14 +119,15 @@ const App: React.FC = () => {
     }
   });
 
-  const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION'>('NONE');
+  const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION' | 'SUBSCRIPTION' | 'CHECKOUT'>('NONE');
+  const [selectedPlan, setSelectedPlan] = useState<{ id: MembershipLevel, name: string, price: string } | null>(null);
+  
   const [swipeProgress, setSwipeProgress] = useState(0); 
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
   const lastSnapshotContentRef = useRef<string>('');
   const idleTimerRef = useRef<number | null>(null);
-  const intervalTimerRef = useRef<number | null>(null);
 
   const handleUpdateProject = (updated: Project) => {
     setState(prev => ({
@@ -140,7 +146,6 @@ const App: React.FC = () => {
       const project = { ...projects[pIdx] };
       let targetChapterId = chapterId;
 
-      // 如果有指定章節，則插入章節；否則插入第一個章節或建立新章節
       if (chapterId) {
         project.chapters = project.chapters.map(c => 
           c.id === chapterId ? { ...c, content: c.content + "\n\n" + content, wordCount: (c.content + content).length, lastEdited: Date.now() } : c
@@ -262,6 +267,15 @@ const App: React.FC = () => {
     }
   };
 
+  const handleSubscriptionSuccess = () => {
+    if (selectedPlan) {
+      setState(prev => ({ ...prev, membership: selectedPlan.id }));
+      setActiveOverlay('NONE');
+      setSelectedPlan(null);
+      alert(`恭喜！您已成功訂閱 ${selectedPlan.name}`);
+    }
+  };
+
   const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
   const isBottomNavVisible = (activeOverlay === 'NONE' && swipeProgress === 0) && (state.activeTab !== AppTab.WRITE || !currentChapter);
 
@@ -334,14 +348,60 @@ const App: React.FC = () => {
         ) : state.activeTab === AppTab.PROFILE ? (
           <Profile 
             state={state} 
-            onUpgrade={() => {}} 
+            onUpgrade={() => setActiveOverlay('SUBSCRIPTION')} 
             onLanguageChange={(l) => setState(prev => ({...prev, language: l}))} 
             onUpdateAIPreferences={(prefs) => setState(prev => ({...prev, aiPreferences: prefs}))}
             onUpdateSecuritySettings={(s) => setState(prev => ({...prev, securitySettings: s}))}
             onUpdateBackupSettings={(b) => setState(prev => ({...prev, backupSettings: b}))}
+            onUpdateSavedCards={(c) => setState(prev => ({...prev, savedCards: c}))}
           />
         ) : null}
       </main>
+
+      {/* Subscription Overlays */}
+      {activeOverlay === 'SUBSCRIPTION' && (
+        <SubscriptionPlans 
+          currentMembership={state.membership}
+          onSelectPlan={(plan) => {
+            setSelectedPlan(plan);
+            setActiveOverlay('CHECKOUT');
+          }}
+          onClose={() => setActiveOverlay('NONE')}
+        />
+      )}
+
+      {activeOverlay === 'CHECKOUT' && selectedPlan && (
+        <CheckoutModal 
+          planName={selectedPlan.name}
+          price={selectedPlan.price}
+          onSuccess={handleSubscriptionSuccess}
+          onClose={() => setActiveOverlay('SUBSCRIPTION')}
+        />
+      )}
+
+      {activeOverlay === 'TIMELINE' && state.currentProject && state.currentChapterId && (
+        <div className="fixed inset-0 z-[2000] animate-in slide-in-from-bottom duration-500">
+           <Timeline 
+             history={state.currentProject.chapters.find(c => c.id === state.currentChapterId)?.history || []}
+             membership={state.membership}
+             isNight={true}
+             onRestore={(s) => {
+               handleUpdateContent(s.content);
+               setActiveOverlay('NONE');
+             }}
+             onPreview={() => {}}
+             onCreateMilestone={() => createSnapshot(SnapshotType.MILESTONE)}
+             onClearSnapshots={() => {}}
+             onClose={() => setActiveOverlay('NONE')}
+             securitySettings={state.securitySettings}
+             onUpdateSecuritySettings={(s) => setState(prev => ({ ...prev, securitySettings: s }))}
+           />
+        </div>
+      )}
+
+      {activeOverlay === 'COLLABORATION' && (
+        <CollaborationPanel onClose={() => setActiveOverlay('NONE')} />
+      )}
 
       <BottomNav activeTab={state.activeTab} onTabChange={(tab) => setState(prev => ({ ...prev, activeTab: tab }))} isVisible={isBottomNavVisible} />
     </div>

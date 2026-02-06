@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { AppState, MembershipLevel, SupportedLanguage, AIPreferences, SecuritySettings, BackupSettings } from '../types';
+import { AppState, MembershipLevel, SupportedLanguage, AIPreferences, SecuritySettings, BackupSettings, CreditCard } from '../types';
 import LanguageSelector from './LanguageSelector';
 import PrivacyModal from './PrivacyModal';
 import AIPreferencesPage from './AIPreferences';
 import SecuritySettingsPage from './SecuritySettingsPage';
+import CreditCardManager from './CreditCardManager';
 
 interface ProfileProps {
   state: AppState;
@@ -13,13 +14,15 @@ interface ProfileProps {
   onUpdateAIPreferences: (prefs: AIPreferences) => void;
   onUpdateSecuritySettings: (settings: SecuritySettings) => void;
   onUpdateBackupSettings: (settings: BackupSettings) => void;
+  onUpdateSavedCards: (cards: CreditCard[]) => void;
 }
 
-const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, onUpdateAIPreferences, onUpdateSecuritySettings, onUpdateBackupSettings }) => {
+const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, onUpdateAIPreferences, onUpdateSecuritySettings, onUpdateBackupSettings, onUpdateSavedCards }) => {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isAIPreferencesOpen, setIsAIPreferencesOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const [isCardsOpen, setIsCardsOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
   const handleLanguageSelect = (lang: SupportedLanguage) => {
@@ -35,6 +38,14 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
       status: state.backupSettings.googleDriveConnected ? 'IDLE' : 'SYNCING',
       lastBackupTime: state.backupSettings.googleDriveConnected ? state.backupSettings.lastBackupTime : Date.now()
     });
+  };
+
+  const handleAddCard = (card: CreditCard) => {
+    onUpdateSavedCards([card, ...state.savedCards]);
+  };
+
+  const handleDeleteCard = (id: string) => {
+    onUpdateSavedCards(state.savedCards.filter(c => c.id !== id));
   };
 
   const currentLangName = {
@@ -71,33 +82,44 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
       )}
 
       {/* User Status Card */}
-      <section className="bg-[#1E293B] p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl">
-        <div className="flex items-center space-x-4 mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-black shadow-xl">
+      <section className="bg-[#1E293B] p-8 rounded-[44px] border border-slate-800 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+        <div className="flex items-center space-x-6 mb-8 relative z-10">
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-black shadow-xl">
             {state.language.slice(0, 1).toUpperCase()}
           </div>
           <div className={state.language === 'ar' ? 'mr-4 ml-0' : ''}>
-            <h2 className="text-xl font-bold text-white">作家身分</h2>
-            <div className="flex items-center space-x-2 mt-1">
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${state.membership === MembershipLevel.PREMIUM ? 'bg-amber-500 text-slate-950' : 'bg-blue-500/10 text-blue-400'}`}>
+            <h2 className="text-2xl font-black text-white tracking-tight">作家身分</h2>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-lg ${state.membership === MembershipLevel.PREMIUM ? 'bg-amber-500 text-slate-950' : state.membership === MembershipLevel.PRO ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 border border-white/5'}`}>
                 {state.membership}
               </span>
-              <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em]">
+              <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.25em]">
                 持續創作 124 天
               </span>
             </div>
           </div>
         </div>
 
-        {state.membership === MembershipLevel.FREE && (
-          <button 
-            onClick={onUpgrade}
-            className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl text-white font-bold text-[11px] uppercase tracking-[0.2em] shadow-lg shadow-blue-900/20 active:scale-95 transition-all flex items-center justify-center space-x-2"
-          >
-            <i className="fa-solid fa-bolt-lightning text-xs mr-2"></i>
-            <span>獲得 90 天 PRO 試用</span>
-          </button>
-        )}
+        <div className="space-y-4 relative z-10">
+          {state.membership === MembershipLevel.FREE ? (
+            <button 
+              onClick={onUpgrade}
+              className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[28px] text-white font-black text-[12px] uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(37,99,235,0.3)] active:scale-95 transition-all flex items-center justify-center space-x-2"
+            >
+              <i className="fa-solid fa-bolt-lightning text-xs mr-2"></i>
+              <span>解鎖全功能 Pro 模式</span>
+            </button>
+          ) : (
+            <button 
+              onClick={onUpgrade}
+              className="w-full py-5 bg-white/5 border border-white/10 rounded-[28px] text-white font-black text-[12px] uppercase tracking-[0.3em] active:scale-95 transition-all flex items-center justify-center space-x-2"
+            >
+              <i className="fa-solid fa-gem text-xs mr-2 text-amber-500"></i>
+              <span>管理您的訂閱方案</span>
+            </button>
+          )}
+        </div>
       </section>
 
       {/* NEW: Data Backup & Sync Card (Google Drive) */}
@@ -163,6 +185,24 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
         <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">偏好設定 SETTINGS</h2>
         
         <div className="bg-slate-800/50 rounded-3xl overflow-hidden border border-slate-800">
+          <button 
+            onClick={() => setIsCardsOpen(true)}
+            className="w-full flex items-center justify-between p-4 border-b border-slate-800 hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-slate-700/50 rounded-lg text-emerald-400">
+                <i className="fa-solid fa-credit-card text-sm"></i>
+              </div>
+              <span className="text-sm font-medium text-slate-200">常用信用卡</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">
+                {state.savedCards.length} Cards
+              </span>
+              <i className={`fa-solid fa-chevron-right text-slate-500 text-[10px] ${state.language === 'ar' ? 'rotate-180' : ''}`}></i>
+            </div>
+          </button>
+
           <button 
             onClick={() => setIsAIPreferencesOpen(true)}
             className="w-full flex items-center justify-between p-4 border-b border-slate-800 hover:bg-white/5 transition-colors"
@@ -271,6 +311,15 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
           settings={state.securitySettings}
           onUpdate={onUpdateSecuritySettings}
           onClose={() => setIsSecurityOpen(false)}
+        />
+      )}
+
+      {isCardsOpen && (
+        <CreditCardManager 
+          cards={state.savedCards}
+          onAdd={handleAddCard}
+          onDelete={handleDeleteCard}
+          onClose={() => setIsCardsOpen(false)}
         />
       )}
 

@@ -153,6 +153,15 @@ export interface BackupSettings {
   status: 'IDLE' | 'SYNCING' | 'ERROR';
 }
 
+export interface CreditCard {
+  id: string;
+  number: string;
+  expiry: string;
+  name: string;
+  type: 'MASTERCARD' | 'VISA';
+  cvv: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -190,6 +199,7 @@ export interface AppState {
   aiPreferences: AIPreferences;
   securitySettings: SecuritySettings;
   backupSettings: BackupSettings;
+  savedCards: CreditCard[];
   editorSettings: {
     typewriterMode: boolean;
     previewMode: boolean;
