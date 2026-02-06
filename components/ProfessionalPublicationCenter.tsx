@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 enum PubStep { DASHBOARD, GALLERY, CONFIG }
@@ -16,12 +17,12 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
   if (step === PubStep.GALLERY) {
     return (
       <div className="fixed inset-0 z-[1000] bg-[#0F0F10] flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-white/5">
-          <button onClick={() => setStep(PubStep.DASHBOARD)} className="text-gray-400 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>
+        <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between border-b border-white/5">
+          <button onClick={() => setStep(PubStep.DASHBOARD)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+            <i className="fa-solid fa-chevron-left"></i>
           </button>
           <h2 className="text-sm font-black text-white uppercase tracking-[0.3em]">EXPORT GALLERY</h2>
-          <button className="text-gray-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></button>
+          <button className="text-gray-400"><i className="fa-solid fa-magnifying-glass"></i></button>
         </header>
 
         <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-10">
@@ -32,7 +33,7 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
 
           <div className="flex space-x-3 overflow-x-auto no-scrollbar pb-2">
             {['All', 'PDF', 'DOCX', 'EPUB'].map(f => (
-              <button key={f} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${f === selectedFormat ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}>
+              <button key={f} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all shrink-0 ${f === selectedFormat ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}>
                 {f}
               </button>
             ))}
@@ -41,7 +42,7 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
           <div className="grid grid-cols-2 gap-8 pb-20">
             {templates.map((t, idx) => (
               <div key={idx} className="space-y-4 group cursor-pointer" onClick={() => setStep(PubStep.CONFIG)}>
-                <div className={`${t.color} aspect-[3/4] rounded-3xl relative shadow-2xl transition-transform hover:scale-105 overflow-hidden`}>
+                <div className={`${t.color} aspect-[3/4] rounded-3xl relative shadow-2xl transition-transform hover:scale-105 overflow-hidden border border-white/5`}>
                   {t.type === 'PREMIUM' && <span className="absolute top-4 left-4 bg-amber-500/20 text-amber-500 text-[8px] font-black px-2 py-1 rounded-full border border-amber-500/30">★ PREMIUM</span>}
                   <div className="absolute inset-x-8 top-12 bottom-12 border border-gray-200/50 p-4 opacity-10">
                     <div className="h-2 w-full bg-gray-300 rounded mb-2" />
@@ -63,14 +64,16 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
   if (step === PubStep.CONFIG) {
     return (
       <div className="fixed inset-0 z-[1000] bg-[#0A0B0D] flex flex-col animate-in slide-in-from-right duration-500">
-        <header className="h-20 px-8 flex items-center justify-between border-b border-white/5 bg-[#0F1012]">
-          <button onClick={() => setStep(PubStep.GALLERY)} className="text-gray-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+        <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between border-b border-white/5 bg-[#0F1012]">
+          <button onClick={() => setStep(PubStep.GALLERY)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
+            <i className="fa-solid fa-chevron-left"></i>
+          </button>
           <h2 className="text-sm font-black text-white uppercase tracking-[0.3em]">EXPORT CONFIGURATION</h2>
           <div className="w-6" />
         </header>
 
-        <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12">
-          {/* Document Preview - Image 15 */}
+        <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12 pb-48">
+          {/* Document Preview */}
           <div className="bg-[#16181C] rounded-[3rem] p-12 border border-white/5 shadow-2xl relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative z-10">
@@ -89,24 +92,24 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
           {/* Configuration Options */}
           <section className="space-y-10">
             <div>
-              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6">Output Options</h3>
+              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 px-1">Output Options</h3>
               <div className="grid grid-cols-2 gap-4">
-                <button className="py-5 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest">All Chapters</button>
+                <button className="py-5 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-900/20">All Chapters</button>
                 <button className="py-5 bg-white/5 border border-white/10 text-gray-400 rounded-2xl text-[11px] font-black uppercase tracking-widest">Custom Range</button>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
-              <div className="p-8 bg-[#16181C] border-2 border-blue-600 rounded-[2.5rem] text-center">
+              <button className="p-8 bg-[#16181C] border-2 border-blue-600 rounded-[2.5rem] text-center active:scale-95 transition-all">
                  <span className="text-4xl font-serif text-white block mb-4">Aa</span>
                  <p className="text-sm font-bold text-white mb-1">Serif</p>
                  <p className="text-[9px] text-gray-500 uppercase font-black">Classic</p>
-              </div>
-              <div className="p-8 bg-[#16181C] border border-white/10 rounded-[2.5rem] text-center opacity-40">
+              </button>
+              <button className="p-8 bg-[#16181C] border border-white/10 rounded-[2.5rem] text-center opacity-40 active:scale-95 transition-all">
                  <span className="text-4xl font-sans text-white block mb-4">Aa</span>
                  <p className="text-sm font-bold text-white mb-1">Sans-serif</p>
                  <p className="text-[9px] text-gray-500 uppercase font-black">Modern</p>
-              </div>
+              </button>
             </div>
 
             <div className="space-y-4">
@@ -124,19 +127,22 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
                <input placeholder="Elena Fisher" className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 text-sm text-white focus:border-blue-500 outline-none transition-all" />
                <input placeholder="ISBN-13 (Optional)" className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 text-sm text-white focus:border-blue-500 outline-none transition-all" />
                <div className="grid grid-cols-2 gap-4">
-                  <input placeholder="2023" className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 text-sm text-white outline-none" />
+                  <input placeholder="2025" className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 text-sm text-white outline-none" />
                   <div className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 flex items-center justify-between text-sm text-white">
-                     <span>English</span>
-                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                     <span>Traditional Chinese</span>
+                     <i className="fa-solid fa-chevron-down text-xs text-gray-500"></i>
                   </div>
                </div>
             </div>
           </section>
         </main>
 
-        <footer className="p-10 bg-[#0F1012] border-t border-white/5">
-          <button className="w-full py-7 bg-blue-600 rounded-[3rem] text-white font-black text-sm uppercase tracking-[0.4em] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(37,99,235,0.3)] active:scale-95 transition-all">
-             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        <footer className="fixed bottom-0 inset-x-0 p-10 bg-gradient-to-t from-[#0A0B0D] via-[#0A0B0D] to-transparent shrink-0">
+          <button 
+            onClick={() => { alert('Document generated successfully!'); onClose(); }}
+            className="w-full py-7 bg-blue-600 rounded-[3rem] text-white font-black text-sm uppercase tracking-[0.4em] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(37,99,235,0.3)] active:scale-95 transition-all"
+          >
+             <i className="fa-solid fa-file-export text-xl"></i>
              <span>Generate & Export</span>
           </button>
         </footer>
@@ -145,19 +151,21 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
   }
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-[#F8F9FB] flex flex-col animate-in fade-in duration-500">
-      <header className="h-20 px-8 flex items-center justify-between border-b border-gray-100 bg-white">
+    <div className="fixed inset-0 z-[1000] bg-[#F8F9FB] flex flex-col animate-in fade-in duration-500 overflow-hidden">
+      <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between border-b border-gray-100 bg-white">
         <div className="flex items-center space-x-4">
-           <button onClick={onClose} className="p-2 text-gray-400 hover:text-black transition-colors"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
+           <button onClick={onClose} className="p-2 text-gray-400 hover:text-black transition-colors">
+             <i className="fa-solid fa-chevron-left text-xl"></i>
+           </button>
            <div>
               <h2 className="text-sm font-black text-[#1E293B] uppercase tracking-[0.2em]">Export & Membership</h2>
               <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">MANAGEMENT CENTER</p>
            </div>
         </div>
-        <button className="p-2 text-gray-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.572-1.065z"/></svg></button>
+        <button className="p-2 text-gray-400"><i className="fa-solid fa-gear text-xl"></i></button>
       </header>
 
-      <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12 text-[#1E293B]">
+      <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12 text-[#1E293B] pb-40">
         <section>
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">EXPORT FORMATS</h3>
@@ -168,12 +176,12 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
               onClick={() => { setSelectedFormat('PDF'); setStep(PubStep.GALLERY); }}
               className="p-8 bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col items-start space-y-4 relative active:scale-95 transition-all"
             >
-               <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center"><svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>
+               <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center"><i className="fa-solid fa-file-pdf text-3xl"></i></div>
                <div><p className="text-base font-black">PDF Document</p><p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Standard format</p></div>
                <div className="absolute top-6 right-6 w-2 h-2 bg-green-500 rounded-full" />
             </button>
             <button className="p-8 bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col items-start space-y-4 relative active:scale-95 transition-all opacity-60">
-               <div className="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center"><svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg></div>
+               <div className="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center"><i className="fa-solid fa-book text-3xl"></i></div>
                <div><p className="text-base font-black">EPUB E-Book</p><p className="text-[10px] text-gray-400 font-bold uppercase mt-1">For Kindle & Apple</p></div>
                <span className="absolute top-6 right-6 text-[9px] font-black bg-blue-500 text-white px-2 py-0.5 rounded-lg uppercase">PRO</span>
             </button>
@@ -197,7 +205,7 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
 
         <footer className="pb-10">
            <button className="w-full py-7 bg-[#5d5dff] rounded-[3rem] text-white font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(93,93,255,0.4)] active:scale-95 transition-all">
-              <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M13.13 11.13L11 9L13.13 6.87L15.26 9L13.13 11.13M13.13 2L11 4.13L13.13 6.26L15.26 4.13L13.13 2M13.13 15.87L11 18L13.13 20.13L15.26 18L13.13 15.87Z"/></svg>
+              <i className="fa-solid fa-bolt-lightning"></i>
               <span>Unlock Full Potential</span>
            </button>
         </footer>
