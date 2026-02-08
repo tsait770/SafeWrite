@@ -40,6 +40,18 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   ];
 
   const handleFinalDelivery = async (platform: string) => {
+    // 導航邏輯：針對 Google Drive 與 iCloud 進行外部連結導向
+    if (platform === 'Google Drive') {
+      window.open('https://share.google/MAGEy5AkuKG8A2waS', '_blank');
+      onClose();
+      return;
+    }
+    if (platform === 'iCloud') {
+      window.open('https://www.icloud.com/', '_blank');
+      onClose();
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmissionStatus(`正在建立與 ${platform} 的加密通道...`);
     
@@ -386,7 +398,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                       </div>
                       <div className="px-5 py-2.5 border border-blue-600/30 text-[10px] font-black text-blue-500 rounded-full uppercase tracking-widest bg-blue-600/5">官方認證</div>
                    </div>
-                   <button onClick={() => handleFinalDelivery('Google Drive')} className="w-full h-20 bg-blue-600 text-white rounded-[36px] text-[13px] font-black uppercase tracking-[0.5em] shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all">傳 送 至 G O O G L E 雲 端</button>
+                   <button onClick={() => handleFinalDelivery('Google Drive')} className="w-full h-20 bg-blue-600 text-white rounded-[36px] text-[13px] font-black uppercase tracking-[0.5em] shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all">傳 送 至 G O O G L E D R I V E</button>
                 </div>
                 <div className="bg-[#121214] rounded-[56px] p-10 space-y-10 border border-white/5 shadow-2xl">
                    <div className="flex items-center justify-between">
@@ -399,7 +411,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                       </div>
                       <div className="px-5 py-2.5 border border-blue-600/30 text-[10px] font-black text-blue-500 rounded-full uppercase tracking-widest bg-blue-600/5">官方認證</div>
                    </div>
-                   <button onClick={() => handleFinalDelivery('iCloud')} className="w-full h-20 bg-[#1C1C1E] border border-white/10 text-white rounded-[36px] text-[13px] font-black uppercase tracking-[0.5em] active:scale-[0.98] transition-all">傳 送 至 I C L O U D</button>
+                   <button onClick={() => handleFinalDelivery('iCloud')} className="w-full h-20 bg-[#1C1C1E] border border-white/10 text-white rounded-[36px] text-[13px] font-black uppercase tracking-[0.5em] active:scale-[0.98] transition-all">傳 送 至 A P P L E I C L O U D</button>
                 </div>
              </div>
           </div>
