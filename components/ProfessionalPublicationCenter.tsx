@@ -20,11 +20,35 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState('');
 
-  // Metadata states
-  const [author, setAuthor] = useState('Elena Fisher');
-  const [isbn, setIsbn] = useState('');
+  // Metadata states - initialized to match unentered state appearance
+  const [author, setAuthor] = useState('Author Name');
+  const [isbn, setIsbn] = useState('ISBN-13 (Optional)');
   const [pubYear, setPubYear] = useState('2026');
   const [language, setLanguage] = useState('English');
+
+  const languages = [
+    "English",
+    "繁體中文",
+    "简体中文",
+    "Español",
+    "Português (Brasil)",
+    "Português",
+    "Deutsch",
+    "Français",
+    "Italiano",
+    "Nederlands",
+    "Svenska",
+    "Türkçe",
+    "Русский",
+    "日本語",
+    "한국어",
+    "ไทย",
+    "Tiếng Việt",
+    "Bahasa Indonesia",
+    "Bahasa Melayu",
+    "العربية",
+    "हिन्दी"
+  ];
 
   const templates = [
     { id: 't1', name: 'Modern Novel', subtitle: 'Professional serif layout', type: 'FREE', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop' },
@@ -154,12 +178,12 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
 
           {/* Font Selection Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => setSelectedFont('serif')} className={`h-[240px] rounded-[44px] flex flex-col items-center justify-center space-y-2 border-2 transition-all ${selectedFont === 'serif' ? 'bg-[#121214] border-blue-600' : 'bg-[#121214] border-transparent opacity-30'}`}>
+            <button onClick={() => setSelectedFont('serif')} className={`h-[240px] rounded-[44px] flex flex-col items-center justify-center space-y-2 border-2 transition-all ${selectedFont === 'serif' ? 'bg-[#121214] border-blue-600 shadow-[0_0_0_2px_rgba(37,99,235,0.5)]' : 'bg-[#121214] border-transparent opacity-30'}`}>
               <span className="text-[48px] font-serif">Aa</span>
               <span className="text-[16px] font-black">Serif</span>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Classic</span>
             </button>
-            <button onClick={() => setSelectedFont('sans')} className={`h-[240px] rounded-[44px] flex flex-col items-center justify-center space-y-2 border-2 transition-all ${selectedFont === 'sans' ? 'bg-[#121214] border-blue-600' : 'bg-[#121214] border-transparent opacity-30'}`}>
+            <button onClick={() => setSelectedFont('sans')} className={`h-[240px] rounded-[44px] flex flex-col items-center justify-center space-y-2 border-2 transition-all ${selectedFont === 'sans' ? 'bg-[#121214] border-blue-600 shadow-[0_0_0_2px_rgba(37,99,235,0.5)]' : 'bg-[#121214] border-transparent opacity-30'}`}>
               <span className="text-[48px] font-sans">Aa</span>
               <span className="text-[16px] font-black">Sans-serif</span>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Modern</span>
@@ -168,13 +192,13 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
 
           {/* Toggles */}
           <div className="space-y-4">
-             <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center justify-between">
+             <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center justify-between shadow-xl">
                 <span className="text-[15px] font-black uppercase tracking-[0.2em]">Page Numbering</span>
                 <button onClick={() => setIsPageNumbering(!isPageNumbering)} className={`w-14 h-8 rounded-full flex items-center px-1 transition-all ${isPageNumbering ? 'bg-blue-600' : 'bg-gray-700'}`}>
                   <div className={`w-6 h-6 bg-white rounded-full transition-transform ${isPageNumbering ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
              </div>
-             <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center justify-between">
+             <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center justify-between shadow-xl">
                 <span className="text-[15px] font-black uppercase tracking-[0.2em]">Headers & Footers</span>
                 <button onClick={() => setIsHeadersFooters(!isHeadersFooters)} className={`w-14 h-8 rounded-full flex items-center px-1 transition-all ${isHeadersFooters ? 'bg-blue-600' : 'bg-gray-700'}`}>
                   <div className={`w-6 h-6 bg-white rounded-full transition-transform ${isHeadersFooters ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -182,44 +206,44 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
              </div>
           </div>
 
-          {/* Metadata Grid matching screenshot */}
+          {/* Metadata Section - Optimized per requirements */}
           <div className="space-y-4 pb-20">
-            <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center">
+            <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center shadow-xl">
               <input 
                 value={author} 
                 onChange={e => setAuthor(e.target.value)}
                 placeholder="Author Name"
-                className="w-full bg-transparent outline-none border-none text-[15px] font-black text-white placeholder-gray-800"
+                className="w-full bg-transparent outline-none border-none text-[15px] font-black text-[#8E8E93] placeholder-[#8E8E93]"
               />
             </div>
-            <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center">
+            <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center shadow-xl">
               <input 
                 value={isbn} 
                 onChange={e => setIsbn(e.target.value)}
                 placeholder="ISBN-13 (Optional)"
-                className="w-full bg-transparent outline-none border-none text-[15px] font-black text-white placeholder-gray-800"
+                className="w-full bg-transparent outline-none border-none text-[15px] font-black text-[#8E8E93] placeholder-[#8E8E93]"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
-               <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center">
+               <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center shadow-xl">
                   <input 
                     value={pubYear} 
                     onChange={e => setPubYear(e.target.value)}
                     placeholder="2026"
-                    className="w-full bg-transparent outline-none border-none text-[15px] font-black text-white placeholder-gray-800"
+                    className="w-full bg-transparent outline-none border-none text-[15px] font-black text-[#8E8E93] placeholder-[#8E8E93]"
                   />
                </div>
-               <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center justify-between">
+               <div className="bg-[#121214] h-[92px] rounded-[46px] px-8 flex items-center justify-between shadow-xl relative overflow-hidden">
                   <select 
                     value={language}
                     onChange={e => setLanguage(e.target.value)}
-                    className="bg-transparent outline-none border-none text-[15px] font-black text-gray-500 flex-1 appearance-none cursor-pointer"
+                    className="w-full h-full bg-transparent outline-none border-none text-[15px] font-black text-[#8E8E93] appearance-none cursor-pointer z-10"
                   >
-                    <option value="English">English</option>
-                    <option value="Chinese">繁體中文</option>
-                    <option value="Japanese">日本語</option>
+                    {languages.map(lang => (
+                      <option key={lang} value={lang} className="bg-[#121214] text-white">{lang}</option>
+                    ))}
                   </select>
-                  <i className="fa-solid fa-chevron-down text-gray-800 text-[10px]"></i>
+                  <i className="fa-solid fa-chevron-down text-gray-800 text-[10px] absolute right-8 pointer-events-none"></i>
                </div>
             </div>
           </div>
@@ -257,7 +281,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                 <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.4em]">投遞與出版 Submission</h3>
                 <p className="text-[10px] text-gray-800 font-bold mt-1.5 uppercase tracking-widest">直接投遞至出版平台或指定編輯</p>
              </div>
-             <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5">
+             <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
                 <div className="flex items-center space-x-6">
                    <div className="w-16 h-16 rounded-3xl bg-blue-600 flex items-center justify-center text-white"><i className="fa-solid fa-paper-plane text-2xl"></i></div>
                    <div>
@@ -265,7 +289,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                       <p className="text-[10px] text-blue-500 font-black uppercase tracking-[0.2em] mt-2">Direct Publishing</p>
                    </div>
                 </div>
-                <div className="bg-black/50 h-18 rounded-[24px] px-8 flex items-center justify-between border border-white/5">
+                <div className="bg-black/50 h-18 rounded-[24px] px-8 flex items-center justify-between border border-white/5 shadow-inner">
                    <div className="flex items-center space-x-4 text-gray-500">
                       <i className="fa-solid fa-building-columns text-lg"></i>
                       <span className="text-[15px] font-bold">選擇目標出版社...</span>
@@ -284,7 +308,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
              </div>
              <div className="space-y-6">
                 {/* Google Drive Card */}
-                <div className="bg-[#121214] rounded-[56px] p-10 space-y-10 border border-white/5">
+                <div className="bg-[#121214] rounded-[56px] p-10 space-y-10 border border-white/5 shadow-2xl">
                    <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-6">
                         <div className="w-18 h-18 rounded-[28px] bg-white/5 flex items-center justify-center text-4xl text-white"><i className="fa-brands fa-google-drive"></i></div>
@@ -299,7 +323,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                 </div>
                 
                 {/* iCloud Card */}
-                <div className="bg-[#121214] rounded-[56px] p-10 space-y-10 border border-white/5">
+                <div className="bg-[#121214] rounded-[56px] p-10 space-y-10 border border-white/5 shadow-2xl">
                    <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-6">
                         <div className="w-18 h-18 rounded-[28px] bg-white/5 flex items-center justify-center text-4xl text-white"><i className="fa-brands fa-apple"></i></div>
@@ -321,7 +345,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                 <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.4em]">儲存至本地設備 Local Storage</h3>
                 <p className="text-[10px] text-gray-800 font-bold mt-1.5 uppercase tracking-widest">直接儲存至您的手機或電腦硬碟中</p>
              </div>
-             <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5">
+             <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
                 <div className="flex items-center space-x-6">
                    <div className="w-18 h-18 rounded-[28px] bg-[#D4FF5F]/10 flex items-center justify-center text-[#D4FF5F] text-3xl"><i className="fa-solid fa-download"></i></div>
                    <div>
