@@ -33,19 +33,16 @@ const App: React.FC = () => {
           title: '第 1 章 · Chapter 1', 
           content: '故事開始於太陽不再升起的那一天...', 
           order: 1, 
-          history: [
-            { id: 'v1', timestamp: Date.now() - 3600000, content: '初始草稿...', title: '第 1 章', type: SnapshotType.AUTO },
-            { id: 'v2', timestamp: Date.now() - 1800000, content: '故事開始於...', title: '第 1 章', type: SnapshotType.MILESTONE }
-          ], 
+          history: [], 
           wordCount: 1250, 
           lastEdited: Date.now(),
           createdAt: Date.now() - 3600000
         }],
         modules: [],
         settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 600000 * 24 * 12,
+        createdAt: Date.now() - 86400000,
         updatedAt: Date.now() - 600000,
-        tags: ['SCI-FI', 'SPACE'],
+        tags: ['SCI-FI', 'NOVEL'],
         isPinned: true
       },
       {
@@ -55,15 +52,51 @@ const App: React.FC = () => {
         structureType: StructureType.SECTION,
         targetWordCount: 10000,
         metadata: 'EDITED 2H AGO',
-        progress: 35,
+        progress: 45,
         color: '#FF6B2C', 
         icon: 'fa-pen-nib',
         chapters: [],
         modules: [],
         settings: { typography: 'sans', fontSize: 'normal' },
-        createdAt: Date.now() - 86400000,
+        createdAt: Date.now() - 172800000,
         updatedAt: Date.now() - 7200000,
-        tags: ['TECH', 'WEB3'],
+        tags: ['TECH', 'BLOG'],
+        isPinned: false
+      },
+      {
+        id: 'p3',
+        name: 'Echoes of Silence',
+        writingType: WritingType.DIARY,
+        structureType: StructureType.FREE,
+        targetWordCount: 5000,
+        metadata: 'REVIEW PENDING',
+        progress: 95,
+        color: '#D4FF5F', 
+        icon: 'fa-note-sticky',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'serif', fontSize: 'normal' },
+        createdAt: Date.now() - 259200000,
+        updatedAt: Date.now() - 3600000,
+        tags: ['DRAFTS', 'PENDING'],
+        isPinned: false
+      },
+      {
+        id: 'p4',
+        name: 'Digital Frontier',
+        writingType: WritingType.SCREENPLAY,
+        structureType: StructureType.CHAPTER,
+        targetWordCount: 30000,
+        metadata: 'CREATED YESTERDAY',
+        progress: 10,
+        color: '#B2A4FF', 
+        icon: 'fa-clapperboard',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'sans', fontSize: 'normal' },
+        createdAt: Date.now() - 86400000,
+        updatedAt: Date.now() - 43200000,
+        tags: ['FUTURE', 'SCREENPLAY'],
         isPinned: false
       }
     ],
@@ -104,7 +137,7 @@ const App: React.FC = () => {
       status: 'IDLE'
     },
     stats: { 
-      wordCount: 58210, 
+      wordCount: 95430, 
       projectCount: 4, 
       exportCount: 2, 
       lastActive: Date.now(), 
@@ -122,9 +155,27 @@ const App: React.FC = () => {
   const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION' | 'SUBSCRIPTION' | 'CHECKOUT'>('NONE');
   const [selectedPlan, setSelectedPlan] = useState<{ id: MembershipLevel, name: string, price: string } | null>(null);
   
+  // Liquid Edge-Swipe States
   const [swipeProgress, setSwipeProgress] = useState(0); 
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setScreenWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+  const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
+  const isTimelineVisible = swipeProgress > 0 || activeOverlay === 'TIMELINE';
+
+  // Responsive Width: 1/3 Desktop (>=1024px), 1/2 iPad/Tablet (>=768px), 85% Mobile
+  const timelineWidthPx = screenWidth >= 1024 
+    ? screenWidth / 3 
+    : screenWidth >= 768 
+      ? screenWidth / 2 
+      : screenWidth * 0.85;
 
   const lastSnapshotContentRef = useRef<string>('');
   const idleTimerRef = useRef<number | null>(null);
@@ -267,6 +318,62 @@ const App: React.FC = () => {
     }
   };
 
+  const closeTimeline = () => {
+    setActiveOverlay('NONE');
+    setSwipeProgress(0);
+  };
+
+  // Enhanced Liquid Edge-Swipe Logic
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const x = e.touches[0].clientX;
+    const width = window.innerWidth;
+    
+    // Detect start near right edge to open Timeline
+    if (state.activeTab === AppTab.WRITE && currentChapter && x > width * 0.85 && activeOverlay === 'NONE') {
+      touchStartX.current = x;
+      setIsDragging(true);
+    }
+    // Detect start on active Timeline panel to allow Swipe Right to Close
+    else if (activeOverlay === 'TIMELINE') {
+       if (x > (width - timelineWidthPx)) {
+          touchStartX.current = x;
+          setIsDragging(true);
+       }
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || touchStartX.current === null) return;
+    const currentX = e.touches[0].clientX;
+    
+    let progress = 0;
+    if (activeOverlay === 'NONE') {
+      // Swiping from right to left to open
+      const diff = touchStartX.current - currentX;
+      progress = Math.max(0, Math.min(1, diff / timelineWidthPx));
+    } else if (activeOverlay === 'TIMELINE') {
+      // Swiping from left to right to close (x increases)
+      const diff = currentX - touchStartX.current;
+      progress = 1 - Math.max(0, Math.min(1, diff / timelineWidthPx));
+    }
+    
+    setSwipeProgress(progress);
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    // Snapping logic: Threshold 20%
+    if (swipeProgress > 0.2) {
+      setActiveOverlay('TIMELINE');
+      setSwipeProgress(1);
+    } else {
+      closeTimeline();
+    }
+    touchStartX.current = null;
+  };
+
   const handleSubscriptionSuccess = () => {
     if (selectedPlan) {
       setState(prev => ({ ...prev, membership: selectedPlan.id }));
@@ -276,11 +383,21 @@ const App: React.FC = () => {
     }
   };
 
-  const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
   const isBottomNavVisible = (activeOverlay === 'NONE' && swipeProgress === 0) && (state.activeTab !== AppTab.WRITE || !currentChapter);
 
+  // Dynamic Styles for Liquid Swipe
+  const editorScale = 1 - swipeProgress * 0.04; 
+  const editorBlur = swipeProgress * 4; 
+  const editorOpacity = 1 - swipeProgress * 0.4;
+  const timelineTranslate = (1 - swipeProgress) * 100;
+
   return (
-    <div className="h-screen flex flex-col relative overflow-hidden bg-black text-white">
+    <div 
+      className="h-screen flex flex-col relative overflow-hidden bg-black text-white"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {state.activeTab !== AppTab.WRITE && (
         <header className="fixed top-0 w-full z-[100] h-24 pt-[env(safe-area-inset-top,0px)] flex items-end justify-between px-8 pb-4 bg-black/60 backdrop-blur-3xl border-b border-white/5">
           <div className="flex flex-col">
@@ -301,7 +418,18 @@ const App: React.FC = () => {
         </header>
       )}
 
-      <main className={`flex-1 overflow-y-auto no-scrollbar ${(state.activeTab === AppTab.WRITE && currentChapter) ? 'p-0' : (state.activeTab === AppTab.WRITE ? 'p-0' : 'pt-24 pb-32')}`}>
+      <main 
+        style={{
+          transform: `scale(${editorScale})`,
+          filter: `blur(${editorBlur}px)`,
+          opacity: editorOpacity,
+          transition: isDragging ? 'none' : 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+        onClick={() => {
+          if (activeOverlay === 'TIMELINE') closeTimeline();
+        }}
+        className={`flex-1 overflow-y-auto no-scrollbar ${(state.activeTab === AppTab.WRITE && currentChapter) ? 'p-0' : (state.activeTab === AppTab.WRITE ? 'p-0' : 'pt-24 pb-32')}`}
+      >
         {state.activeTab === AppTab.LIBRARY ? (
           state.appMode === AppMode.REPOSITORY ? (
             <Library 
@@ -325,6 +453,7 @@ const App: React.FC = () => {
             onUpdateProject={handleUpdateProject}
             onDeleteProject={(id) => setState(prev => ({...prev, projects: prev.projects.filter(p => p.id !== id), activeTab: AppTab.LIBRARY}))}
             onEnterEditor={(id) => setState(prev => ({...prev, currentChapterId: id, activeTab: AppTab.WRITE}))}
+            onOpenExport={() => setActiveOverlay('EXPORT')}
           />
         ) : state.activeTab === AppTab.WRITE ? (
           currentChapter ? (
@@ -333,7 +462,7 @@ const App: React.FC = () => {
               onUpdateContent={handleUpdateContent}
               uiMode={state.uiMode}
               onModeToggle={(mode) => setState(prev => ({ ...prev, uiMode: mode }))}
-              onOpenTimeline={() => setActiveOverlay('TIMELINE')}
+              onOpenTimeline={() => { setActiveOverlay('TIMELINE'); setSwipeProgress(1); }}
               onOpenCollaboration={() => setActiveOverlay('COLLABORATION')}
               onBack={() => setState(prev => ({ ...prev, activeTab: AppTab.PROJECT_DETAIL }))}
               onUpdateOutline={() => {}}
@@ -358,6 +487,18 @@ const App: React.FC = () => {
         ) : null}
       </main>
 
+      {/* Dynamic Liquid Backdrop Mask */}
+      <div 
+        className="fixed inset-0 bg-black pointer-events-none z-[190]"
+        style={{ 
+          opacity: swipeProgress * 0.6,
+          transition: isDragging ? 'none' : 'opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+        onClick={() => {
+          if (activeOverlay === 'TIMELINE') closeTimeline();
+        }}
+      />
+
       {/* Subscription Overlays */}
       {activeOverlay === 'SUBSCRIPTION' && (
         <SubscriptionPlans 
@@ -379,20 +520,40 @@ const App: React.FC = () => {
         />
       )}
 
-      {activeOverlay === 'TIMELINE' && state.currentProject && state.currentChapterId && (
-        <div className="fixed inset-0 z-[2000] animate-in slide-in-from-bottom duration-500">
+      {activeOverlay === 'EXPORT' && (
+        <ProfessionalPublicationCenter 
+          project={state.currentProject} 
+          onClose={() => setActiveOverlay('NONE')} 
+        />
+      )}
+
+      {/* Responsive Liquid Swipable Timeline Panel */}
+      {isTimelineVisible && state.currentProject && state.currentChapterId && (
+        <div 
+          className="fixed inset-y-0 right-0 z-[200] overflow-hidden"
+          style={{
+            width: timelineWidthPx,
+            transform: `translateX(${timelineTranslate}%)`,
+            transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+        >
+           {/* Handle for Gesture Interaction (Grabber area for swiping right to close) */}
+           <div 
+             className="absolute left-0 inset-y-0 w-10 z-[210] cursor-ew-resize active:bg-white/5"
+           />
+           
            <Timeline 
              history={state.currentProject.chapters.find(c => c.id === state.currentChapterId)?.history || []}
              membership={state.membership}
              isNight={true}
              onRestore={(s) => {
                handleUpdateContent(s.content);
-               setActiveOverlay('NONE');
+               closeTimeline();
              }}
              onPreview={() => {}}
              onCreateMilestone={() => createSnapshot(SnapshotType.MILESTONE)}
              onClearSnapshots={() => {}}
-             onClose={() => setActiveOverlay('NONE')}
+             onClose={closeTimeline}
              securitySettings={state.securitySettings}
              onUpdateSecuritySettings={(s) => setState(prev => ({ ...prev, securitySettings: s }))}
            />

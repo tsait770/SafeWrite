@@ -1,57 +1,112 @@
 
 import React, { useState } from 'react';
+import { Project } from '../types';
 
-enum PubStep { DASHBOARD, GALLERY, CONFIG }
+enum PubStep { GALLERY, CONFIG, DELIVERY }
 
-const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const [step, setStep] = useState<PubStep>(PubStep.DASHBOARD);
-  const [selectedFormat, setSelectedFormat] = useState('PDF');
+interface ProfessionalPublicationCenterProps {
+  project: Project | null;
+  onClose: () => void;
+}
+
+const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps> = ({ project, onClose }) => {
+  const [step, setStep] = useState<PubStep>(PubStep.CONFIG); // 預設進入配置頁以供預覽
+  const [selectedFormat, setSelectedFormat] = useState('All');
+  const [isPageNumbering, setIsPageNumbering] = useState(true);
+  const [isHeadersFooters, setIsHeadersFooters] = useState(false);
+  const [selectedFont, setSelectedFont] = useState<'serif' | 'sans'>('serif');
+  const [exportRange, setExportRange] = useState<'all' | 'custom'>('all');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState('');
+
+  // Metadata states
+  const [author, setAuthor] = useState('Elena Fisher');
+  const [pubYear, setPubYear] = useState('2026');
 
   const templates = [
-    { name: 'Modern Novel', format: 'PDF, DOCX', type: 'PREMIUM', color: 'bg-[#FDFBF7]' },
-    { name: 'Academic', format: 'PDF', type: 'Free', color: 'bg-[#F3F4F6]' },
-    { name: 'Classic EPUB', format: 'EPUB', type: 'PREMIUM', color: 'bg-[#000000]' },
-    { name: 'Screenplay', format: 'PDF, DOCX', type: 'Free', color: 'bg-[#FFFFFF]' }
+    { id: 't1', name: 'Modern Novel', subtitle: 'Professional serif layout', type: 'FREE', formats: ['PDF', 'DOCX'], image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop' },
+    { id: 't2', name: 'Academic Paper', subtitle: 'Standard APA format', type: 'PREMIUM', formats: ['PDF'], image: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=400&auto=format&fit=crop', isSelected: true },
+    { id: 't3', name: 'Screenplay', subtitle: 'Industry standard layout', type: 'PREMIUM', formats: ['PDF', 'DOCX'], image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=400&auto=format&fit=crop' },
+    { id: 't4', name: 'Technical Manual', subtitle: 'Structured technical guide', type: 'FREE', formats: ['PDF'], image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=400&auto=format&fit=crop' }
   ];
+
+  const handleExport = () => {
+    if (!project) return;
+    setStep(PubStep.DELIVERY);
+  };
+
+  const handleFinalDelivery = (platform: string) => {
+    setIsSubmitting(true);
+    setSubmissionStatus(`正在建立與 ${platform} 的加密通道...`);
+    setTimeout(() => {
+      setSubmissionStatus(`正在上傳稿件至 ${platform}...`);
+      setTimeout(() => {
+        setSubmissionStatus(`投遞完成！${platform} 已確認接收。`);
+        setTimeout(() => {
+          setIsSubmitting(false);
+          onClose();
+        }, 1500);
+      }, 2000);
+    }, 1500);
+  };
+
+  const handleSaveLocal = () => {
+    setIsSubmitting(true);
+    setSubmissionStatus('正在整合並優化本地存儲格式...');
+    setTimeout(() => {
+      setIsSubmitting(false);
+      onClose();
+      alert('已成功儲存至此裝置');
+    }, 2000);
+  };
 
   if (step === PubStep.GALLERY) {
     return (
-      <div className="fixed inset-0 z-[1000] bg-[#0F0F10] flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden">
-        <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between border-b border-white/5">
-          <button onClick={() => setStep(PubStep.DASHBOARD)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
-            <i className="fa-solid fa-chevron-left"></i>
+      <div className="fixed inset-0 z-[2000] bg-[#000000] flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden">
+        <header className="h-20 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between border-b border-white/5 shrink-0">
+          <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform">
+            <i className="fa-solid fa-chevron-left text-lg"></i>
           </button>
-          <h2 className="text-sm font-black text-white uppercase tracking-[0.3em]">EXPORT GALLERY</h2>
-          <button className="text-gray-400"><i className="fa-solid fa-magnifying-glass"></i></button>
+          <h2 className="text-[13px] font-black text-white uppercase tracking-[0.3em] text-center flex-1">Export Gallery</h2>
+          <button className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400">
+            <i className="fa-solid fa-ellipsis-vertical"></i>
+          </button>
         </header>
 
         <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-10">
-          <div>
-            <h3 className="text-4xl font-black text-white tracking-tighter mb-4 leading-none">Choose your<br/><span className="text-blue-500">format style.</span></h3>
-            <p className="text-sm text-gray-500 font-bold uppercase tracking-widest">Select a template to preview layout.</p>
+          <div className="relative">
+            <i className="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-gray-700"></i>
+            <input 
+              type="text" 
+              placeholder="Search templates..." 
+              className="w-full h-16 bg-[#111112] border border-white/5 rounded-[28px] pl-16 pr-6 text-sm font-bold text-white outline-none focus:border-blue-500 transition-all placeholder-gray-800"
+            />
           </div>
 
           <div className="flex space-x-3 overflow-x-auto no-scrollbar pb-2">
             {['All', 'PDF', 'DOCX', 'EPUB'].map(f => (
-              <button key={f} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all shrink-0 ${f === selectedFormat ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}>
+              <button 
+                key={f} 
+                onClick={() => setSelectedFormat(f)}
+                className={`px-8 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest border transition-all shrink-0 ${f === selectedFormat ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white/5 border-white/10 text-gray-600 hover:bg-white/10'}`}
+              >
                 {f}
               </button>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-8 pb-20">
-            {templates.map((t, idx) => (
-              <div key={idx} className="space-y-4 group cursor-pointer" onClick={() => setStep(PubStep.CONFIG)}>
-                <div className={`${t.color} aspect-[3/4] rounded-3xl relative shadow-2xl transition-transform hover:scale-105 overflow-hidden border border-white/5`}>
-                  {t.type === 'PREMIUM' && <span className="absolute top-4 left-4 bg-amber-500/20 text-amber-500 text-[8px] font-black px-2 py-1 rounded-full border border-amber-500/30">★ PREMIUM</span>}
-                  <div className="absolute inset-x-8 top-12 bottom-12 border border-gray-200/50 p-4 opacity-10">
-                    <div className="h-2 w-full bg-gray-300 rounded mb-2" />
-                    <div className="h-2 w-3/4 bg-gray-300 rounded" />
-                  </div>
+          <div className="grid grid-cols-2 gap-6 pb-32">
+            {templates.map((t) => (
+              <div key={t.id} className="space-y-4 group cursor-pointer" onClick={() => setStep(PubStep.CONFIG)}>
+                <div className="aspect-[3/4] rounded-[44px] relative shadow-2xl overflow-hidden border border-white/5 bg-gray-900">
+                  <img src={t.image} alt={t.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
+                  <span className="absolute top-6 right-6 text-[8px] font-black px-3 py-1.5 rounded-full border bg-black/40 border-white/10 text-white uppercase tracking-widest">
+                    {t.type}
+                  </span>
                 </div>
-                <div>
-                  <h4 className="text-base font-black text-white">{t.name}</h4>
-                  <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">{t.format} • {t.type}</p>
+                <div className="px-2">
+                  <h4 className="text-base font-black text-white leading-tight">{t.name}</h4>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1.5 leading-relaxed">{t.subtitle}</p>
                 </div>
               </div>
             ))}
@@ -63,87 +118,89 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
 
   if (step === PubStep.CONFIG) {
     return (
-      <div className="fixed inset-0 z-[1000] bg-[#0A0B0D] flex flex-col animate-in slide-in-from-right duration-500">
-        <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between border-b border-white/5 bg-[#0F1012]">
-          <button onClick={() => setStep(PubStep.GALLERY)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400">
+      <div className="fixed inset-0 z-[2000] bg-[#000000] flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden">
+        <header className="h-16 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0 border-b border-white/5 bg-black/40 backdrop-blur-md">
+          <button onClick={() => setStep(PubStep.GALLERY)} className="w-8 h-8 flex items-center justify-center text-gray-400">
             <i className="fa-solid fa-chevron-left"></i>
           </button>
-          <h2 className="text-sm font-black text-white uppercase tracking-[0.3em]">EXPORT CONFIGURATION</h2>
-          <div className="w-6" />
+          <h2 className="text-[11px] font-black text-white uppercase tracking-[0.4em] flex-1 text-center pl-4">Export Configuration</h2>
+          <button className="text-[#2563EB] text-[9px] font-black uppercase tracking-widest">HELP</button>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12 pb-48">
-          {/* Document Preview */}
-          <div className="bg-[#16181C] rounded-[3rem] p-12 border border-white/5 shadow-2xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/40 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative z-10">
-               <h4 className="text-2xl font-black text-white mb-2">The Silent Ocean</h4>
-               <p className="text-[11px] text-gray-500 font-black uppercase tracking-widest mb-10">Page 1 of 243 • Chapter 1</p>
-               <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-bold text-gray-400">Document Preview</p>
-                    <p className="text-[10px] text-gray-500 leading-relaxed max-w-[200px] mt-2">Visual representation based on current settings.</p>
-                  </div>
-                  <span className="bg-blue-600/10 text-blue-500 text-[10px] font-black px-4 py-1.5 rounded-xl border border-blue-500/20 uppercase tracking-widest">READY</span>
-               </div>
+        <main className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar space-y-10 pb-48">
+          {/* Document Preview Card - Match The Solar Paradox style */}
+          <div className="bg-[#121214] rounded-[44px] p-8 sm:p-10 border border-white/5 shadow-2xl relative overflow-hidden">
+            <div className="space-y-8">
+              <div className="space-y-2">
+                <h4 className="text-[34px] font-black text-white tracking-tighter leading-none">{project?.name || 'The Solar Paradox'}</h4>
+                <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.3em]">CHAPTERS: 1 • PROGRESS: 82 %</p>
+              </div>
+              
+              <div className="flex justify-between items-end">
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Document Preview</p>
+                  <p className="text-[9px] text-gray-600 leading-relaxed max-w-[200px] font-black uppercase tracking-[0.2em]">Visual representation based on current settings.</p>
+                </div>
+                <button className="px-6 py-3 bg-[#2563EB]/10 border border-[#2563EB]/30 text-[#2563EB] text-[11px] font-black rounded-xl uppercase tracking-[0.2em] shadow-inner">READY</button>
+              </div>
             </div>
           </div>
 
-          {/* Configuration Options */}
-          <section className="space-y-10">
-            <div>
-              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6 px-1">Output Options</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <button className="py-5 bg-blue-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-900/20">All Chapters</button>
-                <button className="py-5 bg-white/5 border border-white/10 text-gray-400 rounded-2xl text-[11px] font-black uppercase tracking-widest">Custom Range</button>
-              </div>
+          {/* Output Options */}
+          <section className="space-y-6">
+            <h3 className="text-[11px] font-black text-gray-700 uppercase tracking-[0.3em] px-2">Output Options</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => setExportRange('all')} className={`py-6 rounded-[28px] text-[11px] font-black uppercase tracking-widest transition-all ${exportRange === 'all' ? 'bg-[#2563EB] text-white shadow-lg' : 'bg-[#121214] border border-white/5 text-gray-600'}`}>All Chapters</button>
+              <button onClick={() => setExportRange('custom')} className={`py-6 rounded-[28px] text-[11px] font-black uppercase tracking-widest transition-all ${exportRange === 'custom' ? 'bg-[#2563EB] text-white shadow-lg' : 'bg-[#121214] border border-white/5 text-gray-600'}`}>Custom Range</button>
             </div>
+          </section>
 
-            <div className="grid grid-cols-2 gap-6">
-              <button className="p-8 bg-[#16181C] border-2 border-blue-600 rounded-[2.5rem] text-center active:scale-95 transition-all">
-                 <span className="text-4xl font-serif text-white block mb-4">Aa</span>
-                 <p className="text-sm font-bold text-white mb-1">Serif</p>
-                 <p className="text-[9px] text-gray-500 uppercase font-black">Classic</p>
-              </button>
-              <button className="p-8 bg-[#16181C] border border-white/10 rounded-[2.5rem] text-center opacity-40 active:scale-95 transition-all">
-                 <span className="text-4xl font-sans text-white block mb-4">Aa</span>
-                 <p className="text-sm font-bold text-white mb-1">Sans-serif</p>
-                 <p className="text-[9px] text-gray-500 uppercase font-black">Modern</p>
-              </button>
-            </div>
+          {/* Font Selection */}
+          <section className="grid grid-cols-2 gap-4">
+            <button onClick={() => setSelectedFont('serif')} className={`h-[200px] rounded-[44px] text-center transition-all border-2 flex flex-col items-center justify-center ${selectedFont === 'serif' ? 'bg-[#121214] border-[#2563EB]' : 'bg-[#121214] border-transparent opacity-30'}`}>
+               <span className="text-[48px] font-serif block mb-2 text-white">Aa</span>
+               <p className="text-[15px] font-black text-white">Serif</p>
+               <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mt-1">Classic</p>
+            </button>
+            <button onClick={() => setSelectedFont('sans')} className={`h-[200px] rounded-[44px] text-center transition-all border-2 flex flex-col items-center justify-center ${selectedFont === 'sans' ? 'bg-[#121214] border-[#2563EB]' : 'bg-[#121214] border-transparent opacity-30'}`}>
+               <span className="text-[48px] font-sans block mb-2 text-white">Aa</span>
+               <p className="text-[15px] font-black text-white">Sans-serif</p>
+               <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mt-1">Modern</p>
+            </button>
+          </section>
 
-            <div className="space-y-4">
-               <div className="flex items-center justify-between p-6 bg-[#16181C] rounded-[2rem] border border-white/5">
-                  <span className="text-sm font-bold text-white">Page Numbering</span>
-                  <div className="w-12 h-6 bg-blue-600 rounded-full flex items-center px-1"><div className="w-4 h-4 bg-white rounded-full translate-x-6" /></div>
-               </div>
-               <div className="flex items-center justify-between p-6 bg-[#16181C] rounded-[2rem] border border-white/5">
-                  <span className="text-sm font-bold text-white">Headers & Footers</span>
-                  <div className="w-12 h-6 bg-white/10 rounded-full flex items-center px-1"><div className="w-4 h-4 bg-white rounded-full" /></div>
-               </div>
-            </div>
+          {/* Toggles */}
+          <section className="space-y-4">
+             <div className="flex items-center justify-between px-10 h-[96px] bg-[#121214] rounded-[48px] border border-white/5">
+                <span className="text-[14px] font-black text-white uppercase tracking-[0.2em]">Page Numbering</span>
+                <button onClick={() => setIsPageNumbering(!isPageNumbering)} className={`w-[56px] h-[34px] rounded-full flex items-center px-1 transition-all ${isPageNumbering ? 'bg-[#2563EB]' : 'bg-[#2C2C2E]'}`}>
+                  <div className={`w-[26px] h-[26px] bg-white rounded-full shadow-md transition-transform ${isPageNumbering ? 'translate-x-[24px]' : 'translate-x-0'}`} />
+                </button>
+             </div>
+             <div className="flex items-center justify-between px-10 h-[96px] bg-[#121214] rounded-[48px] border border-white/5">
+                <span className="text-[14px] font-black text-white uppercase tracking-[0.2em]">Headers & Footers</span>
+                <button onClick={() => setIsHeadersFooters(!isHeadersFooters)} className={`w-[56px] h-[34px] rounded-full flex items-center px-1 transition-all ${isHeadersFooters ? 'bg-[#2563EB]' : 'bg-[#2C2C2E]'}`}>
+                  <div className={`w-[26px] h-[26px] bg-white rounded-full shadow-md transition-transform ${isHeadersFooters ? 'translate-x-[24px]' : 'translate-x-0'}`} />
+                </button>
+             </div>
+          </section>
 
-            <div className="space-y-4">
-               <input placeholder="Elena Fisher" className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 text-sm text-white focus:border-blue-500 outline-none transition-all" />
-               <input placeholder="ISBN-13 (Optional)" className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 text-sm text-white focus:border-blue-500 outline-none transition-all" />
-               <div className="grid grid-cols-2 gap-4">
-                  <input placeholder="2025" className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 text-sm text-white outline-none" />
-                  <div className="w-full h-16 bg-[#16181C] border border-white/10 rounded-2xl px-6 flex items-center justify-between text-sm text-white">
-                     <span>Traditional Chinese</span>
-                     <i className="fa-solid fa-chevron-down text-xs text-gray-500"></i>
-                  </div>
-               </div>
-            </div>
+          {/* Metadata Inputs */}
+          <section className="space-y-4">
+             <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Elena Fisher" className="w-full h-[88px] bg-[#121214] rounded-[44px] px-12 text-white font-black text-base outline-none placeholder-gray-800" />
+             <input value={pubYear} onChange={e => setPubYear(e.target.value)} placeholder="2026" className="w-full h-[88px] bg-[#121214] rounded-[44px] px-12 text-white font-black text-base outline-none placeholder-gray-800" />
           </section>
         </main>
 
-        <footer className="fixed bottom-0 inset-x-0 p-10 bg-gradient-to-t from-[#0A0B0D] via-[#0A0B0D] to-transparent shrink-0">
+        <footer className="p-8 shrink-0 flex flex-col items-center bg-black">
           <button 
-            onClick={() => { alert('Document generated successfully!'); onClose(); }}
-            className="w-full py-7 bg-blue-600 rounded-[3rem] text-white font-black text-sm uppercase tracking-[0.4em] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(37,99,235,0.3)] active:scale-95 transition-all"
+            onClick={handleExport} 
+            className="w-full h-[100px] bg-[#2563EB] rounded-[50px] text-white font-black text-[14px] uppercase tracking-[0.3em] flex items-center justify-center gap-6 shadow-[0_20px_40px_rgba(37,99,235,0.3)] active:scale-[0.98] transition-all"
           >
-             <i className="fa-solid fa-file-export text-xl"></i>
-             <span>Generate & Export</span>
+             <div className="w-10 h-10 rounded-full border-2 border-white/20 flex items-center justify-center">
+               <i className="fa-solid fa-arrow-right text-[12px]"></i>
+             </div>
+             <span className="font-black">Proceed to Distribution</span>
           </button>
         </footer>
       </div>
@@ -151,65 +208,146 @@ const ProfessionalPublicationCenter: React.FC<{ onClose: () => void }> = ({ onCl
   }
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-[#F8F9FB] flex flex-col animate-in fade-in duration-500 overflow-hidden">
-      <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between border-b border-gray-100 bg-white">
-        <div className="flex items-center space-x-4">
-           <button onClick={onClose} className="p-2 text-gray-400 hover:text-black transition-colors">
-             <i className="fa-solid fa-chevron-left text-xl"></i>
-           </button>
-           <div>
-              <h2 className="text-sm font-black text-[#1E293B] uppercase tracking-[0.2em]">Export & Membership</h2>
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">MANAGEMENT CENTER</p>
-           </div>
-        </div>
-        <button className="p-2 text-gray-400"><i className="fa-solid fa-gear text-xl"></i></button>
+    <div className="fixed inset-0 z-[2000] bg-[#000000] flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden">
+      <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0 border-b border-white/5 bg-[#000000]/60 backdrop-blur-3xl">
+        <button onClick={() => setStep(PubStep.CONFIG)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 active:scale-90 transition-all">
+          <i className="fa-solid fa-chevron-left text-lg"></i>
+        </button>
+        <h2 className="text-[12px] font-black text-white uppercase tracking-[0.3em] flex-1 text-center">Delivery & Submission</h2>
+        <div className="w-10" />
       </header>
 
-      <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12 text-[#1E293B] pb-40">
-        <section>
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">EXPORT FORMATS</h3>
-            <button className="text-[10px] font-black text-blue-500 uppercase tracking-widest">View History</button>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <button 
-              onClick={() => { setSelectedFormat('PDF'); setStep(PubStep.GALLERY); }}
-              className="p-8 bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col items-start space-y-4 relative active:scale-95 transition-all"
-            >
-               <div className="w-14 h-14 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center"><i className="fa-solid fa-file-pdf text-3xl"></i></div>
-               <div><p className="text-base font-black">PDF Document</p><p className="text-[10px] text-gray-400 font-bold uppercase mt-1">Standard format</p></div>
-               <div className="absolute top-6 right-6 w-2 h-2 bg-green-500 rounded-full" />
-            </button>
-            <button className="p-8 bg-white rounded-[3rem] border border-gray-100 shadow-sm flex flex-col items-start space-y-4 relative active:scale-95 transition-all opacity-60">
-               <div className="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center"><i className="fa-solid fa-book text-3xl"></i></div>
-               <div><p className="text-base font-black">EPUB E-Book</p><p className="text-[10px] text-gray-400 font-bold uppercase mt-1">For Kindle & Apple</p></div>
-               <span className="absolute top-6 right-6 text-[9px] font-black bg-blue-500 text-white px-2 py-0.5 rounded-lg uppercase">PRO</span>
-            </button>
-          </div>
+      <main className="flex-1 overflow-y-auto px-8 py-8 no-scrollbar space-y-12 pb-48">
+        
+        {/* SUBMISSION - Top per Image 7 */}
+        <section className="space-y-6">
+           <div className="flex flex-col">
+              <h3 className="text-[12px] font-black text-gray-600 uppercase tracking-[0.3em] px-2">投遞與出版 SUBMISSION</h3>
+              <p className="text-[10px] text-gray-800 font-bold px-2 mt-1">直接投遞至出版平台或指定編輯</p>
+           </div>
+
+           <div className="bg-[#121214] p-10 rounded-[44px] border border-blue-600/10 space-y-8 shadow-2xl">
+              <div className="flex items-center space-x-5">
+                 <div className="w-18 h-18 rounded-3xl bg-[#2563EB] flex items-center justify-center text-white shadow-xl shadow-blue-900/30">
+                    <i className="fa-solid fa-paper-plane text-2xl"></i>
+                 </div>
+                 <div>
+                    <h4 className="text-xl font-black text-white tracking-tight">一鍵自動投遞</h4>
+                    <p className="text-[10px] text-[#2563EB] font-black uppercase tracking-[0.2em] mt-1">DIRECT PUBLISHING</p>
+                 </div>
+              </div>
+              
+              <div className="space-y-4">
+                 <div className="flex items-center space-x-4 p-6 bg-black/40 rounded-[28px] border border-white/5">
+                    <i className="fa-solid fa-building-columns text-gray-600"></i>
+                    <select className="flex-1 bg-transparent text-sm font-black text-gray-400 outline-none appearance-none">
+                       <option>選擇目標出版社...</option>
+                       <option>SafeWrite Creative Network</option>
+                       <option>Global Literary Agency</option>
+                       <option>Amazon KDP Direct</option>
+                    </select>
+                    <i className="fa-solid fa-chevron-down text-gray-700 text-xs"></i>
+                 </div>
+                 <button 
+                  onClick={() => handleFinalDelivery('出版社網路')}
+                  className="w-full py-7 bg-white text-black rounded-[32px] text-[13px] font-black uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all"
+                 >
+                   啟 動 全 球 投 遞 程 序
+                 </button>
+              </div>
+           </div>
         </section>
 
-        <section className="bg-white rounded-[3rem] border border-gray-100 p-10 shadow-sm">
-           <div className="flex justify-between items-center mb-8">
-              <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">CURRENT PLAN</p>
-              <span className="px-4 py-1.5 bg-gray-100 text-gray-500 text-[10px] font-black rounded-full uppercase tracking-widest">ACTIVE</span>
+        {/* CLOUD TRANSFER */}
+        <section className="space-y-6">
+           <div className="flex flex-col">
+              <h3 className="text-[12px] font-black text-gray-600 uppercase tracking-[0.3em] px-2">雲端傳送與備份 CLOUD TRANSFER</h3>
+              <p className="text-[10px] text-gray-800 font-bold px-2 mt-1">傳送至第三方雲端空間進行二次校驗</p>
            </div>
-           <h4 className="text-4xl font-black mb-8 leading-none">Free Basic</h4>
-           <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-5">
-              <div className="h-full bg-blue-500 w-[75%] rounded-full shadow-[0_0_15px_rgba(59,130,246,0.3)]" />
-           </div>
-           <div className="flex justify-between text-[11px] font-black text-gray-400 uppercase tracking-widest">
-              <span>3 / 4 Exports used this month</span>
-              <span>75%</span>
+           
+           <div className="grid grid-cols-1 gap-6">
+              <div className="bg-[#121214] p-8 rounded-[44px] border border-white/5 flex flex-col space-y-8 shadow-xl">
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-5">
+                       <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-white">
+                          <i className="fa-brands fa-google-drive text-3xl"></i>
+                       </div>
+                       <div>
+                          <h4 className="text-lg font-black text-white tracking-tight">Google Drive</h4>
+                          <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest">DRIVE.GOOGLE.COM</p>
+                       </div>
+                    </div>
+                    <button className="text-[10px] font-black text-[#2563EB] border border-[#2563EB]/30 px-5 py-2.5 rounded-full uppercase tracking-widest bg-[#2563EB]/5">官方認證</button>
+                 </div>
+                 <button 
+                  onClick={() => handleFinalDelivery('Google Drive')}
+                  className="w-full py-6 bg-[#2563EB] text-white rounded-[28px] text-[12px] font-black uppercase tracking-[0.3em] shadow-lg active:scale-95 transition-all"
+                 >
+                   傳 送 至 G O O G L E 雲 端
+                 </button>
+              </div>
+
+              <div className="bg-[#121214] p-8 rounded-[44px] border border-white/5 flex flex-col space-y-8 shadow-xl">
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-5">
+                       <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-white">
+                          <i className="fa-brands fa-apple text-3xl"></i>
+                       </div>
+                       <div>
+                          <h4 className="text-lg font-black text-white tracking-tight">Apple iCloud</h4>
+                          <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest">ICLOUD.COM</p>
+                       </div>
+                    </div>
+                    <button className="text-[10px] font-black text-[#2563EB] border border-[#2563EB]/30 px-5 py-2.5 rounded-full uppercase tracking-widest bg-[#2563EB]/5">官方認證</button>
+                 </div>
+                 <button 
+                  onClick={() => handleFinalDelivery('Apple iCloud')}
+                  className="w-full py-6 bg-[#1C1C1E] border border-white/10 text-white rounded-[28px] text-[12px] font-black uppercase tracking-[0.3em] active:scale-95 transition-all"
+                 >
+                   傳 送 至 I C L O U D
+                 </button>
+              </div>
            </div>
         </section>
 
-        <footer className="pb-10">
-           <button className="w-full py-7 bg-[#5d5dff] rounded-[3rem] text-white font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(93,93,255,0.4)] active:scale-95 transition-all">
-              <i className="fa-solid fa-bolt-lightning"></i>
-              <span>Unlock Full Potential</span>
-           </button>
-        </footer>
+        {/* LOCAL STORAGE per Image 8 */}
+        <section className="space-y-6">
+           <div className="flex flex-col">
+              <h3 className="text-[12px] font-black text-gray-600 uppercase tracking-[0.3em] px-2">儲存至本地設備 LOCAL STORAGE</h3>
+              <p className="text-[10px] text-gray-800 font-bold px-2 mt-1">直接儲存至您的手機或電腦硬碟中</p>
+           </div>
+           
+           <div className="bg-[#121214] p-10 rounded-[44px] border border-white/5 flex flex-col space-y-8 shadow-2xl">
+              <div className="flex items-center space-x-5">
+                 <div className="w-18 h-18 rounded-3xl bg-[#D4FF5F]/10 flex items-center justify-center text-[#D4FF5F] border border-[#D4FF5F]/20">
+                    <i className="fa-solid fa-download text-2xl"></i>
+                 </div>
+                 <div>
+                    <h4 className="text-xl font-black text-white tracking-tight">下載至本地</h4>
+                    <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] mt-1">OFFLINE PERSISTENCE</p>
+                 </div>
+              </div>
+              <button 
+                onClick={handleSaveLocal}
+                className="w-full py-7 bg-[#D4FF5F] text-black rounded-[32px] text-[13px] font-black uppercase tracking-[0.4em] shadow-2xl shadow-[#D4FF5F]/10 active:scale-95 transition-all"
+              >
+                儲 存 檔 案 至 此 裝 置
+              </button>
+           </div>
+        </section>
       </main>
+
+      {isSubmitting && (
+        <div className="fixed inset-0 z-[5000] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center animate-in fade-in duration-300">
+           <div className="relative w-32 h-32 mb-12">
+              <div className="absolute inset-0 border-[6px] border-blue-600/10 rounded-full"></div>
+              <div className="absolute inset-0 border-[6px] border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute inset-8 bg-blue-500/10 rounded-full animate-pulse"></div>
+           </div>
+           <h2 className="text-2xl font-black text-white tracking-tighter text-center px-12 leading-tight">{submissionStatus}</h2>
+           <p className="text-[12px] text-blue-500 font-black uppercase tracking-[0.5em] mt-8 animate-pulse">ENCRYPTING & TRANSMITTING</p>
+        </div>
+      )}
     </div>
   );
 };

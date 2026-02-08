@@ -10,9 +10,10 @@ interface ProjectDetailProps {
   onUpdateProject: (p: Project) => void;
   onDeleteProject: (id: string) => void;
   onEnterEditor: (chapterId: string) => void;
+  onOpenExport?: () => void; // 新增回調
 }
 
-const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenModule, onUpdateProject, onDeleteProject, onEnterEditor }) => {
+const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenModule, onUpdateProject, onDeleteProject, onEnterEditor, onOpenExport }) => {
   const [isAddingChapter, setIsAddingChapter] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
@@ -153,6 +154,10 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                   <button onClick={handleEditProject} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
                     <i className="fa-solid fa-pen-to-square text-blue-400"></i>
                     <span className="text-[11px] font-black uppercase tracking-widest text-white">編輯名稱</span>
+                  </button>
+                  <button onClick={() => { setIsMenuOpen(false); onOpenExport?.(); }} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
+                    <i className="fa-solid fa-file-export text-blue-500"></i>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white">導出專案</span>
                   </button>
                   <div className="h-px bg-white/5 my-1 mx-2" />
                   <button onClick={handleDeleteProjectConfirm} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-red-500/10 text-left transition-colors">

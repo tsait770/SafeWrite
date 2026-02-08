@@ -34,6 +34,19 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // 語音錄製相關 Refs 與狀態
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+    };
+  }, []);
+
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -89,6 +102,78 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
     }
   };
 
+  // 語音錄製邏輯
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Data = (reader.result as string).split(',')[1];
+          setIsProcessing(true);
+          try {
+            const text = await geminiService.transcribeAudio(base64Data, 'audio/webm');
+            if (text && text.trim()) {
+              setOcrBlocks([{
+                id: `voice-${Date.now()}`,
+                text: text,
+                confidence: 0.98,
+                isSelected: true
+              }]);
+              setShowDistribution(true);
+            } else {
+              alert('未偵測到有效的語音內容');
+            }
+          } catch (e) {
+            alert('語音轉錄失敗，請檢查 API 設定或網路狀態');
+          } finally {
+            setIsProcessing(false);
+          }
+        };
+        stream.getTracks().forEach(t => t.stop());
+      };
+
+      setRecordingTime(0);
+      setMode('VOICE_RECORDING');
+      mediaRecorder.start();
+      
+      timerRef.current = window.setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+
+    } catch (err) {
+      alert('無法存取麥克風：' + err);
+      setMode('IDLE');
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setMode('IDLE');
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleQuickNoteFinish = (text: string) => {
     if (text.trim()) {
       setOcrBlocks([{
@@ -100,21 +185,6 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
       setMode('IDLE');
       setShowDistribution(true);
     }
-  };
-
-  const handleVoiceFinish = () => {
-    setIsProcessing(true);
-    setTimeout(() => {
-      setOcrBlocks([{
-        id: `voice-${Date.now()}`,
-        text: "這是語音轉化後的文本示例。文字的力量在於流動與碰撞，捕捉這些閃現的靈感至關重要。",
-        confidence: 0.95,
-        isSelected: true
-      }]);
-      setIsProcessing(false);
-      setMode('IDLE');
-      setShowDistribution(true);
-    }, 2000);
   };
 
   const handleFinalSave = () => {
@@ -188,7 +258,7 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
 
           <div className="grid grid-cols-2 gap-6">
             <button 
-              onClick={() => setMode('VOICE_RECORDING')}
+              onClick={startVoiceRecording}
               className="bg-[#B2A4FF] rounded-[44px] aspect-square p-8 flex flex-col justify-between items-start text-white shadow-[0_30px_60px_rgba(178,164,255,0.15)] active:scale-[0.98] transition-all"
             >
               <div className="flex justify-end w-full"><i className="fa-solid fa-microphone-lines text-3xl"></i></div>
@@ -284,11 +354,12 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
            <div className="relative w-72 h-72 mb-20 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full bg-[#B2A4FF]/10 animate-ping"></div>
               <div className="absolute inset-4 rounded-full bg-[#B2A4FF]/20 animate-pulse"></div>
-              <div className="relative w-40 h-40 bg-[#B2A4FF] rounded-full flex items-center justify-center shadow-[0_0_60px_#B2A4FF]"><i className="fa-solid fa-microphone text-white text-6xl"></i></div>
+              <div className="relative w-40 h-40 bg-[#B2A4FF] rounded-full flex items-center justify-center shadow-[0_0_60px_#B2A4FF] shadow-purple-500/20"><i className="fa-solid fa-microphone text-white text-6xl"></i></div>
            </div>
            <h2 className="text-3xl font-black text-white tracking-tighter text-center">正在聆聽靈感...</h2>
-           <p className="text-[12px] text-[#B2A4FF] font-black uppercase tracking-[0.4em] mt-6 animate-pulse">TRANSCRIBING IN REALTIME</p>
-           <button onClick={handleVoiceFinish} className="mt-28 w-full py-7 bg-white rounded-[44px] text-black font-black text-sm uppercase tracking-[0.4em] active:scale-95 transition-all">停止並完成擷取</button>
+           <p className="text-5xl font-black text-white/20 mt-4 tabular-nums">{formatTime(recordingTime)}</p>
+           <p className="text-[12px] text-[#B2A4FF] font-black uppercase tracking-[0.4em] mt-6 animate-pulse">TRANSCRIBING WITH GEMINI AI</p>
+           <button onClick={stopVoiceRecording} className="mt-28 w-full py-7 bg-white rounded-[44px] text-black font-black text-sm uppercase tracking-[0.4em] active:scale-95 transition-all shadow-2xl">停止並完成擷取</button>
         </div>
       )}
 
@@ -323,7 +394,7 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
         </div>
       )}
 
-      {/* 6. DISTRIBUTION HUB Modal (核心分發邏輯與片段處理) */}
+      {/* 6. DISTRIBUTION HUB Modal */}
       {showDistribution && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 sm:p-8">
            <div className="absolute inset-0 bg-black/95 backdrop-blur-3xl" onClick={() => setShowDistribution(false)} />

@@ -107,6 +107,23 @@ export const geminiService = {
     return response.text || content;
   },
 
+  async transcribeAudio(base64Data: string, mimeType: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [
+        {
+          inlineData: {
+            mimeType: mimeType,
+            data: base64Data
+          }
+        },
+        { text: "請準確地將這段音檔轉換為繁體中文文字。僅回傳轉換後的文字內容，不需要任何解釋或引號。" }
+      ]
+    });
+    return response.text || "";
+  },
+
   async analyzeProjectStructure(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
