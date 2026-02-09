@@ -16,44 +16,33 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const [isTemplatesExpanded, setIsTemplatesExpanded] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   
+  // 直接編輯狀態
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [tempName, setTempName] = useState('');
+
   // SafeWrite 核心色盤：22 個不重複顏色
-  // 前四位固定順序：太陽黃、活力橘、螢光綠、夢幻紫
-  // 其餘 18 位採用莫蘭迪色系 (Morandi Color Palette)
   const corePalette = [
     '#FADE4B', // 1. 太陽黃
     '#FF6B2C', // 2. 活力橘
     '#D4FF5F', // 3. 螢光綠
     '#B2A4FF', // 4. 夢幻紫 (預設選中)
-    '#9EABB3', // 5. 莫蘭迪藍
-    '#B2967D', // 6. 莫蘭迪棕
-    '#8E9775', // 7. 莫蘭迪橄欖
-    '#E28E8E', // 8. 莫蘭迪粉
-    '#7C9473', // 9. 莫蘭迪草綠
-    '#AFB9C8', // 10. 莫蘭迪灰藍
-    '#9BABB8', // 11. 莫蘭迪石灰
-    '#D7C0AE', // 12. 莫蘭迪米褐
-    '#967E76', // 13. 莫蘭迪褐
-    '#7286D3', // 14. 莫蘭迪紫藍
-    '#A4BE7B', // 15. 莫蘭迪苔蘚
-    '#EDCDBB', // 16. 莫蘭迪蜜桃
-    '#6D8299', // 17. 莫蘭迪冷灰
-    '#D4ADFC', // 18. 莫蘭迪淺紫
-    '#B99470', // 19. 莫蘭迪焦糖
-    '#7895B2', // 20. 莫蘭迪海藍
-    '#A1C298', // 21. 莫蘭迪葉綠
-    '#C6A683'  // 22. 莫蘭迪卡其
+    '#9EABB3', '#B2967D', '#8E9775', '#E28E8E', '#7C9473', '#AFB9C8',
+    '#9BABB8', '#D7C0AE', '#967E76', '#7286D3', '#A4BE7B', '#EDCDBB',
+    '#6D8299', '#D4ADFC', '#B99470', '#7895B2', '#A1C298', '#C6A683'
   ];
 
   const [formData, setFormData] = useState({
     name: '',
     type: WritingType.NOVEL,
     targetWordCount: 5000,
-    color: '#B2A4FF', // 預設值設定為紫色
+    color: '#B2A4FF',
     icon: PROJECT_ICONS[0]
   });
 
   useEffect(() => {
-    const handleGlobalClick = () => setActiveMenuId(null);
+    const handleGlobalClick = () => {
+      setActiveMenuId(null);
+    };
     window.addEventListener('click', handleGlobalClick);
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
@@ -116,18 +105,22 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
     setActiveMenuId(null);
   };
 
-  const handleRename = (e: React.MouseEvent, project: Project) => {
+  const handleStartInlineEdit = (e: React.MouseEvent, project: Project) => {
     e.stopPropagation();
-    const newName = window.prompt('請輸入新的專案名稱：', project.name);
-    if (newName && newName.trim()) {
+    setEditingProjectId(project.id);
+    setTempName(project.name);
+    setActiveMenuId(null);
+  };
+
+  const handleSaveInlineEdit = (projId: string) => {
+    const trimmed = tempName.trim();
+    if (trimmed) {
       const updatedProjects = projects.map(p => 
-        p.id === project.id ? { ...p, name: newName.trim(), updatedAt: Date.now() } : p
+        p.id === projId ? { ...p, name: trimmed, updatedAt: Date.now() } : p
       );
       onUpdateProjects(updatedProjects);
-    } else if (newName === '') {
-      alert('專案名稱不能為空');
     }
-    setActiveMenuId(null);
+    setEditingProjectId(null);
   };
 
   const handleDelete = (e: React.MouseEvent, project: Project) => {
@@ -202,10 +195,31 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
             >
               <div className="flex flex-col h-full relative">
                 <div className="flex justify-between items-start mb-1">
-                  <div className="max-w-[80%]">
-                    <div className="flex items-center space-x-3 mb-1.5">
+                  <div className="max-w-[85%]">
+                    <div className="flex items-center space-x-3 mb-1.5 min-h-[40px]">
                       {proj.isPinned && <i className="fa-solid fa-thumbtack text-xs opacity-60"></i>}
-                      <h3 className="text-[28px] sm:text-[34px] font-black tracking-tighter leading-none truncate">{proj.name}</h3>
+                      
+                      {editingProjectId === proj.id ? (
+                        <input
+                          autoFocus
+                          value={tempName}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setTempName(e.target.value)}
+                          onBlur={() => handleSaveInlineEdit(proj.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSaveInlineEdit(proj.id);
+                            if (e.key === 'Escape') setEditingProjectId(null);
+                          }}
+                          className="bg-black/10 border-b-2 border-current outline-none text-[28px] sm:text-[34px] font-black tracking-tighter leading-none w-full px-1"
+                        />
+                      ) : (
+                        <h3 
+                          onClick={(e) => handleStartInlineEdit(e, proj)}
+                          className="text-[28px] sm:text-[34px] font-black tracking-tighter leading-none truncate cursor-text hover:underline decoration-2 underline-offset-4"
+                        >
+                          {proj.name}
+                        </h3>
+                      )}
                     </div>
                     <div className="flex items-center space-x-2">
                        <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40">
@@ -227,7 +241,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
 
                     {activeMenuId === proj.id && (
                       <div 
-                        className="absolute right-0 top-12 w-40 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl z-[200] p-1 animate-in fade-in zoom-in duration-200"
+                        className="absolute right-0 top-12 w-44 bg-[#1C1C1E] border border-white/10 rounded-2xl shadow-2xl z-[200] p-1 animate-in fade-in zoom-in duration-200"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button 
@@ -238,7 +252,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                           <span className="text-[11px] font-black text-white uppercase tracking-wider">{proj.isPinned ? '取消置頂' : '置頂專案'}</span>
                         </button>
                         <button 
-                          onClick={(e) => handleRename(e, proj)}
+                          onClick={(e) => handleStartInlineEdit(e, proj)}
                           className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/5 text-left transition-colors"
                         >
                           <i className="fa-solid fa-pen-to-square text-blue-400"></i>

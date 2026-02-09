@@ -10,7 +10,7 @@ interface ProjectDetailProps {
   onUpdateProject: (p: Project) => void;
   onDeleteProject: (id: string) => void;
   onEnterEditor: (chapterId: string) => void;
-  onOpenExport?: () => void; // 新增回調
+  onOpenExport?: () => void; 
 }
 
 const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenModule, onUpdateProject, onDeleteProject, onEnterEditor, onOpenExport }) => {
@@ -18,13 +18,25 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const [newTitle, setNewTitle] = useState('');
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Inline editing states
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState(project.name);
+  
   const menuRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const structDef = STRUCTURE_DEFINITIONS[project.structureType] || STRUCTURE_DEFINITIONS[StructureType.FREE];
 
   const totalWords = project.chapters.reduce((acc, c) => acc + (c.wordCount || 0), 0);
   const writingDays = Math.max(1, Math.ceil((Date.now() - project.createdAt) / (1000 * 60 * 60 * 24)));
 
+  // Sync edit value when project name changes externally
+  useEffect(() => {
+    setEditNameValue(project.name);
+  }, [project.name]);
+
+  // Handle click outside for the dropdown menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -66,7 +78,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
       createdAt: Date.now()
     };
     
-    onUpdateProject({ ...project, chapters: [...project.chapters, newUnit] });
+    onUpdateProject({ ...project, chapters: [...project.chapters, newUnit], updatedAt: Date.now() });
     setNewTitle('');
     setIsAddingChapter(false);
   };
@@ -74,21 +86,32 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const handleDeleteChapter = (id: string) => {
     const remaining = project.chapters.filter(c => c.id !== id);
     const reordered = remaining.map((c, i) => ({ ...c, order: i + 1 }));
-    onUpdateProject({ ...project, chapters: reordered });
+    onUpdateProject({ ...project, chapters: reordered, updatedAt: Date.now() });
   };
 
   const handleTogglePin = () => {
-    onUpdateProject({ ...project, isPinned: !project.isPinned });
+    onUpdateProject({ ...project, isPinned: !project.isPinned, updatedAt: Date.now() });
     setIsMenuOpen(false);
   };
 
-  const handleEditProject = () => {
-    const newName = window.prompt('請輸入新的專案名稱：', project.name);
-    if (newName && newName.trim()) {
-      onUpdateProject({ ...project, name: newName.trim(), updatedAt: Date.now() });
-    } else if (newName === '') {
-      alert('專案名稱不能為空');
+  // Inline Name Editing Logic
+  const handleNameSave = () => {
+    const trimmed = editNameValue.trim();
+    if (trimmed && trimmed !== project.name) {
+      onUpdateProject({ ...project, name: trimmed, updatedAt: Date.now() });
+    } else {
+      setEditNameValue(project.name);
     }
+    setIsEditingName(false);
+  };
+
+  const handleNameCancel = () => {
+    setEditNameValue(project.name);
+    setIsEditingName(false);
+  };
+
+  const handleEditProjectFromMenu = () => {
+    setIsEditingName(true);
     setIsMenuOpen(false);
   };
 
@@ -112,7 +135,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
     newChapters.splice(idx, 0, item);
     
     const orderedChapters = newChapters.map((c, i) => ({ ...c, order: i + 1 }));
-    onUpdateProject({ ...project, chapters: orderedChapters });
+    onUpdateProject({ ...project, chapters: orderedChapters, updatedAt: Date.now() });
     setDraggedIdx(idx);
   };
 
@@ -125,8 +148,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
             <button onClick={onBack} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-400 active:scale-90 transition-transform">
                <i className="fa-solid fa-chevron-left"></i>
             </button>
-            <div className="flex flex-col items-center">
-               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-2xl mb-2 relative" style={{ backgroundColor: project.color, color: '#121212' }}>
+            
+            <div className="flex flex-col items-center flex-1 max-w-[70%]">
+               <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-2xl mb-3 relative shrink-0" style={{ backgroundColor: project.color, color: '#121212' }}>
                   <i className={`fa-solid ${project.icon}`}></i>
                   {project.isPinned && (
                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#D4FF5F] rounded-full border-2 border-black flex items-center justify-center text-[10px]">
@@ -134,10 +158,36 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                     </div>
                   )}
                </div>
-               <h1 className="text-3xl font-black tracking-tight">{project.name}</h1>
-               <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1">{TEMPLATES[project.writingType]?.label}</p>
+               
+               {isEditingName ? (
+                 <div className="w-full flex justify-center px-4">
+                   <input
+                      ref={inputRef}
+                      autoFocus
+                      value={editNameValue}
+                      onChange={(e) => setEditNameValue(e.target.value)}
+                      onBlur={handleNameSave}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleNameSave();
+                        if (e.key === 'Escape') handleNameCancel();
+                      }}
+                      className="w-full bg-white/5 border-b-2 border-blue-600 outline-none text-2xl sm:text-3xl font-black text-center text-white pb-1 tracking-tight"
+                   />
+                 </div>
+               ) : (
+                 <div 
+                   className="flex items-center space-x-3 group cursor-pointer max-w-full px-4"
+                   onClick={() => setIsEditingName(true)}
+                 >
+                    <h1 className="text-2xl sm:text-3xl font-black tracking-tighter truncate text-center">{project.name}</h1>
+                    <i className="fa-solid fa-pen text-[10px] text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                 </div>
+               )}
+               
+               <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">{TEMPLATES[project.writingType]?.label}</p>
             </div>
-            <div className="relative" ref={menuRef}>
+
+            <div className="relative shrink-0" ref={menuRef}>
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)} 
                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMenuOpen ? 'bg-white/20 text-white' : 'bg-white/5 text-gray-400'}`}
@@ -151,7 +201,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                     <i className={`fa-solid fa-thumbtack ${project.isPinned ? 'text-[#D4FF5F]' : 'text-gray-500'}`}></i>
                     <span className="text-[11px] font-black uppercase tracking-widest text-white">{project.isPinned ? '取消置頂' : '置頂專案'}</span>
                   </button>
-                  <button onClick={handleEditProject} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
+                  <button onClick={handleEditProjectFromMenu} className="w-full flex items-center space-x-3 p-4 rounded-2xl hover:bg-white/5 text-left transition-colors">
                     <i className="fa-solid fa-pen-to-square text-blue-400"></i>
                     <span className="text-[11px] font-black uppercase tracking-widest text-white">編輯名稱</span>
                   </button>
