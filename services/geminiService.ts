@@ -167,18 +167,50 @@ export const geminiService = {
         data: base64Data,
       },
     };
-    const prompt = "請提取圖片中的所有文字。將文字劃分為邏輯段落，並以 JSON 陣列格式回傳：[{'text': '內容', 'confidence': 0.98}]。僅回傳 JSON。";
+    const prompt = `你是一個世界級的 OCR 與文檔視覺結構分析專家。請執行深度文本提取任務：
+1. **精確提取**：捕捉所有文字，包含極小字體與特殊符號。
+2. **自動語言偵測**：識別文本主語言（如：繁體中文、English 等），並提供 0.0 至 1.0 的信心分數。
+3. **邏輯層級分析**：識別文檔的視覺邏輯，區分標題、次標題、正文與引用區塊。
+4. **Markdown 保存**：在正文片段中保留基本的 Markdown 語法（如 - 列表、** 粗體）。
+5. **語義分類**：將文字劃分為「title (大標)」、「heading (小標)」、「body (正文)」、「quote (引用)」或「metadata (腳註)」。
+請嚴格以 JSON 格式回傳結果。`;
     
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: { parts: [imagePart, { text: prompt }] },
-      config: { responseMimeType: "application/json" }
+      config: { 
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            detectedLanguage: { type: Type.STRING },
+            languageConfidence: { type: Type.NUMBER },
+            segments: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  text: { type: Type.STRING },
+                  type: { type: Type.STRING, description: "One of: title, heading, body, quote, metadata" },
+                  confidence: { type: Type.NUMBER }
+                },
+                required: ['text', 'type', 'confidence']
+              }
+            }
+          },
+          required: ['detectedLanguage', 'languageConfidence', 'segments']
+        }
+      }
     });
     
     try {
-      return JSON.parse(response.text || "[]");
+      return JSON.parse(response.text || '{"detectedLanguage": "Unknown", "languageConfidence": 0, "segments": []}');
     } catch (e) {
-      return [{ text: response.text, confidence: 0.9 }];
+      return { 
+        detectedLanguage: "偵測失敗", 
+        languageConfidence: 0, 
+        segments: [{ text: response.text || "解析異常", type: "body", confidence: 0.5 }] 
+      };
     }
   },
 

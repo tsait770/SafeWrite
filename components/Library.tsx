@@ -118,9 +118,12 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
     return a.isPinned ? -1 : 1;
   });
 
+  // 四宮格佈局：左上長篇故事(NOVEL), 右上隨手筆記(DIARY), 左下部落格創作(BLOG), 右下自定義範本(CUSTOM)
   const mainParadigms = [
     WritingType.NOVEL,
-    WritingType.BLOG
+    WritingType.DIARY,
+    WritingType.BLOG,
+    WritingType.CUSTOM
   ];
 
   const scrollParadigms = (Object.keys(TEMPLATES) as WritingType[]).filter(t => !mainParadigms.includes(t));
@@ -300,7 +303,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </div>
                  </div>
 
-                 {/* Paradigm Cards */}
+                 {/* Paradigm Cards - Four-cell Grid */}
                  <div className="space-y-4">
                     <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-1">寫作範式 TEMPLATE PARADIGM</label>
                     <div className="grid grid-cols-2 gap-4">
