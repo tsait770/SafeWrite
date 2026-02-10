@@ -17,5 +17,21 @@
     "camera",
     "microphone",
     "geolocation"
-  ]
+  ],
+  "publishingPayload": {
+    "title": "Manuscript Title",
+    "subtitle": "Story Tagline",
+    "author": "Author Identity",
+    "language": "ISO 639-1",
+    "description": "Blurb or abstract for the work",
+    "categories": [],
+    "keywords": [],
+    "isbn13": null,
+    "coverImage": null,
+    "contentFormats": [
+      "epub",
+      "pdf",
+      "docx"
+    ]
+  }
 }

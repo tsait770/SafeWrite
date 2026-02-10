@@ -59,14 +59,22 @@ export enum ThemeMode {
 export enum PublicationStatus {
   SUBMITTED = 'SUBMITTED',
   REVIEWING = 'REVIEWING',
-  ACCEPTED = 'ACCEPTED'
+  ACCEPTED = 'ACCEPTED',
+  LIVE = 'LIVE',
+  REJECTED = 'REJECTED'
 }
 
-export interface PublicationRecord {
-  platform: string;
-  status: PublicationStatus;
-  timestamp: number;
-  id: string;
+export interface PublishingPayload {
+  title: string;
+  subtitle: string;
+  author: string;
+  language: string;
+  description: string;
+  categories: string[];
+  keywords: string[];
+  isbn13?: string;
+  coverImage?: string;
+  contentFormats: ('epub' | 'pdf' | 'docx')[];
 }
 
 export interface OutlineNode {
@@ -185,7 +193,7 @@ export interface Project {
   };
   isPinned?: boolean;
   visualOutline?: OutlineNode[];
-  publicationHistory?: PublicationRecord[];
+  publishingPayload?: PublishingPayload;
 }
 
 export interface AppState {

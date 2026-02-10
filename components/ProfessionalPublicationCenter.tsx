@@ -1,464 +1,361 @@
 
 import React, { useState, useEffect } from 'react';
-import { Project, SupportedLanguage, PublicationStatus, PublicationRecord } from '../types';
-import LanguageSelector from './LanguageSelector';
+import { Project, PublishingPayload } from '../types';
 
-enum PubStep { EXPORT_CONFIG, DELIVERY_HUB, PIPELINE, SUCCESS }
+enum PubStep { CONFIG, GALLERY, FINALIZATION, DELIVERY, SUCCESS }
 
 interface ProfessionalPublicationCenterProps {
   project: Project | null;
   onClose: () => void;
-  onUpdateProject?: (project: Project) => void;
 }
 
-const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps> = ({ project, onClose, onUpdateProject }) => {
-  const [step, setStep] = useState<PubStep>(PubStep.EXPORT_CONFIG);
-  
-  // Phase 1: Configuration
-  const [outputOption, setOutputOption] = useState<'ALL' | 'CUSTOM'>('ALL');
-  const [typography, setTypography] = useState<'SERIF' | 'SANS'>('SERIF');
+const FAQItem: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className="border-b border-white/5">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full py-5 flex items-center justify-between text-left group focus:outline-none"
+      >
+        <span className="text-[13px] font-bold text-gray-400 group-hover:text-white transition-colors">{question}</span>
+        <i className={`fa-solid fa-chevron-down text-[10px] text-gray-600 transition-transform duration-300 ${isOpen ? 'rotate-180 text-blue-500' : ''}`}></i>
+      </button>
+      {isOpen && (
+        <div className="pb-6 text-[12px] text-gray-500 leading-relaxed animate-in fade-in slide-in-from-top-1 duration-300 font-medium">
+          {answer}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps> = ({ project, onClose }) => {
+  const [step, setStep] = useState<PubStep>(PubStep.CONFIG);
+  const [outputMode, setOutputMode] = useState<'ALL' | 'CUSTOM'>('ALL');
+  const [fontMode, setFontMode] = useState<'SERIF' | 'SANS'>('SERIF');
   const [pageNumbering, setPageNumbering] = useState(true);
   const [headersFooters, setHeadersFooters] = useState(false);
-  const [authorName, setAuthorName] = useState('');
-  const [isbn, setIsbn] = useState('');
-  const [language, setLanguage] = useState<SupportedLanguage>('zh-TW');
-  const [isLanguageSelectorOpen, setIsLanguageSelectorOpen] = useState(false);
+  
+  const [targetPlatform, setTargetPlatform] = useState('');
+  const [deliveryPhase, setDeliveryPhase] = useState(0);
 
-  // Phase 3: Pipeline States
-  const [pipelinePhase, setPipelinePhase] = useState(0);
-  const [selectedPlatform, setSelectedPlatform] = useState('');
+  // Publishing Payload State
+  const [payload, setPayload] = useState<PublishingPayload>({
+    title: project?.name || 'The Solar Paradox',
+    subtitle: '',
+    author: project?.publishingPayload?.author || 'Author Name',
+    language: 'English',
+    description: '',
+    categories: [],
+    keywords: [],
+    contentFormats: ['pdf']
+  });
 
-  const pipelinePhases = [
-    { label: '內容標準化與 AST 解析', desc: 'Content Normalization & AI Pre-processing' },
-    { label: '生成 DOCX 編輯母檔', desc: 'Generating Editorial DOCX Artifact' },
-    { label: '封裝 PDF 印刷級手稿', desc: 'Packaging High-Fidelity PDF' },
-    { label: '構建 EPUB 3 出版規格電子書', desc: 'Building EPUB 3 Standards E-book' },
-    { label: '加密傳輸至出版商通道', desc: 'Encrypted Delivery to Platform API' }
+  const selfPublishing = [
+    { id: 'Amazon KDP', name: 'Amazon KDP', sub: 'KINDLE DIRECT PUBLISHING', meta: 'Official self-publishing platform · Global distribution', color: '#FADE4B', icon: 'fa-amazon' },
+    { id: 'Apple Books', name: 'Apple Books', sub: 'APPLE PUBLISHING', meta: 'Official Apple publishing channel', color: '#1E90FF', icon: 'fa-apple' },
+    { id: 'Google Books', name: 'Google Books', sub: 'PARTNER PROGRAM', meta: 'Global book discovery & distribution', color: '#EA4335', icon: 'fa-google' },
+    { id: 'Draft2Digital', name: 'Draft2Digital', sub: 'MULTI-PLATFORM AGGREGATOR', meta: 'Global distribution to Kobo, Apple, and libraries', color: '#10B981', icon: 'fa-share-nodes' }
   ];
 
-  const languageNames: Record<string, string> = {
-    'en': 'English', 'zh-TW': '繁體中文', 'zh-CN': '简体中文', 'es': 'Español',
-    'pt-BR': 'Português (Brasil)', 'pt-PT': 'Português', 'de': 'Deutsch',
-    'fr': 'Français', 'it': 'Italiano', 'nl': 'Nederlands', 'sv': 'Svenska',
-    'tr': 'Türkçe', 'ru': 'Русский', 'ja': '日本語', 'ko': '韓國語',
-    'th': 'ไทย', 'vi': 'Tiếng Việt', 'id': 'Bahasa Indonesia', 'ms': 'Bahasa Melayu',
-    'ar': 'العربية', 'hi': 'हिन्दी'
-  };
+  const contentPlatforms = [
+    { id: 'Medium', name: 'Medium 專欄', sub: 'DIGITAL STORYTELLING', meta: 'Content publishing & audience platform', color: '#FFFFFF', icon: 'fa-medium' },
+    { id: 'Substack', name: 'Substack', sub: 'SERIAL / NEWSLETTER', meta: 'Newsletter publication hub', color: '#FF6719', icon: 'fa-envelope-open-text' }
+  ];
 
-  const startPublishing = (platform: string) => {
-    setSelectedPlatform(platform);
-    setStep(PubStep.PIPELINE);
-    setPipelinePhase(0);
-  };
+  const deliverySteps = [
+    { title: '內容標準化與 AST 解析', en: 'CONTENT NORMALIZATION & AST PARSING', icon: 'fa-microchip' },
+    { title: '生成 DOCX 編輯母檔', en: 'GENERATING EDITORIAL DOCX ARTIFACT', icon: 'fa-microchip' },
+    { title: '封裝 PDF 印刷級手稿', en: 'PACKAGING HIGH-FIDELITY PDF', icon: 'fa-rocket' },
+    { title: '構建 EPUB 3 出版規格電子書', en: 'BUILDING EPUB 3 STANDARDS E-BOOK', icon: 'fa-microchip' },
+    { title: '加密傳輸至出版商通道', en: 'ENCRYPTED DELIVERY TO PLATFORM API', icon: 'fa-rocket' }
+  ];
 
   useEffect(() => {
-    if (step === PubStep.PIPELINE) {
+    if (step === PubStep.DELIVERY) {
       const interval = setInterval(() => {
-        setPipelinePhase(prev => {
-          if (prev >= pipelinePhases.length - 1) {
-            clearInterval(interval);
-            setTimeout(() => {
-              completePublishing();
-            }, 1000);
-            return prev;
-          }
-          return prev + 1;
+        setDeliveryPhase(prev => {
+          if (prev < deliverySteps.length - 1) return prev + 1;
+          clearInterval(interval);
+          setTimeout(() => setStep(PubStep.SUCCESS), 1500);
+          return prev;
         });
-      }, 1500);
+      }, 2000);
       return () => clearInterval(interval);
     }
   }, [step]);
 
-  const completePublishing = () => {
-    if (project && onUpdateProject) {
-      const newRecord: PublicationRecord = {
-        id: `pub-${Date.now()}`,
-        platform: selectedPlatform,
-        status: PublicationStatus.SUBMITTED,
-        timestamp: Date.now()
-      };
-      const updatedProject = {
-        ...project,
-        publicationHistory: [newRecord, ...(project.publicationHistory || [])]
-      };
-      onUpdateProject(updatedProject);
-    }
-    setStep(PubStep.SUCCESS);
-  };
-
-  // Phase 1 UI: Export Configuration
-  if (step === PubStep.EXPORT_CONFIG) {
+  // STAGE 1: EXPORT CONFIGURATION
+  if (step === PubStep.CONFIG) {
     return (
-      <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white font-sans">
-        <header className="h-20 px-8 pt-6 flex items-center justify-between shrink-0 bg-black z-20">
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-start text-white active:opacity-50">
+      <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white">
+        <header className="h-20 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0">
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-start text-white opacity-60">
             <i className="fa-solid fa-chevron-left text-lg"></i>
           </button>
-          <h2 className="text-[11px] font-black uppercase tracking-[0.25em] text-white">Export Configuration</h2>
-          <button className="text-[11px] font-black uppercase tracking-[0.2em] text-blue-500">Manual</button>
+          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-100">Export Configuration</h2>
+          <button className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Help</button>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-8 py-4 no-scrollbar space-y-12 pb-48">
-          <div className="bg-[#1C1C1E] rounded-[48px] p-10 flex flex-col items-start relative overflow-hidden shadow-2xl">
-             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
-             <h1 className="text-[44px] font-black tracking-tighter leading-none mb-2 z-10">{project?.name || 'Untitled Project'}</h1>
-             <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest mb-10 z-10">
-               {project?.chapters.length || 0} UNITS • READY FOR DELIVERY
-             </p>
-             
-             <div className="w-full flex justify-between items-end z-10">
-                <div className="space-y-1">
-                   <p className="text-[11px] font-black text-white uppercase tracking-widest">Document Preview</p>
-                   <p className="text-[9px] font-bold text-gray-600 uppercase tracking-widest leading-relaxed">
-                     Visual representation<br/>based on current settings.
-                   </p>
+        <main className="flex-1 overflow-y-auto px-8 py-4 no-scrollbar space-y-8">
+           <div className="bg-[#121214] rounded-[44px] p-10 flex flex-col relative overflow-hidden">
+              <div className="relative z-10">
+                <h1 className="text-4xl font-black tracking-tighter mb-1">{payload.title}</h1>
+                <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-10">PAGE 1 OF 243 • CHAPTER 1</p>
+                <div className="flex flex-col space-y-1">
+                   <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Document Preview</p>
+                   <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest leading-relaxed max-w-[140px]">Visual representation based on current settings.</p>
+                      <button className="px-8 py-3 bg-[#1A1A1E] border border-white/5 rounded-2xl text-[10px] font-black text-blue-500 uppercase tracking-widest">Ready</button>
+                   </div>
                 </div>
-                <div className="px-10 py-3 rounded-full border border-gray-800 text-[#D4FF5F] text-[11px] font-black uppercase tracking-[0.2em]">Validated</div>
-             </div>
-          </div>
+              </div>
+           </div>
 
-          <section className="space-y-4">
-             <p className="text-[11px] font-black text-gray-700 uppercase tracking-widest px-2">Scope Options</p>
-             <div className="grid grid-cols-2 gap-4">
-                {['ALL', 'CUSTOM'].map(opt => (
-                  <button 
-                    key={opt}
-                    onClick={() => setOutputOption(opt as any)}
-                    className={`py-6 rounded-[2.5rem] text-[11px] font-black uppercase tracking-[0.2em] transition-all ${outputOption === opt ? 'bg-[#3b82f6] text-white shadow-xl shadow-blue-900/30' : 'bg-[#121214] text-gray-600 border border-white/5'}`}
-                  >
-                    {opt === 'ALL' ? '全體章節' : '自定範圍'}
-                  </button>
-                ))}
-             </div>
-          </section>
+           <div className="space-y-4">
+              <label className="text-[10px] font-black text-gray-700 uppercase tracking-widest px-2">Output Options</label>
+              <div className="grid grid-cols-2 gap-4">
+                 <button onClick={() => setOutputMode('ALL')} className={`h-20 rounded-[32px] font-black text-[10px] uppercase tracking-widest transition-all ${outputMode === 'ALL' ? 'bg-blue-600 text-white shadow-[0_0_30px_rgba(37,99,235,0.3)]' : 'bg-[#121214] text-gray-500 border border-white/5'}`}>All Chapters</button>
+                 <button onClick={() => setOutputMode('CUSTOM')} className={`h-20 rounded-[32px] font-black text-[10px] uppercase tracking-widest transition-all ${outputMode === 'CUSTOM' ? 'bg-blue-600 text-white shadow-[0_0_30px_rgba(37,99,235,0.3)]' : 'bg-[#121214] text-gray-500 border border-white/5'}`}>Custom Range</button>
+              </div>
+           </div>
 
-          <section className="grid grid-cols-2 gap-4">
-             {[
-               { id: 'SERIF', label: 'Serif', desc: 'Classic', font: 'font-serif' },
-               { id: 'SANS', label: 'Sans-serif', desc: 'Modern', font: 'font-sans' }
-             ].map(style => (
-               <button 
-                  key={style.id}
-                  onClick={() => setTypography(style.id as any)}
-                  className={`flex flex-col items-center justify-center p-12 rounded-[3.5rem] border-2 transition-all ${typography === style.id ? 'border-[#3b82f6] bg-black ring-4 ring-[#3b82f6]/20' : 'border-white/5 bg-[#121214] opacity-40'}`}
-               >
-                  <span className={`text-[54px] ${style.font} mb-4 leading-none`}>Aa</span>
-                  <p className="text-xl font-black tracking-tight">{style.label}</p>
-                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">{style.desc}</p>
-               </button>
-             ))}
-          </section>
+           <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => setFontMode('SERIF')} className={`h-56 rounded-[44px] flex flex-col items-center justify-center space-y-4 transition-all border-4 ${fontMode === 'SERIF' ? 'bg-[#121214] border-blue-600 shadow-[0_0_40px_rgba(37,99,235,0.2)]' : 'bg-[#0A0A0B] border-white/5 opacity-50'}`}>
+                 <span className="text-5xl font-serif">Aa</span>
+                 <div className="text-center"><p className="text-sm font-black text-white">Serif</p><p className="text-[8px] font-black text-gray-600 uppercase tracking-widest mt-1">Classic</p></div>
+              </button>
+              <button onClick={() => setFontMode('SANS')} className={`h-56 rounded-[44px] flex flex-col items-center justify-center space-y-4 transition-all border-4 ${fontMode === 'SANS' ? 'bg-[#121214] border-blue-600 shadow-[0_0_40px_rgba(37,99,235,0.2)]' : 'bg-[#0A0A0B] border-white/5 opacity-50'}`}>
+                 <span className="text-5xl font-sans">Aa</span>
+                 <div className="text-center"><p className="text-sm font-black text-white">Sans-serif</p><p className="text-[8px] font-black text-gray-600 uppercase tracking-widest mt-1">Modern</p></div>
+              </button>
+           </div>
 
-          <section className="space-y-4">
-             <div className="h-24 px-10 rounded-[2.5rem] bg-[#121214] flex items-center justify-between border border-white/5">
-                <span className="text-[14px] font-black uppercase tracking-[0.2em] text-gray-200">Page Numbering</span>
-                <button onClick={() => setPageNumbering(!pageNumbering)} className={`w-14 h-8 rounded-full flex items-center px-1 transition-all ${pageNumbering ? 'bg-blue-600' : 'bg-gray-800'}`}>
-                   <div className={`w-6 h-6 bg-white rounded-full transition-transform ${pageNumbering ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-             </div>
-             <div className="h-24 px-10 rounded-[2.5rem] bg-[#121214] flex items-center justify-between border border-white/5">
-                <span className="text-[14px] font-black uppercase tracking-[0.2em] text-gray-200">Headers & Footers</span>
-                <button onClick={() => setHeadersFooters(!headersFooters)} className={`w-14 h-8 rounded-full flex items-center px-1 transition-all ${headersFooters ? 'bg-blue-600' : 'bg-gray-800'}`}>
-                   <div className={`w-6 h-6 bg-white rounded-full transition-transform ${headersFooters ? 'translate-x-6' : 'translate-x-0'}`} />
-                </button>
-             </div>
-          </section>
+           <div className="space-y-4">
+              <div className="bg-[#121214] h-20 rounded-[32px] px-8 flex items-center justify-between border border-white/5">
+                 <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white">Page Numbering</span>
+                 <button onClick={() => setPageNumbering(!pageNumbering)} className={`w-14 h-8 rounded-full flex items-center px-1 transition-all ${pageNumbering ? 'bg-blue-600' : 'bg-gray-700'}`}><div className={`w-6 h-6 bg-white rounded-full transition-transform ${pageNumbering ? 'translate-x-6' : 'translate-x-0'}`} /></button>
+              </div>
+              <div className="bg-[#121214] h-20 rounded-[32px] px-8 flex items-center justify-between border border-white/5">
+                 <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white">Headers & Footers</span>
+                 <button onClick={() => setHeadersFooters(!headersFooters)} className={`w-14 h-8 rounded-full flex items-center px-1 transition-all ${headersFooters ? 'bg-blue-600' : 'bg-gray-700'}`}><div className={`w-6 h-6 bg-white rounded-full transition-transform ${headersFooters ? 'translate-x-6' : 'translate-x-0'}`} /></button>
+              </div>
+           </div>
 
-          <section className="space-y-4">
-             <input type="text" placeholder="Author Name" value={authorName} onChange={e => setAuthorName(e.target.value)} className="w-full h-24 px-10 rounded-[2.5rem] bg-[#121214] border border-white/5 text-lg font-black text-white outline-none focus:border-[#3b82f6] placeholder-gray-700" />
-             <input type="text" placeholder="ISBN-13 (Optional)" value={isbn} onChange={e => setIsbn(e.target.value)} className="w-full h-24 px-10 rounded-[2.5rem] bg-[#121214] border border-white/5 text-lg font-black text-white outline-none focus:border-[#3b82f6] placeholder-gray-700" />
-             <div className="grid grid-cols-2 gap-4">
-                <div className="h-24 px-10 rounded-[2.5rem] bg-[#121214] flex items-center text-lg font-black text-gray-500 border border-white/5">2026</div>
-                <button onClick={() => setIsLanguageSelectorOpen(true)} className="h-24 px-10 rounded-[2.5rem] bg-[#121214] flex items-center justify-between text-lg font-black text-gray-500 border border-white/5">
-                   <span>{languageNames[language]}</span>
-                   <i className="fa-solid fa-chevron-down text-xs"></i>
-                </button>
-             </div>
-          </section>
+           <div className="space-y-4 pb-32">
+              <input type="text" value={payload.author} onChange={e => setPayload({...payload, author: e.target.value})} placeholder="Author Name" className="w-full h-20 bg-[#121214] border border-white/5 rounded-[32px] px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
+              <input type="text" placeholder="ISBN-13 (Optional)" className="w-full h-20 bg-[#121214] border border-white/5 rounded-[32px] px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="h-20 bg-[#121214] border border-white/5 rounded-[32px] px-8 flex items-center text-sm font-bold text-gray-300">2026</div>
+                 <div className="h-20 bg-[#121214] border border-white/5 rounded-[32px] px-8 flex items-center justify-between text-sm font-bold text-gray-300"><span>{payload.language}</span><i className="fa-solid fa-chevron-down text-[10px] opacity-40"></i></div>
+              </div>
+           </div>
         </main>
 
-        <footer className="absolute bottom-0 inset-x-0 p-8 pb-12 bg-gradient-to-t from-black via-black/80 to-transparent shrink-0">
-           <button 
-             onClick={() => setStep(PubStep.DELIVERY_HUB)}
-             className="w-full h-24 bg-[#3b82f6] text-white rounded-[48px] flex items-center justify-center space-x-6 shadow-[0_20px_50px_rgba(59,130,246,0.4)] active:scale-95 transition-all"
-           >
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                 <i className="fa-solid fa-arrow-right text-[12px]"></i>
-              </div>
-              <span className="text-[14px] font-black uppercase tracking-[0.4em]">Proceed to Distribution</span>
+        <footer className="p-8 pb-12 shrink-0 bg-black">
+           <button onClick={() => setStep(PubStep.GALLERY)} className="w-full h-24 bg-blue-600 text-white rounded-[48px] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i className="fa-solid fa-arrow-right text-[10px]"></i></div>
+              <span className="text-[12px] font-black uppercase tracking-[0.4em]">Proceed to Distribution</span>
            </button>
         </footer>
-
-        {isLanguageSelectorOpen && <LanguageSelector currentLanguage={language} onSelect={setLanguage} onClose={() => setIsLanguageSelectorOpen(false)} />}
       </div>
     );
   }
 
-  // Phase 2: Delivery Hub (Optimized Layout per Screenshot)
-  if (step === PubStep.DELIVERY_HUB) {
+  // STAGE 2: GLOBAL ONE-CLICK PUBLISHING
+  if (step === PubStep.GALLERY) {
     return (
-      <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 text-white font-sans overflow-hidden">
-         <header className="h-20 px-8 pt-6 flex items-center justify-between shrink-0 bg-black z-10 border-b border-white/5">
-            <button onClick={() => setStep(PubStep.EXPORT_CONFIG)} className="w-10 h-10 flex items-center justify-start text-white">
-               <i className="fa-solid fa-chevron-left text-lg"></i>
-            </button>
-            <h2 className="text-[11px] font-black uppercase tracking-[0.25em] text-white">Delivery & Submission</h2>
-            <div className="w-10" />
+      <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white">
+        <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0 border-b border-white/5">
+          <button onClick={() => setStep(PubStep.CONFIG)} className="w-12 h-12 flex items-center justify-start text-white"><i className="fa-solid fa-chevron-left text-xl"></i></button>
+          <div className="text-center">
+            <h2 className="text-[11px] font-black uppercase tracking-[0.5em]">Global One-Click Publishing</h2>
+            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-1">Official Delivery Infrastructure</p>
+          </div>
+          <div className="w-12" />
         </header>
 
-        <main className="flex-1 overflow-y-auto no-scrollbar px-8 py-10 space-y-16 pb-48">
-           
-           {/* Section 1: Submission */}
-           <section className="space-y-8">
-              <div className="px-2">
-                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">投遞與出版 SUBMISSION</h3>
-                 <p className="text-[9px] font-bold text-gray-700 uppercase tracking-widest mt-1">直接投遞至出版平台或指定編輯</p>
+        <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-16">
+          <section className="space-y-4">
+            <div className="bg-gradient-to-br from-blue-600/10 to-transparent p-10 rounded-[48px] border border-blue-600/20">
+              <h3 className="text-2xl font-black tracking-tight mb-2">From Draft to the World</h3>
+              <p className="text-sm text-gray-400 leading-relaxed">Deliver your work through official global publishing channels. This is where your journey from manuscript to published work completes.</p>
+            </div>
+          </section>
+
+          <section className="space-y-10">
+            <div className="px-2">
+              <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em]">Select Publishing Destination</h3>
+              <p className="text-[13px] text-blue-500 font-bold mt-2">You don’t need to handle technical details. Select a destination — we’ll handle the rest.</p>
+            </div>
+
+            <div className="space-y-8">
+              <h4 className="text-[10px] font-black text-gray-700 uppercase tracking-widest px-2">Self-Publishing Platforms</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {selfPublishing.map(p => (
+                  <button key={p.id} onClick={() => { setTargetPlatform(p.id); setStep(PubStep.FINALIZATION); }} className="bg-[#121214] rounded-[44px] p-8 border border-white/5 text-left transition-all hover:scale-[1.02] hover:bg-[#1A1A1C] group">
+                    <div className="flex items-center space-x-5 mb-6">
+                      <div className="w-16 h-16 rounded-[24px] bg-black border border-white/10 flex items-center justify-center text-3xl" style={{ color: p.color }}><i className={`fa-brands ${p.icon}`}></i></div>
+                      <div><h5 className="text-xl font-black tracking-tight">{p.name}</h5><p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mt-1">{p.sub}</p></div>
+                    </div>
+                    <p className="text-[11px] text-gray-600 font-medium leading-relaxed h-10 line-clamp-2">{p.meta}</p>
+                    <div className="mt-6 flex items-center justify-between"><span className="text-[9px] font-black bg-blue-600/20 text-blue-500 px-3 py-1.5 rounded-full uppercase tracking-widest">Official Channel</span><i className="fa-solid fa-arrow-right text-gray-800 group-hover:text-blue-500 transition-colors"></i></div>
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* One Click Direct Publishing Card */}
-              <div className="bg-[#1C1C1E] rounded-[44px] p-10 border border-white/5 space-y-8 shadow-2xl relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                 <div className="flex items-center space-x-6 relative z-10">
-                    <div className="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg animate-pulse">
-                       <i className="fa-solid fa-paper-plane text-2xl"></i>
+            <div className="space-y-8">
+              <h4 className="text-[10px] font-black text-gray-700 uppercase tracking-widest px-2">Content Platforms</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {contentPlatforms.map(p => (
+                  <button key={p.id} onClick={() => { setTargetPlatform(p.id); setStep(PubStep.FINALIZATION); }} className="bg-[#121214] rounded-[44px] p-8 border border-white/5 text-left transition-all hover:scale-[1.02] hover:bg-[#1A1A1C]">
+                    <div className="flex items-center space-x-5 mb-6">
+                      <div className="w-16 h-16 rounded-[24px] bg-black border border-white/10 flex items-center justify-center text-3xl" style={{ color: p.color }}><i className={`fa-brands ${p.icon}`}></i></div>
+                      <div><h5 className="text-xl font-black tracking-tight">{p.name}</h5><p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mt-1">{p.sub}</p></div>
                     </div>
-                    <div>
-                       <h4 className="text-2xl font-black tracking-tight">一鍵自動投遞</h4>
-                       <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest mt-1">Direct Publishing</p>
-                    </div>
-                 </div>
-                 
-                 <div className="relative group/select z-10">
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500">
-                       <i className="fa-solid fa-hotel text-sm"></i>
-                    </div>
-                    <select className="w-full h-16 bg-black rounded-2xl pl-14 pr-10 text-sm font-bold text-gray-400 border border-white/5 outline-none appearance-none focus:border-blue-600 transition-all">
-                       <option>選擇目標出版社...</option>
-                       <option>SafeWrite Global Network</option>
-                       <option>Penguin Random House API</option>
-                       <option>HarperCollins Editorial Hub</option>
-                    </select>
-                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none">
-                       <i className="fa-solid fa-chevron-down text-xs"></i>
-                    </div>
-                 </div>
-
-                 <button 
-                   onClick={() => startPublishing('SafeWrite Direct')}
-                   className="w-full h-16 bg-white text-black rounded-full font-black text-[11px] uppercase tracking-[0.3em] active:scale-95 transition-all shadow-xl relative z-10"
-                 >
-                    啟動全球投遞程序
-                 </button>
+                    <p className="text-[11px] text-gray-600 font-medium leading-relaxed h-10 line-clamp-2">{p.meta}</p>
+                    <div className="mt-6"><span className="text-[9px] font-black bg-white/5 text-gray-500 px-3 py-1.5 rounded-full uppercase tracking-widest">Digital Publication</span></div>
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Platform Specific Cards */}
-              <div className="space-y-6 pt-4">
-                 <div className="flex items-center space-x-4 px-2">
-                    <div className="h-px flex-1 bg-white/5" />
-                    <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest">一鍵自動投遞 DIRECT PUBLISHING</p>
-                    <div className="h-px flex-1 bg-white/5" />
-                 </div>
-                 <p className="text-center text-[9px] font-black text-yellow-500 uppercase tracking-widest -mt-4">直接對接全球主流發行商</p>
-
-                 {/* Amazon KDP */}
-                 <div className="bg-[#1C1C1E] rounded-[44px] p-10 border border-white/5 space-y-8 shadow-xl">
-                    <div className="flex justify-between items-start">
-                       <div className="flex items-center space-x-6">
-                          <div className="w-14 h-14 rounded-full bg-black border border-white/10 flex items-center justify-center text-amber-500 text-xl shadow-inner">
-                             <i className="fa-brands fa-amazon"></i>
-                          </div>
-                          <div>
-                             <h4 className="text-2xl font-black">Amazon KDP</h4>
-                             <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">KINDLE DIRECT PUBLISHING</p>
-                          </div>
-                       </div>
-                       <div className="px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[8px] font-black uppercase tracking-widest">
-                          全球發行
-                       </div>
-                    </div>
-                    <button 
-                      onClick={() => startPublishing('Amazon KDP')}
-                      className="w-full h-16 bg-[#FADE4B] text-black rounded-full font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_15px_30px_rgba(250,222,75,0.2)] active:scale-[0.98] transition-all"
-                    >
-                       投遞至 Amazon KDP
-                    </button>
-                 </div>
-
-                 {/* Medium */}
-                 <div className="bg-[#1C1C1E] rounded-[44px] p-10 border border-white/5 space-y-8 shadow-xl">
-                    <div className="flex justify-between items-start">
-                       <div className="flex items-center space-x-6">
-                          <div className="w-14 h-14 rounded-full bg-black border border-white/10 flex items-center justify-center text-white text-xl shadow-inner">
-                             <i className="fa-brands fa-medium"></i>
-                          </div>
-                          <div>
-                             <h4 className="text-2xl font-black">Medium 專欄</h4>
-                             <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">DIGITAL STORYTELLING</p>
-                          </div>
-                       </div>
-                       <div className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-400 text-[8px] font-black uppercase tracking-widest">
-                          數位出版
-                       </div>
-                    </div>
-                    <button 
-                      onClick={() => startPublishing('Medium')}
-                      className="w-full h-16 bg-white text-black rounded-full font-black text-[11px] uppercase tracking-[0.2em] active:scale-[0.98] transition-all"
-                    >
-                       發佈至 Medium
-                    </button>
-                 </div>
-              </div>
-           </section>
-
-           {/* Section 2: Cloud Transfer */}
-           <section className="space-y-8">
-              <div className="px-2">
-                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">雲端傳送與備份 CLOUD TRANSFER</h3>
-                 <p className="text-[9px] font-bold text-gray-700 uppercase tracking-widest mt-1">傳送至第三方雲端空間進行二次校驗</p>
-              </div>
-
-              <div className="bg-[#1C1C1E] rounded-[44px] p-10 border border-white/5 space-y-8 shadow-xl">
-                 <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-6">
-                       <div className="w-14 h-14 flex items-center justify-center text-4xl">
-                          <i className="fa-brands fa-google-drive text-white"></i>
-                       </div>
-                       <div>
-                          <h4 className="text-2xl font-black">Google Drive</h4>
-                          <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">DRIVE.GOOGLE.COM</p>
-                       </div>
-                    </div>
-                    <div className="px-4 py-1.5 rounded-full bg-blue-600/10 border border-blue-500/30 text-blue-400 text-[8px] font-black uppercase tracking-widest">
-                       官方認證
-                    </div>
-                 </div>
-                 <button className="w-full h-16 bg-[#3b82f6] text-white rounded-full font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_15px_30px_rgba(59,130,246,0.3)] active:scale-[0.98] transition-all">
-                    傳送至 Google Drive
-                 </button>
-              </div>
-           </section>
-
-           {/* Section 3: Local Storage */}
-           <section className="space-y-8">
-              <div className="px-2">
-                 <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest">儲存至本地 LOCAL STORAGE</h3>
-                 <p className="text-[9px] font-bold text-gray-700 uppercase tracking-widest mt-1">直接儲存至您的手機或電腦硬碟中</p>
-              </div>
-
-              <div className="bg-[#1C1C1E] rounded-[44px] p-10 border border-white/5 space-y-8 shadow-xl">
-                 <div className="flex items-center space-x-6">
-                    <div className="w-14 h-14 rounded-2xl bg-[#D4FF5F] flex items-center justify-center text-black shadow-lg">
-                       <i className="fa-solid fa-download text-xl"></i>
-                    </div>
-                    <div>
-                       <h4 className="text-2xl font-black">下載至本地</h4>
-                       <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">OFFLINE PERSISTENCE</p>
-                    </div>
-                 </div>
-                 <button className="w-full h-16 bg-[#D4FF5F] text-black rounded-full font-black text-[11px] uppercase tracking-[0.2em] shadow-[0_15px_30px_rgba(212,255,95,0.2)] active:scale-[0.98] transition-all">
-                    儲存檔案至此裝置
-                 </button>
-              </div>
-           </section>
-
-           {/* Section 4: Professional Q&A */}
-           <section className="space-y-8 pb-10">
-              <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest px-2">PROFESSIONAL Q&A</h3>
-              <div className="space-y-2">
-                 {[
-                   "Do I need an ISBN to publish?",
-                   "I'm not familiar with publishing platforms. Is that a problem?",
-                   "How long does the review process take?",
-                   "Is my content exclusive to one platform?"
-                 ].map((q, idx) => (
-                    <div key={idx} className="border-b border-white/5 py-6 flex items-center justify-between group cursor-pointer active:opacity-50 transition-opacity">
-                       <span className="text-sm font-medium text-gray-400 group-hover:text-white transition-colors">{q}</span>
-                       <i className="fa-solid fa-chevron-down text-[10px] text-gray-600 group-hover:text-white transition-colors"></i>
-                    </div>
-                 ))}
-              </div>
-           </section>
+            <div className="pb-20">
+               <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em] px-2">Professional Q&A</h3>
+               <div className="bg-[#121214] rounded-[48px] px-10 py-4 border border-white/5 mt-6">
+                  <FAQItem question="SafeWrite 會代表我出版嗎？" answer="SafeWrite 作為您的專業發佈基礎設施。我們透過官方 API 管道處理責任移轉，確保您的稿件符合出版標準並正確送達平台，但最終版權與控制權 100% 屬於您。" />
+                  <FAQItem question="這與檔案匯出有何不同？" answer="匯出只是產生文件。出版系統包含了 Metadata 校驗、封面整合以及與出版商官方後台的對接。這是一個專業的責任移轉過程。" />
+               </div>
+            </div>
+          </section>
         </main>
       </div>
     );
   }
 
-  // Phase 3: Pipeline (Loading)
-  if (step === PubStep.PIPELINE) {
-    const current = pipelinePhases[pipelinePhase];
-    const progress = ((pipelinePhase + 1) / pipelinePhases.length) * 100;
-
+  // STAGE 3: MANUSCRIPT FINALIZATION (Screenshot 1)
+  if (step === PubStep.FINALIZATION) {
     return (
-      <div className="fixed inset-0 z-[3000] bg-black flex flex-col items-center justify-center p-12 text-center animate-in fade-in duration-500">
-         <div className="relative w-48 h-48 mb-16">
-            <svg className="absolute inset-0 w-full h-full -rotate-90">
-               <circle cx="96" cy="96" r="80" className="stroke-white/5 fill-none" strokeWidth="6" />
-               <circle cx="96" cy="96" r="80" className="stroke-blue-600 fill-none transition-all duration-700" strokeWidth="6" strokeDasharray="502" strokeDashoffset={502 * (1 - progress / 100)} strokeLinecap="round" />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-               <i className={`fa-solid ${pipelinePhase % 2 === 0 ? 'fa-rocket' : 'fa-microchip'} text-4xl text-blue-500 animate-pulse`}></i>
-            </div>
-         </div>
-         
-         <div className="space-y-4 max-w-sm">
-            <h2 className="text-2xl font-black text-white tracking-tight">{current.label}</h2>
-            <p className="text-[10px] text-blue-500 font-black uppercase tracking-[0.3em]">{current.desc}</p>
-         </div>
+      <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white">
+        <header className="h-20 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0 border-b border-white/5">
+          <button onClick={() => setStep(PubStep.GALLERY)} className="w-10 h-10 flex items-center justify-start text-white"><i className="fa-solid fa-chevron-left text-lg"></i></button>
+          <div className="text-center">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em]">MANUSCRIPT FINALIZATION</h2>
+            <p className="text-[9px] text-blue-500 font-black uppercase tracking-[0.2em] mt-0.5">TARGET: {targetPlatform.toUpperCase()}</p>
+          </div>
+          <div className="w-10" />
+        </header>
 
-         <div className="mt-16 w-full max-w-xs space-y-4 opacity-40">
-            {pipelinePhases.map((p, idx) => (
-               <div key={idx} className={`flex items-center space-x-4 transition-all duration-500 ${idx === pipelinePhase ? 'opacity-100 scale-105' : 'opacity-20 scale-95'}`}>
-                  <div className={`w-2 h-2 rounded-full ${idx <= pipelinePhase ? 'bg-blue-500' : 'bg-white/20'}`} />
-                  <span className="text-[9px] font-black uppercase tracking-widest">{p.label}</span>
-               </div>
-            ))}
-         </div>
-         
-         <div className="absolute bottom-16">
-            <p className="text-[9px] text-gray-700 font-black uppercase tracking-[0.5em] animate-pulse">
-               SAFEWRITE PUBLISHING AGENT ACTIVE
-            </p>
-         </div>
+        <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12">
+          <section className="space-y-6">
+             <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">MANUSCRIPT DETAILS</label>
+             <div className="space-y-4">
+                <div className="bg-[#121214] h-20 rounded-3xl px-8 flex items-center border border-white/5"><h3 className="text-xl font-black tracking-tight">{payload.title}</h3></div>
+                <input value={payload.subtitle} onChange={e => setPayload({...payload, subtitle: e.target.value})} placeholder="Subtitle or Tagline (Optional)" className="w-full h-20 bg-[#121214] border border-white/5 rounded-3xl px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
+                <input value={payload.author} onChange={e => setPayload({...payload, author: e.target.value})} placeholder="Author Identity" className="w-full h-20 bg-[#121214] border border-white/5 rounded-3xl px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
+             </div>
+          </section>
+
+          <section className="space-y-6">
+             <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">DESCRIPTION / BLURB</label>
+             <textarea value={payload.description} onChange={e => setPayload({...payload, description: e.target.value})} placeholder="What is your work about?" className="w-full h-64 bg-[#121214] border border-white/5 rounded-[44px] p-8 text-sm font-medium text-gray-400 outline-none focus:border-blue-600 resize-none leading-relaxed" />
+          </section>
+
+          <div className="bg-blue-600/5 border border-blue-600/10 p-8 rounded-[44px] flex items-start space-x-5">
+             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shrink-0 mt-1"><i className="fa-solid fa-info text-[10px]"></i></div>
+             <p className="text-[12px] text-gray-500 font-medium leading-relaxed">Your work will be delivered as a professional publication package. All content remains under your full ownership through the responsibility transfer protocol.</p>
+          </div>
+        </main>
+
+        <footer className="p-8 pb-12 shrink-0">
+           <button onClick={() => setStep(PubStep.DELIVERY)} className="w-full h-24 bg-blue-600 text-white rounded-[44px] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
+              <i className="fa-solid fa-paper-plane text-xs"></i>
+              <span className="text-[12px] font-black uppercase tracking-[0.4em]">DELIVER TO {targetPlatform.toUpperCase()}</span>
+           </button>
+        </footer>
       </div>
     );
   }
 
-  // Phase 4: Success Ritual
+  // STAGE 4: DELIVERY SEQUENCE (Screenshots 2-6)
+  if (step === PubStep.DELIVERY) {
+    const currentStep = deliverySteps[deliveryPhase];
+    return (
+      <div className="fixed inset-0 z-[3000] bg-black flex flex-col items-center justify-center animate-in fade-in duration-700 text-center">
+        <div className="relative w-64 h-64 mb-20">
+           <svg className="w-full h-full -rotate-90">
+             <circle cx="128" cy="128" r="120" className="stroke-white/5 fill-none" strokeWidth="4" />
+             <circle cx="128" cy="128" r="120" className="stroke-blue-600 fill-none transition-all duration-1000" strokeWidth="4" strokeDasharray="754" strokeDashoffset={754 * (1 - (deliveryPhase + 1) / deliverySteps.length)} strokeLinecap="round" />
+           </svg>
+           <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-500 text-3xl animate-pulse">
+                 <i className={`fa-solid ${currentStep.icon}`}></i>
+              </div>
+           </div>
+        </div>
+
+        <div className="space-y-6 max-w-xl px-12">
+           <h2 className="text-4xl font-black tracking-tighter text-white">{currentStep.title}</h2>
+           <p className="text-[11px] text-blue-500 font-black uppercase tracking-[0.5em]">{currentStep.en}</p>
+        </div>
+
+        <div className="mt-20 w-full max-w-xs space-y-4">
+           {deliverySteps.map((s, i) => (
+             <div key={i} className="flex items-center space-x-4">
+                <div className={`w-2 h-2 rounded-full transition-all ${i < deliveryPhase ? 'bg-blue-600' : i === deliveryPhase ? 'bg-blue-600 animate-pulse' : 'bg-white/10'}`} />
+                <span className={`text-[10px] font-black uppercase tracking-widest ${i <= deliveryPhase ? 'text-gray-300' : 'text-gray-700'}`}>{s.title}</span>
+             </div>
+           ))}
+        </div>
+
+        <footer className="absolute bottom-16 w-full text-center">
+           <p className="text-[10px] text-gray-700 font-black uppercase tracking-[0.4em]">SAFEWRITE PUBLISHING AGENT ACTIVE</p>
+        </footer>
+      </div>
+    );
+  }
+
+  // STAGE 5: SUCCESS (Screenshot 7)
   if (step === PubStep.SUCCESS) {
     return (
-      <div className="fixed inset-0 z-[4000] bg-black flex flex-col items-center justify-center p-12 text-center animate-in zoom-in duration-700">
-         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 rounded-full blur-[120px]"></div>
-         </div>
-         
-         <div className="w-32 h-32 rounded-full bg-blue-600 flex items-center justify-center text-white text-5xl mb-12 shadow-[0_0_80px_rgba(37,99,235,0.6)] animate-bounce">
-            <i className="fa-solid fa-check"></i>
+      <div className="fixed inset-0 z-[5000] bg-black flex flex-col items-center justify-center p-12 animate-in fade-in duration-700 text-center">
+         <div className="w-40 h-40 rounded-full bg-blue-600/10 border-2 border-blue-500/20 flex items-center justify-center text-blue-500 shadow-[0_0_80px_rgba(37,99,235,0.2)] mb-16 animate-in zoom-in duration-1000">
+            <i className="fa-solid fa-check text-5xl"></i>
          </div>
 
-         <h2 className="text-5xl font-black text-white tracking-tighter mb-4">Published Successfully.</h2>
-         <p className="text-gray-400 text-lg font-medium max-w-md leading-relaxed">
-            Your work has been delivered to <span className="text-blue-500 font-black">{selectedPlatform}</span> for final validation.
-         </p>
-
-         <div className="mt-16 p-10 bg-white/5 rounded-[44px] border border-white/10 w-full max-w-md space-y-6">
-            <div className="flex justify-between items-center text-left">
-               <div>
-                  <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">SUBMISSION STATUS</p>
-                  <p className="text-sm font-black text-[#D4FF5F] uppercase tracking-widest mt-1">Pending Review</p>
-               </div>
-               <i className="fa-solid fa-circle-notch fa-spin text-gray-700"></i>
-            </div>
-            <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
-               "This submission was sent through the official publisher channel. Estimated processing time: 24-48 hours."
+         <div className="space-y-6 max-w-md">
+            <h1 className="text-5xl font-black tracking-tighter leading-tight text-white">Published successfully.</h1>
+            <p className="text-lg text-gray-500 font-medium leading-relaxed">
+              Your work has been delivered to <span className="text-white font-black">{targetPlatform}</span> official distribution channel.
             </p>
          </div>
 
-         <button 
-           onClick={onClose}
-           className="mt-16 w-full max-w-md h-24 bg-white text-black rounded-[48px] font-black text-sm uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all"
-         >
-            View publishing status
-         </button>
+         <div className="mt-16 w-full max-w-md bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5">
+            <div className="flex justify-between items-center text-[12px] font-black uppercase tracking-widest">
+               <span className="text-gray-600">CURRENT STATUS</span>
+               <span className="text-blue-500">UNDER REVIEW</span>
+            </div>
+            <div className="flex justify-between items-center text-[12px] font-black uppercase tracking-widest">
+               <span className="text-gray-600">EST. PROCESSING TIME</span>
+               <span className="text-white">24–72 HOURS</span>
+            </div>
+            <div className="pt-8 border-t border-white/5">
+               <p className="text-[10px] text-gray-700 font-black uppercase tracking-[0.4em] leading-relaxed">
+                 THIS SUBMISSION WAS SENT THROUGH THE OFFICIAL PUBLISHER CHANNEL.
+               </p>
+            </div>
+         </div>
+
+         <div className="mt-20 w-full max-w-md">
+            <button 
+              onClick={onClose}
+              className="w-full h-24 bg-white text-black rounded-[48px] text-[13px] font-black uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all"
+            >
+              VIEW PUBLISHING STATUS
+            </button>
+            <p className="mt-8 text-[10px] text-gray-700 font-black uppercase tracking-widest">SAFEWRITE PROFESSIONAL INFRASTRUCTURE</p>
+         </div>
       </div>
     );
   }
