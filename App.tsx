@@ -43,7 +43,8 @@ const App: React.FC = () => {
         createdAt: Date.now() - 86400000,
         updatedAt: Date.now() - 600000,
         tags: ['SCI-FI', 'NOVEL'],
-        isPinned: true
+        isPinned: true,
+        publicationHistory: []
       },
       {
         id: 'p2',
@@ -155,7 +156,6 @@ const App: React.FC = () => {
   const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION' | 'SUBSCRIPTION' | 'CHECKOUT'>('NONE');
   const [selectedPlan, setSelectedPlan] = useState<{ id: MembershipLevel, name: string, price: string } | null>(null);
   
-  // Liquid Edge-Swipe States
   const [swipeProgress, setSwipeProgress] = useState(0); 
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -170,7 +170,6 @@ const App: React.FC = () => {
   const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
   const isTimelineVisible = swipeProgress > 0 || activeOverlay === 'TIMELINE';
 
-  // Responsive Width: 1/3 Desktop (>=1024px), 1/2 iPad/Tablet (>=768px), 85% Mobile
   const timelineWidthPx = screenWidth >= 1024 
     ? screenWidth / 3 
     : screenWidth >= 768 
@@ -323,17 +322,14 @@ const App: React.FC = () => {
     setSwipeProgress(0);
   };
 
-  // Enhanced Liquid Edge-Swipe Logic
   const handleTouchStart = (e: React.TouchEvent) => {
     const x = e.touches[0].clientX;
     const width = window.innerWidth;
     
-    // Detect start near right edge to open Timeline
     if (state.activeTab === AppTab.WRITE && currentChapter && x > width * 0.85 && activeOverlay === 'NONE') {
       touchStartX.current = x;
       setIsDragging(true);
     }
-    // Detect start on active Timeline panel to allow Swipe Right to Close
     else if (activeOverlay === 'TIMELINE') {
        if (x > (width - timelineWidthPx)) {
           touchStartX.current = x;
@@ -348,11 +344,9 @@ const App: React.FC = () => {
     
     let progress = 0;
     if (activeOverlay === 'NONE') {
-      // Swiping from right to left to open
       const diff = touchStartX.current - currentX;
       progress = Math.max(0, Math.min(1, diff / timelineWidthPx));
     } else if (activeOverlay === 'TIMELINE') {
-      // Swiping from left to right to close (x increases)
       const diff = currentX - touchStartX.current;
       progress = 1 - Math.max(0, Math.min(1, diff / timelineWidthPx));
     }
@@ -364,7 +358,6 @@ const App: React.FC = () => {
     if (!isDragging) return;
     setIsDragging(false);
     
-    // Snapping logic: Threshold 20%
     if (swipeProgress > 0.2) {
       setActiveOverlay('TIMELINE');
       setSwipeProgress(1);
@@ -385,7 +378,6 @@ const App: React.FC = () => {
 
   const isBottomNavVisible = (activeOverlay === 'NONE' && swipeProgress === 0) && (state.activeTab !== AppTab.WRITE || !currentChapter);
 
-  // Dynamic Styles for Liquid Swipe
   const editorScale = 1 - swipeProgress * 0.04; 
   const editorBlur = swipeProgress * 4; 
   const editorOpacity = 1 - swipeProgress * 0.4;
@@ -487,7 +479,6 @@ const App: React.FC = () => {
         ) : null}
       </main>
 
-      {/* Dynamic Liquid Backdrop Mask */}
       <div 
         className="fixed inset-0 bg-black pointer-events-none z-[190]"
         style={{ 
@@ -499,7 +490,6 @@ const App: React.FC = () => {
         }}
       />
 
-      {/* Subscription Overlays */}
       {activeOverlay === 'SUBSCRIPTION' && (
         <SubscriptionPlans 
           currentMembership={state.membership}
@@ -524,10 +514,10 @@ const App: React.FC = () => {
         <ProfessionalPublicationCenter 
           project={state.currentProject} 
           onClose={() => setActiveOverlay('NONE')} 
+          onUpdateProject={handleUpdateProject}
         />
       )}
 
-      {/* Responsive Liquid Swipable Timeline Panel */}
       {isTimelineVisible && state.currentProject && state.currentChapterId && (
         <div 
           className="fixed inset-y-0 right-0 z-[200] overflow-hidden"
@@ -537,7 +527,6 @@ const App: React.FC = () => {
             transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-           {/* Handle for Gesture Interaction (Grabber area for swiping right to close) */}
            <div 
              className="absolute left-0 inset-y-0 w-10 z-[210] cursor-ew-resize active:bg-white/5"
            />

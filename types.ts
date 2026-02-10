@@ -46,26 +46,29 @@ export enum AppTab {
   PROFILE = 'PROFILE'
 }
 
-// Added UIMode enum
 export enum UIMode {
   MANAGEMENT = 'MANAGEMENT',
   FOCUS = 'FOCUS'
 }
 
-// Added ThemeMode enum
 export enum ThemeMode {
   LIGHT = 'LIGHT',
   NIGHT = 'NIGHT'
 }
 
-// Added PublicationStatus enum
 export enum PublicationStatus {
   SUBMITTED = 'SUBMITTED',
   REVIEWING = 'REVIEWING',
   ACCEPTED = 'ACCEPTED'
 }
 
-// Added OutlineNode interface
+export interface PublicationRecord {
+  platform: string;
+  status: PublicationStatus;
+  timestamp: number;
+  id: string;
+}
+
 export interface OutlineNode {
   id: string;
   label: string;
@@ -98,7 +101,6 @@ export interface StructureUnit {
   history?: VersionSnapshot[];
 }
 
-// Added Chapter type alias for compatibility
 export type Chapter = StructureUnit;
 
 export interface WritingModule {
@@ -183,6 +185,7 @@ export interface Project {
   };
   isPinned?: boolean;
   visualOutline?: OutlineNode[];
+  publicationHistory?: PublicationRecord[];
 }
 
 export interface AppState {
