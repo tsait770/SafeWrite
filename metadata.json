@@ -4,7 +4,7 @@
   "description": "專業、安全的跨平台寫作系統",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#FDFBF7",
+  "background_color": "#000000",
   "theme_color": "#1E293B",
   "icons": [
     {

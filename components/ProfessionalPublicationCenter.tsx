@@ -43,7 +43,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   const [payload, setPayload] = useState<PublishingPayload>({
     title: project?.name || 'The Solar Paradox',
     subtitle: '',
-    author: project?.publishingPayload?.author || 'Author Name',
+    author: project?.publishingPayload?.author || 'Author Identity',
     language: 'English',
     description: '',
     categories: [],
@@ -77,10 +77,10 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         setDeliveryPhase(prev => {
           if (prev < deliverySteps.length - 1) return prev + 1;
           clearInterval(interval);
-          setTimeout(() => setStep(PubStep.SUCCESS), 1500);
+          setTimeout(() => setStep(PubStep.SUCCESS), 2000);
           return prev;
         });
-      }, 2000);
+      }, 2500);
       return () => clearInterval(interval);
     }
   }, [step]);
@@ -143,7 +143,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
            </div>
 
            <div className="space-y-4 pb-32">
-              <input type="text" value={payload.author} onChange={e => setPayload({...payload, author: e.target.value})} placeholder="Author Name" className="w-full h-20 bg-[#121214] border border-white/5 rounded-[32px] px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
+              <input type="text" value={payload.author} onChange={e => setPayload({...payload, author: e.target.value})} placeholder="Author Identity" className="w-full h-20 bg-[#121214] border border-white/5 rounded-[32px] px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
               <input type="text" placeholder="ISBN-13 (Optional)" className="w-full h-20 bg-[#121214] border border-white/5 rounded-[32px] px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
               <div className="grid grid-cols-2 gap-4">
                  <div className="h-20 bg-[#121214] border border-white/5 rounded-[32px] px-8 flex items-center text-sm font-bold text-gray-300">2026</div>
@@ -162,7 +162,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     );
   }
 
-  // STAGE 2: GLOBAL ONE-CLICK PUBLISHING
+  // STAGE 2: GLOBAL ONE-CLICK GALLERY
   if (step === PubStep.GALLERY) {
     return (
       <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white">
@@ -234,7 +234,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     );
   }
 
-  // STAGE 3: MANUSCRIPT FINALIZATION (Screenshot 1)
+  // STAGE 3: MANUSCRIPT FINALIZATION
   if (step === PubStep.FINALIZATION) {
     return (
       <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white">
@@ -278,50 +278,68 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     );
   }
 
-  // STAGE 4: DELIVERY SEQUENCE (Screenshots 2-6)
+  // STAGE 4: DELIVERY SEQUENCE (OPTIMIZED & UNIFIED ANIMATION)
   if (step === PubStep.DELIVERY) {
     const currentStep = deliverySteps[deliveryPhase];
+    const circumference = 741.42; // 2 * PI * 118
+    const progressPercent = ((deliveryPhase + 1) / deliverySteps.length) * 100;
+    
     return (
-      <div className="fixed inset-0 z-[3000] bg-black flex flex-col items-center justify-center animate-in fade-in duration-700 text-center">
-        <div className="relative w-64 h-64 mb-20">
-           <svg className="w-full h-full -rotate-90">
-             <circle cx="128" cy="128" r="120" className="stroke-white/5 fill-none" strokeWidth="4" />
-             <circle cx="128" cy="128" r="120" className="stroke-blue-600 fill-none transition-all duration-1000" strokeWidth="4" strokeDasharray="754" strokeDashoffset={754 * (1 - (deliveryPhase + 1) / deliverySteps.length)} strokeLinecap="round" />
-           </svg>
-           <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-500 text-3xl animate-pulse">
-                 <i className={`fa-solid ${currentStep.icon}`}></i>
+      <div className="fixed inset-0 z-[3000] bg-black flex flex-col items-center justify-center animate-in fade-in duration-700 text-center px-8">
+        <div className="relative w-80 h-80 flex items-center justify-center mb-16 border border-blue-600/20 rounded-[48px] bg-black/40 shadow-[inset_0_0_40px_rgba(37,99,235,0.05)]">
+           <div className="relative w-64 h-64">
+              <svg className="w-full h-full -rotate-90">
+                <circle cx="128" cy="128" r="118" className="stroke-white/5 fill-none" strokeWidth="8" />
+                <circle 
+                  cx="128" 
+                  cy="128" 
+                  r="118" 
+                  className="stroke-blue-600 fill-none transition-all duration-[2000ms] ease-in-out" 
+                  strokeWidth="8" 
+                  strokeDasharray={circumference} 
+                  strokeDashoffset={circumference * (1 - progressPercent / 100)} 
+                  strokeLinecap="round" 
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                 <div className="w-20 h-20 bg-blue-600/10 rounded-3xl flex items-center justify-center text-blue-500 text-4xl animate-pulse border border-blue-600/20 shadow-[0_0_30px_rgba(37,99,235,0.2)]">
+                    <i className={`fa-solid ${currentStep.icon}`}></i>
+                 </div>
               </div>
            </div>
         </div>
 
-        <div className="space-y-6 max-w-xl px-12">
-           <h2 className="text-4xl font-black tracking-tighter text-white">{currentStep.title}</h2>
-           <p className="text-[11px] text-blue-500 font-black uppercase tracking-[0.5em]">{currentStep.en}</p>
+        <div className="space-y-6 max-w-xl">
+           <h2 className="text-4xl font-black tracking-tighter text-white animate-in slide-in-from-bottom-2 duration-700">{currentStep.title}</h2>
+           <p className="text-[11px] text-blue-500 font-black uppercase tracking-[0.5em] opacity-80">{currentStep.en}</p>
         </div>
 
-        <div className="mt-20 w-full max-w-xs space-y-4">
+        <div className="mt-20 w-full max-w-xs space-y-6">
            {deliverySteps.map((s, i) => (
-             <div key={i} className="flex items-center space-x-4">
-                <div className={`w-2 h-2 rounded-full transition-all ${i < deliveryPhase ? 'bg-blue-600' : i === deliveryPhase ? 'bg-blue-600 animate-pulse' : 'bg-white/10'}`} />
-                <span className={`text-[10px] font-black uppercase tracking-widest ${i <= deliveryPhase ? 'text-gray-300' : 'text-gray-700'}`}>{s.title}</span>
+             <div key={i} className={`flex items-center space-x-6 transition-all duration-700 ${i <= deliveryPhase ? 'opacity-100' : 'opacity-20'}`}>
+                <div className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-1000 ${
+                  i < deliveryPhase ? 'bg-blue-600 border-blue-600' : 
+                  i === deliveryPhase ? 'bg-blue-500 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-pulse' : 
+                  'bg-transparent border-white/20'
+                }`} />
+                <span className={`text-[11px] font-black uppercase tracking-widest ${i === deliveryPhase ? 'text-white' : 'text-gray-600'}`}>{s.title}</span>
              </div>
            ))}
         </div>
 
-        <footer className="absolute bottom-16 w-full text-center">
-           <p className="text-[10px] text-gray-700 font-black uppercase tracking-[0.4em]">SAFEWRITE PUBLISHING AGENT ACTIVE</p>
+        <footer className="absolute bottom-12 w-full text-center">
+           <p className="text-[10px] text-gray-700 font-black uppercase tracking-widest">SAFEWRITE PUBLISHING AGENT ACTIVE</p>
         </footer>
       </div>
     );
   }
 
-  // STAGE 5: SUCCESS (Screenshot 7)
+  // STAGE 5: SUCCESS
   if (step === PubStep.SUCCESS) {
     return (
       <div className="fixed inset-0 z-[5000] bg-black flex flex-col items-center justify-center p-12 animate-in fade-in duration-700 text-center">
-         <div className="w-40 h-40 rounded-full bg-blue-600/10 border-2 border-blue-500/20 flex items-center justify-center text-blue-500 shadow-[0_0_80px_rgba(37,99,235,0.2)] mb-16 animate-in zoom-in duration-1000">
-            <i className="fa-solid fa-check text-5xl"></i>
+         <div className="w-44 h-44 rounded-full bg-blue-600/10 border-2 border-blue-500/20 flex items-center justify-center text-blue-500 shadow-[0_0_100px_rgba(37,99,235,0.25)] mb-16 animate-in zoom-in duration-1000">
+            <i className="fa-solid fa-check text-6xl"></i>
          </div>
 
          <div className="space-y-6 max-w-md">
@@ -331,10 +349,10 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
             </p>
          </div>
 
-         <div className="mt-16 w-full max-w-md bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5">
+         <div className="mt-16 w-full max-w-md bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
             <div className="flex justify-between items-center text-[12px] font-black uppercase tracking-widest">
                <span className="text-gray-600">CURRENT STATUS</span>
-               <span className="text-blue-500">UNDER REVIEW</span>
+               <span className="text-blue-500 flex items-center"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-3 animate-pulse"></div>UNDER REVIEW</span>
             </div>
             <div className="flex justify-between items-center text-[12px] font-black uppercase tracking-widest">
                <span className="text-gray-600">EST. PROCESSING TIME</span>
@@ -350,7 +368,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
          <div className="mt-20 w-full max-w-md">
             <button 
               onClick={onClose}
-              className="w-full h-24 bg-white text-black rounded-[48px] text-[13px] font-black uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all"
+              className="w-full h-24 bg-white text-black rounded-[48px] text-[13px] font-black uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all hover:bg-gray-100"
             >
               VIEW PUBLISHING STATUS
             </button>

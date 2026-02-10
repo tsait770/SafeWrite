@@ -37,7 +37,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ currentMembership
       price: '$12.99',
       period: 'Monthly',
       description: 'Your work is delivered professionally to the world.',
-      features: ['Global One-Click Publishing', 'Industry-Standard Submission', 'Multi-user Collaboration', 'Visual Outline Mapping', 'Priority Publisher Access'],
+      features: ['Global One-Click Delivery', 'No Publishing Knowledge Needed', 'Professional Submission Standards', 'Multi-user Collaboration', 'Priority Publisher Access'],
       color: 'bg-amber-500/10',
       accent: 'text-amber-500'
     }
@@ -62,7 +62,7 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ currentMembership
           <div className="text-center space-y-6">
              <h3 className="text-4xl font-black text-white tracking-tighter">We don’t just help you write. We deliver your work.</h3>
              <p className="text-gray-500 text-sm font-medium leading-relaxed max-w-xl mx-auto">
-               Most writing apps stop at files. SafeWrite completes the journey — from drafting to official global publishing channels.
+               Most writing apps stop at files. SafeWrite completes the journey — from manuscript to real global publishing channels.
              </p>
           </div>
 
@@ -102,10 +102,10 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ currentMembership
                   className={`w-full py-5 rounded-3xl text-[11px] font-black uppercase tracking-[0.25em] transition-all active:scale-95 ${
                     currentMembership === plan.id 
                     ? 'bg-white/5 text-gray-600 cursor-not-allowed' 
-                    : plan.popular ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-black'
+                    : plan.id === MembershipLevel.PREMIUM ? 'bg-amber-500 text-black shadow-lg shadow-amber-900/20' : plan.popular ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-black'
                   }`}
                 >
-                  {currentMembership === plan.id ? 'Current Active' : plan.id === MembershipLevel.PREMIUM ? 'Unlock Publishing' : 'Upgrade Plan'}
+                  {currentMembership === plan.id ? 'Current Active' : plan.id === MembershipLevel.PREMIUM ? 'Unlock Global Publishing' : 'Upgrade Plan'}
                 </button>
               </div>
             ))}
