@@ -41,8 +41,17 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   const [submissionStatus, setSubmissionStatus] = useState('');
   const [targetPlatform, setTargetPlatform] = useState('');
 
-  const [author, setAuthor] = useState('Author Name');
-  const [isbn, setIsbn] = useState('ISBN-13 (Optional)');
+  const [author, setAuthor] = useState('');
+  const [isbn, setIsbn] = useState('');
+  const [publishYear, setPublishYear] = useState('2026');
+  const [language, setLanguage] = useState('English');
+
+  const languages = [
+    "English", "繁體中文", "简体中文", "Español", "Português (Brasil)", 
+    "Português", "Deutsch", "Français", "Italiano", "Nederlands", 
+    "Svenska", "Türkçe", "Русский", "日本語", "한국어", "ไทย", 
+    "Tiếng Việt", "Bahasa Indonesia", "Bahasa Melayu", "العربية", "हिन्दी"
+  ];
 
   const templates = [
     { id: 't1', name: 'Modern Novel', subtitle: 'Professional serif layout', type: 'FREE', image: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=400&auto=format&fit=crop' },
@@ -144,70 +153,125 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   if (step === PubStep.CONFIG) {
     return (
       <div className="fixed inset-0 z-[2000] bg-[#000000] flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white font-sans">
-        <header className="h-20 px-6 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0">
-          <button onClick={() => setStep(PubStep.GALLERY)} className="w-10 h-10 flex items-center justify-start text-gray-400">
+        <header className="h-20 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0">
+          <button onClick={() => setStep(PubStep.GALLERY)} className="w-10 h-10 flex items-center justify-start text-white">
             <i className="fa-solid fa-chevron-left text-lg"></i>
           </button>
           <h2 className="text-[11px] font-black uppercase tracking-[0.4em] flex-1 text-center">Export Configuration</h2>
           <button className="w-10 h-10 flex items-center justify-end text-blue-500 text-[10px] font-black uppercase tracking-widest">
-            Help
+            HELP
           </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar space-y-12">
-          <div className="bg-[#121214] rounded-[48px] p-12 border border-white/5 relative shadow-3xl">
-            <h4 className="text-[34px] font-black text-white tracking-tighter leading-none mb-1">{project?.name || 'Untitled Work'}</h4>
-            <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] mb-10">PAGE 1 OF 243 • PROFESSIONAL SKELETON</p>
+        <main className="flex-1 overflow-y-auto px-6 py-6 no-scrollbar space-y-10">
+          {/* Document Preview Card */}
+          <div className="bg-[#141414] rounded-[56px] p-12 border border-white/5 relative shadow-3xl">
+            <h4 className="text-[40px] font-black text-white tracking-tighter leading-none mb-1">{project?.name || 'Echoes of Silence'}</h4>
+            <p className="text-[10px] text-gray-700 font-black uppercase tracking-[0.2em] mb-12">PAGE 1 OF 243 • PROFESSIONAL SKELETON</p>
+            
             <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Document Preview</p>
-                <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.2em] max-w-[200px] leading-relaxed">Layout generated based on manuscript metadata.</p>
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-black text-gray-500 uppercase tracking-widest">DOCUMENT PREVIEW</p>
+                <p className="text-[9px] text-gray-700 font-black uppercase tracking-[0.2em] max-w-[220px] leading-relaxed">LAYOUT GENERATED BASED ON MANUSCRIPT METADATA.</p>
               </div>
-              <button className="px-10 py-4 border-2 border-blue-600/20 text-blue-500 text-[11px] font-black rounded-3xl uppercase tracking-widest active:scale-95 transition-all">Preview PDF</button>
+              <button className="px-10 py-4 bg-[#1E212B] border-2 border-blue-600/10 text-blue-500 text-[11px] font-black rounded-[24px] uppercase tracking-widest active:scale-95 transition-all">PREVIEW PDF</button>
             </div>
           </div>
 
-          <div className="space-y-4">
-             <h3 className="text-[11px] font-black text-gray-700 uppercase tracking-widest px-4">Output Options</h3>
+          {/* Output Options */}
+          <div className="space-y-5">
+             <h3 className="text-[11px] font-black text-[#1F1F1F] uppercase tracking-[0.2em] px-2">OUTPUT OPTIONS</h3>
              <div className="grid grid-cols-2 gap-4">
-               <button onClick={() => setExportRange('all')} className={`py-8 rounded-[32px] text-[11px] font-black uppercase tracking-widest border transition-all ${exportRange === 'all' ? 'bg-blue-600 border-blue-600 text-white shadow-2xl' : 'bg-[#121214] border-white/5 text-gray-600'}`}>All Chapters</button>
-               <button onClick={() => setExportRange('custom')} className={`py-8 rounded-[32px] text-[11px] font-black uppercase tracking-widest border transition-all ${exportRange === 'custom' ? 'bg-blue-600 border-blue-600 text-white shadow-2xl' : 'bg-[#121214] border-white/5 text-gray-600'}`}>Custom Selection</button>
+               <button onClick={() => setExportRange('all')} className={`py-8 rounded-[40px] text-[11px] font-black uppercase tracking-widest border transition-all ${exportRange === 'all' ? 'bg-blue-600 border-blue-600 text-white shadow-2xl' : 'bg-[#141414] border-white/5 text-gray-700'}`}>ALL CHAPTERS</button>
+               <button onClick={() => setExportRange('custom')} className={`py-8 rounded-[40px] text-[11px] font-black uppercase tracking-widest border transition-all ${exportRange === 'custom' ? 'bg-blue-600 border-blue-600 text-white shadow-2xl' : 'bg-[#141414] border-white/5 text-gray-700'}`}>CUSTOM SELECTION</button>
              </div>
           </div>
 
+          {/* Font Selection Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => setSelectedFont('serif')} className={`h-[260px] rounded-[48px] flex flex-col items-center justify-center space-y-3 border-2 transition-all ${selectedFont === 'serif' ? 'bg-[#121214] border-blue-600 shadow-2xl scale-[1.02]' : 'bg-[#121214] border-transparent opacity-40 hover:opacity-100'}`}>
-              <span className="text-[54px] font-serif">Aa</span>
-              <span className="text-[16px] font-black">Serif</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Standard Publishing</span>
+            <button onClick={() => setSelectedFont('serif')} className={`h-[300px] rounded-[56px] flex flex-col items-center justify-center space-y-5 border-2 transition-all ${selectedFont === 'serif' ? 'bg-[#0F0F0F] border-blue-600 shadow-[0_0_50px_rgba(37,99,235,0.25)] scale-[1.02]' : 'bg-[#0F0F0F] border-transparent opacity-30'}`}>
+              <div className="w-[180px] h-[100px] bg-[#141414] rounded-[24px] flex items-center justify-center mb-1 shadow-inner border border-white/5">
+                <span className="text-[48px] font-serif font-black text-white">Serif</span>
+              </div>
+              <div className="text-center">
+                <p className="text-[18px] font-black text-white">Serif</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 mt-1">STANDARD PUBLISHING</p>
+              </div>
             </button>
-            <button onClick={() => setSelectedFont('sans')} className={`h-[260px] rounded-[48px] flex flex-col items-center justify-center space-y-3 border-2 transition-all ${selectedFont === 'sans' ? 'bg-[#121214] border-blue-600 shadow-2xl scale-[1.02]' : 'bg-[#121214] border-transparent opacity-40 hover:opacity-100'}`}>
-              <span className="text-[54px] font-sans">Aa</span>
-              <span className="text-[16px] font-black">Sans-serif</span>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-600">Modern Digital</span>
+            <button onClick={() => setSelectedFont('sans')} className={`h-[300px] rounded-[56px] flex flex-col items-center justify-center space-y-5 border-2 transition-all ${selectedFont === 'sans' ? 'bg-[#0F0F0F] border-blue-600 shadow-[0_0_50px_rgba(37,99,235,0.25)] scale-[1.02]' : 'bg-[#0F0F0F] border-transparent opacity-30'}`}>
+              <div className="w-[180px] h-[100px] bg-[#141414] rounded-[24px] flex items-center justify-center mb-1 shadow-inner border border-white/5">
+                <span className="text-[48px] font-sans font-black text-white">Aa</span>
+              </div>
+              <div className="text-center">
+                <p className="text-[18px] font-black text-white">Sans-serif</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-700 mt-1">MODERN DIGITAL</p>
+              </div>
             </button>
           </div>
 
-          <div className="space-y-4 pb-32">
-            <div className="bg-[#121214] h-[100px] rounded-[50px] px-10 flex items-center justify-between shadow-2xl border border-white/5">
-                <span className="text-[15px] font-black uppercase tracking-[0.2em]">Page Numbering</span>
-                <button onClick={() => setIsPageNumbering(!isPageNumbering)} className={`w-14 h-8 rounded-full flex items-center px-1 transition-all ${isPageNumbering ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                  <div className={`w-6 h-6 bg-white rounded-full transition-transform duration-300 ${isPageNumbering ? 'translate-x-6' : 'translate-x-0'}`} />
+          {/* Switch Toggles */}
+          <div className="space-y-4">
+            <div className="bg-[#141414] h-[100px] rounded-[50px] px-12 flex items-center justify-between border border-white/5 shadow-2xl">
+                <span className="text-[13px] font-black uppercase tracking-[0.3em] text-white">PAGE NUMBERING</span>
+                <button onClick={() => setIsPageNumbering(!isPageNumbering)} className={`w-16 h-10 rounded-full flex items-center px-1 transition-all ${isPageNumbering ? 'bg-blue-600' : 'bg-[#2A2A2A]'}`}>
+                  <div className={`w-8 h-8 bg-white rounded-full transition-transform duration-500 cubic-bezier(0.19, 1, 0.22, 1) ${isPageNumbering ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
              </div>
-             <div className="bg-[#121214] h-[100px] rounded-[50px] px-10 flex items-center justify-between shadow-2xl border border-white/5">
-                <span className="text-[15px] font-black uppercase tracking-[0.2em]">Headers & Footers</span>
-                <button onClick={() => setIsHeadersFooters(!isHeadersFooters)} className={`w-14 h-8 rounded-full flex items-center px-1 transition-all ${isHeadersFooters ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                  <div className={`w-6 h-6 bg-white rounded-full transition-transform duration-300 ${isHeadersFooters ? 'translate-x-6' : 'translate-x-0'}`} />
+             <div className="bg-[#141414] h-[100px] rounded-[50px] px-12 flex items-center justify-between border border-white/5 shadow-2xl">
+                <span className="text-[13px] font-black uppercase tracking-[0.3em] text-white">HEADERS & FOOTERS</span>
+                <button onClick={() => setIsHeadersFooters(!isHeadersFooters)} className={`w-16 h-10 rounded-full flex items-center px-1 transition-all ${isHeadersFooters ? 'bg-blue-600' : 'bg-[#2A2A2A]'}`}>
+                  <div className={`w-8 h-8 bg-white rounded-full transition-transform duration-500 cubic-bezier(0.19, 1, 0.22, 1) ${isHeadersFooters ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
              </div>
+          </div>
+
+          {/* Metadata Inputs */}
+          <div className="space-y-4 pb-48">
+            <input 
+              type="text" 
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              placeholder="Author Name"
+              className="w-full bg-[#141414] h-[100px] px-12 rounded-[50px] text-[16px] font-black border border-white/5 focus:border-blue-500 outline-none transition-all placeholder-[#333333] text-white"
+            />
+            <input 
+              type="text" 
+              value={isbn}
+              onChange={(e) => setIsbn(e.target.value)}
+              placeholder="ISBN-13 (Optional)"
+              className="w-full bg-[#141414] h-[100px] px-12 rounded-[50px] text-[16px] font-black border border-white/5 focus:border-blue-500 outline-none transition-all placeholder-[#333333] text-white"
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <input 
+                type="text" 
+                value={publishYear}
+                onChange={(e) => setPublishYear(e.target.value)}
+                placeholder="2026"
+                className="w-full bg-[#141414] h-[100px] px-12 rounded-[50px] text-[16px] font-black border border-white/5 focus:border-blue-500 outline-none transition-all placeholder-[#333333] text-white"
+              />
+              <div className="relative group">
+                <select 
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="w-full h-full bg-[#141414] px-12 rounded-[50px] text-[16px] font-black border border-white/5 focus:border-blue-500 outline-none transition-all appearance-none text-white pt-4"
+                >
+                  {languages.map(lang => (
+                    <option key={lang} value={lang}>{lang}</option>
+                  ))}
+                </select>
+                <div className="absolute right-12 top-4 text-[9px] font-black text-gray-700 uppercase tracking-widest pointer-events-none">{language.toUpperCase()}</div>
+                <i className="fa-solid fa-chevron-down absolute right-12 bottom-6 text-gray-800 text-[10px] pointer-events-none"></i>
+              </div>
+            </div>
           </div>
         </main>
 
-        <footer className="p-10 pb-12 shrink-0 bg-gradient-to-t from-black via-black/90 to-transparent">
-           <button onClick={() => setStep(PubStep.DELIVERY)} className="w-full h-[96px] bg-blue-600 rounded-[48px] flex items-center justify-center space-x-5 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
-              <div className="w-10 h-10 rounded-full border-2 border-white/30 flex items-center justify-center"><i className="fa-solid fa-arrow-right text-xs"></i></div>
-              <span className="text-[14px] font-black uppercase tracking-[0.4em]">Proceed to Distribution</span>
+        <footer className="p-10 pb-16 shrink-0 bg-black">
+           <button onClick={() => setStep(PubStep.DELIVERY)} className="w-full h-[100px] bg-blue-600 rounded-[50px] flex items-center justify-center space-x-8 shadow-[0_25px_60px_rgba(37,99,235,0.4)] active:scale-95 transition-all">
+              <div className="w-12 h-12 rounded-full border-2 border-white/20 flex items-center justify-center">
+                <i className="fa-solid fa-arrow-right text-[12px]"></i>
+              </div>
+              <span className="text-[15px] font-black uppercase tracking-[0.4em]">PROCEED TO DISTRIBUTION</span>
            </button>
         </footer>
       </div>
@@ -307,7 +371,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
 
           <div className="space-y-10">
              <div className="px-4">
-                <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em]">雲 端 同 步 存 儲 C L O U D S T O R A G E</h3>
+                <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em]">雲 端 同 步 存 儲 C L O U D S T O G E</h3>
                 <p className="text-[14px] text-blue-400 font-black tracking-tight mt-2">將作品備份至主流雲端硬碟。</p>
              </div>
 
