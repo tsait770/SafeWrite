@@ -469,9 +469,25 @@ const App: React.FC = () => {
               membership={state.membership}
             />
           ) : (
-            <div className="h-full flex flex-col items-center justify-center p-10 bg-black">
-               <h2 className="text-2xl font-black text-white mb-4">尚未選擇作品</h2>
-               <button onClick={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))} className="mt-8 px-8 py-4 bg-blue-600 rounded-2xl text-white font-black uppercase tracking-widest">返回書架</button>
+            <div className="h-full flex flex-col items-center justify-center p-8 bg-black text-center animate-in fade-in duration-700">
+               {/* Icon Container with Glassmorphism */}
+               <div className="w-40 h-40 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[44px] flex items-center justify-center mb-10 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent opacity-50"></div>
+                  <i className="fa-solid fa-feather text-[#2563EB] text-6xl relative z-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.4)]"></i>
+               </div>
+               
+               <h2 className="text-[28px] font-black text-white mb-4 tracking-tighter">尚未選擇作品</h2>
+               
+               <p className="text-[14px] text-[#8E8E93] font-medium leading-relaxed max-w-[280px] mb-12">
+                 請先從書架選擇一個現有作品，或在書架中建立新專案以開始寫作。
+               </p>
+               
+               <button 
+                 onClick={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))} 
+                 className="px-14 py-5 bg-[#2563EB] rounded-full text-white font-black text-[13px] uppercase tracking-[0.25em] shadow-[0_20px_40px_rgba(37,99,235,0.25)] active:scale-95 transition-all hover:brightness-110"
+               >
+                 返回書架
+               </button>
             </div>
           )
         ) : state.activeTab === AppTab.PROFILE ? (
