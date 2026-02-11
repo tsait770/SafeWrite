@@ -10,7 +10,7 @@ interface ProfessionalPublicationCenterProps {
   onClose: () => void;
 }
 
-// Updated Channel Rules based on Version 1.1 Table
+// Updated Channel Rules based on Version 1.1 Table (Complete Version)
 const CHANNEL_RULES: Record<string, ChannelRule> = {
   'Amazon KDP (Kindle)': { requiresISBN: false, allowsPlatformISBN: false },
   'Amazon KDP (Paperback)': { requiresISBN: true, allowsPlatformISBN: true },
@@ -18,34 +18,9 @@ const CHANNEL_RULES: Record<string, ChannelRule> = {
   'Draft2Digital': { requiresISBN: false, allowsPlatformISBN: false },
   'IngramSpark': { requiresISBN: true, allowsPlatformISBN: false },
   'Apple Books': { requiresISBN: false, allowsPlatformISBN: false },
+  'Medium': { requiresISBN: false, allowsPlatformISBN: false, isNonPublishing: true },
   'Substack': { requiresISBN: false, allowsPlatformISBN: false, isNonPublishing: true },
   'Traditional submission': { requiresISBN: false, allowsPlatformISBN: false, isNonPublishing: true }
-};
-
-const FAQItem: React.FC<{ question: string; answer: React.ReactNode; noPadding?: boolean }> = ({ question, answer, noPadding = false }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const paddingClass = noPadding ? 'pl-0' : 'pl-12';
-  
-  return (
-    <div className="border-b border-white/5">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full py-8 flex items-center justify-between text-left group focus:outline-none"
-      >
-        <span className={`text-[14px] font-bold text-gray-400 group-hover:text-white transition-all pr-4 ${paddingClass}`}>{question}</span>
-        <i className={`fa-solid fa-chevron-up text-[11px] text-blue-500 transition-transform duration-500 pr-8 ${!isOpen ? 'rotate-180' : ''}`}></i>
-      </button>
-      {isOpen && (
-        <div className={`pb-10 pr-12 text-[12.5px] text-gray-500 leading-relaxed animate-in fade-in slide-in-from-top-2 duration-500 font-medium ${paddingClass}`}>
-          {typeof answer === 'string' ? (
-            <p>{answer}</p>
-          ) : (
-            answer
-          )}
-        </div>
-      )}
-    </div>
-  );
 };
 
 const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps> = ({ project, onClose }) => {
@@ -75,7 +50,8 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   
   const isbnState = useMemo(() => {
     if (!channelRule.requiresISBN) return ISBNState.NOT_REQUIRED;
-    return config.isbn.trim() ? ISBNState.PROVIDED : ISBNState.REQUIRED_UNSET;
+    // Check if the ISBN is provided and is a valid length (typically 13 for ISBN-13)
+    return config.isbn.trim().length >= 10 ? ISBNState.PROVIDED : ISBNState.REQUIRED_UNSET;
   }, [channelRule, config.isbn]);
 
   const hasConflict = useMemo(() => {
@@ -83,10 +59,12 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     return false;
   }, [channelRule, project]);
 
+  // Refined Validation & Prompting Logic
   const handleInitiateDelivery = () => {
-    if (isbnState === ISBNState.REQUIRED_UNSET) {
+    if (channelRule.requiresISBN && isbnState === ISBNState.REQUIRED_UNSET) {
       setShowISBNPrompt(true);
-      // Optional: Auto-scroll to ISBN field if possible, or just show visual feedback
+      // Explicitly prompt the user to provide the missing ISBN as per requirements
+      alert(`【出版驗證失敗】\n\n您選擇的通路「${targetPlatform}」要求提供 ISBN 識別碼。請在文稿細節區塊中填寫 13 位數 ISBN 後再執行投遞。`);
       return;
     }
     setStep(PubStep.DELIVERY_SEQUENCE);
@@ -119,7 +97,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
       }, 2000);
       return () => clearInterval(interval);
     }
-  }, [step]);
+  }, [step, deliverySteps.length]);
 
   if (step === PubStep.TEMPLATE_GALLERY) {
     return (
@@ -256,6 +234,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                     </button>
                 </div>
 
+                {/* Apple Books */}
                 <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center space-x-6">
@@ -277,27 +256,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                     </button>
                 </div>
 
-                <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center space-x-6">
-                          <div className="w-16 h-16 rounded-3xl bg-[#121214] border border-white/5 flex items-center justify-center text-[#EA4335] text-3xl">
-                            <i className="fa-brands fa-google"></i>
-                          </div>
-                          <div>
-                            <h4 className="text-2xl font-black tracking-tight">Google Books</h4>
-                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">PARTNER PROGRAM</p>
-                          </div>
-                       </div>
-                       <div className="px-5 py-2.5 border border-white/20 text-white text-[10px] font-black rounded-full uppercase tracking-widest">數位出版</div>
-                    </div>
-                    <button 
-                      onClick={() => { setTargetPlatform('Google Books'); setStep(PubStep.FINALIZATION); }} 
-                      className="w-full h-20 bg-[#EA4335] text-white rounded-[40px] text-[13px] font-black uppercase tracking-[0.5em] shadow-xl active:scale-[0.98] transition-all"
-                    >
-                      發 佈 至 G O O G L E B O O K S
-                    </button>
-                </div>
-
+                {/* Substack */}
                 <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center space-x-6">
@@ -309,7 +268,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                             <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">建立您的訂閱電子報與寫作社群。</p>
                           </div>
                        </div>
-                       <div className="px-5 py-2.5 border border-white/20 text-white text-[10px] font-black rounded-full uppercase tracking-widest">數位出版</div>
+                       <div className="px-5 py-2.5 border border-white/20 text-white text-[10px] font-black rounded-full uppercase tracking-widest">專欄分發</div>
                     </div>
                     <button 
                       onClick={() => { setTargetPlatform('Substack'); setStep(PubStep.FINALIZATION); }} 
@@ -372,7 +331,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                           value={config.isbn} 
                           onChange={e => handleUpdateConfig('isbn', e.target.value)} 
                           placeholder="ISBN-13 (Required for this channel)" 
-                          className={`w-full h-20 bg-[#121214] border rounded-3xl px-8 text-sm font-bold outline-none transition-all ${showISBNPrompt ? 'border-red-500 animate-pulse bg-red-500/5' : isbnState === ISBNState.REQUIRED_UNSET ? 'border-amber-500 text-amber-500' : 'border-white/5 text-gray-300 focus:border-blue-600'}`} 
+                          className={`w-full h-20 bg-[#121214] border rounded-3xl px-8 text-sm font-bold outline-none transition-all ${showISBNPrompt ? 'border-red-500 animate-pulse bg-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : isbnState === ISBNState.REQUIRED_UNSET ? 'border-amber-500 text-amber-500' : 'border-white/5 text-gray-300 focus:border-blue-600'}`} 
                         />
                         {isbnState === ISBNState.REQUIRED_UNSET && (
                           <p className={`text-[9px] font-black uppercase tracking-widest px-4 transition-colors ${showISBNPrompt ? 'text-red-500' : 'text-amber-500'}`}>
@@ -413,7 +372,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         <footer className="p-8 pb-12 shrink-0">
            <button 
              onClick={handleInitiateDelivery} 
-             className={`w-full h-24 rounded-[44px] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95 transition-all ${isbnState === ISBNState.REQUIRED_UNSET && showISBNPrompt ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'}`}
+             className={`w-full h-24 rounded-[44px] flex items-center justify-center space-x-4 shadow-[0_20px_50px_rgba(37,99,235,0.4)] active:scale-95 transition-all ${isbnState === ISBNState.REQUIRED_UNSET && showISBNPrompt ? 'bg-red-600 text-white shadow-[0_0_30px_rgba(220,38,38,0.4)]' : 'bg-blue-600 text-white'}`}
            >
               <i className={`fa-solid ${isTraditional ? 'fa-file-zipper' : 'fa-paper-plane'} text-xs`}></i>
               <span className="text-[12px] font-black uppercase tracking-[0.4em]">
