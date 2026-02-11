@@ -128,23 +128,54 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   if (step === PubStep.DISTRIBUTION_GALLERY) {
     return (
       <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white font-sans">
-        <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0 border-b border-white/5">
-          <button onClick={() => setStep(PubStep.CONFIG)} className="w-12 h-12 flex items-center justify-start text-white opacity-60"><i className="fa-solid fa-chevron-left text-xl"></i></button>
-          <div className="text-center">
-            <h2 className="text-[11px] font-black uppercase tracking-[0.5em]">Global One-Click Publishing</h2>
-            <p className="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em] mt-1">Official Delivery Infrastructure</p>
-          </div>
-          <div className="w-12" />
+        <header className="h-24 px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-center shrink-0 relative border-b border-white/5">
+          <button onClick={() => setStep(PubStep.CONFIG)} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full absolute left-8">
+            <i className="fa-solid fa-chevron-left text-lg"></i>
+          </button>
+          <h2 className="text-[11px] font-black uppercase tracking-[0.5em]">DELIVERY & SUBMISSION</h2>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-16">
-          <section className="bg-gradient-to-br from-blue-600/10 to-transparent p-10 rounded-[48px] border border-blue-600/20">
-             <h3 className="text-2xl font-black tracking-tight mb-2">From Draft to the World</h3>
-             <p className="text-sm text-gray-400 leading-relaxed">Deliver your work through official global publishing channels. This is where your journey from manuscript to published work completes.</p>
-          </section>
+        <main className="flex-1 overflow-y-auto px-8 py-12 no-scrollbar space-y-16">
+          {/* Top Banner */}
+          <div className="bg-gradient-to-br from-blue-600/10 to-transparent p-10 rounded-[56px] border border-blue-600/20">
+             <h3 className="text-2xl font-black tracking-tight mb-2 text-white">From Draft to the World</h3>
+             <p className="text-sm text-gray-400 leading-relaxed font-medium">Deliver your work through official global publishing channels. This is where your journey from manuscript to published work completes.</p>
+          </div>
 
-          <div className="space-y-12">
+          {/* Section 1: Submission */}
+          <div className="space-y-6">
              <div className="px-2">
+                <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.4em]">投 遞 與 出 版 S U B M I S S I O N</h3>
+                <p className="text-[10px] text-gray-800 font-bold mt-1.5 uppercase tracking-widest">直接投遞至出版平台或指定編輯</p>
+             </div>
+             
+             <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl relative overflow-hidden group">
+                <div className="flex items-center space-x-6">
+                   <div className="w-16 h-16 rounded-3xl bg-blue-600 flex items-center justify-center text-white shadow-lg"><i className="fa-solid fa-paper-plane text-2xl"></i></div>
+                   <div>
+                      <h4 className="text-2xl font-black tracking-tight leading-none">一鍵自動投遞</h4>
+                      <p className="text-[10px] text-blue-500 font-black uppercase tracking-[0.2em] mt-2">DIRECT PUBLISHING</p>
+                   </div>
+                </div>
+                <div className="bg-black/50 h-[72px] rounded-[24px] px-8 flex items-center justify-between border border-white/5 shadow-inner">
+                   <div className="flex items-center space-x-4 text-gray-500">
+                      <i className="fa-solid fa-building-columns text-lg"></i>
+                      <span className="text-[15px] font-bold">選擇目標出版社...</span>
+                   </div>
+                   <i className="fa-solid fa-chevron-down text-gray-800 text-[10px]"></i>
+                </div>
+                <button 
+                  onClick={() => { setTargetPlatform('出版社'); setStep(PubStep.FINALIZATION); }} 
+                  className="w-full h-20 bg-white text-black rounded-[40px] text-[13px] font-black uppercase tracking-[0.5em] shadow-xl active:scale-[0.98] transition-all hover:bg-gray-100"
+                >
+                  啟 動 全 球 投 遞 程 序
+                </button>
+             </div>
+          </div>
+
+          {/* Section 2: Direct Publishing */}
+          <div className="space-y-6">
+             <div className="px-2 pt-4">
                 <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.4em]">一 鍵 自 動 投 遞 D I R E C T P U B L I S H I N G</h3>
                 <p className="text-[13px] text-[#D4FF5F] font-black tracking-tight mt-1.5">直接對接全球主流發行商</p>
              </div>
@@ -216,7 +247,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                     </button>
                 </div>
 
-                {/* Substack (Newly Added) */}
+                {/* Substack */}
                 <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center space-x-6">
@@ -230,7 +261,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                        </div>
                        <div className="px-5 py-2.5 border border-white/20 text-white text-[10px] font-black rounded-full uppercase tracking-widest">數位出版</div>
                     </div>
-                    <p className="text-[11px] text-gray-600 font-medium leading-relaxed h-10 line-clamp-2">Serial / Newsletter publication hub</p>
+                    <p className="text-[11px] text-gray-600 font-medium leading-relaxed h-10 line-clamp-2 px-2">Serial / Newsletter publication hub</p>
                     <button 
                       onClick={() => { setTargetPlatform('Substack'); setStep(PubStep.FINALIZATION); }} 
                       className="w-full h-20 bg-[#FF6719] text-black rounded-[40px] text-[13px] font-black uppercase tracking-[0.5em] shadow-xl active:scale-[0.98] transition-all"
@@ -253,35 +284,12 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                        </div>
                        <div className="px-5 py-2.5 border border-white/20 text-white text-[10px] font-black rounded-full uppercase tracking-widest">數位出版</div>
                     </div>
-                    <p className="text-[11px] text-gray-600 font-medium leading-relaxed h-10 line-clamp-2">Global distribution to Apple, Kobo, and libraries</p>
+                    <p className="text-[11px] text-gray-600 font-medium leading-relaxed h-10 line-clamp-2 px-2">Global distribution to Apple, Kobo, and libraries</p>
                     <button 
                       onClick={() => { setTargetPlatform('Draft2Digital'); setStep(PubStep.FINALIZATION); }} 
                       className="w-full h-20 bg-[#10B981] text-black rounded-[40px] text-[13px] font-black uppercase tracking-[0.5em] shadow-xl active:scale-[0.98] transition-all"
                     >
                       發 佈 至 D R A F T 2 D I G I T A L
-                    </button>
-                </div>
-
-                {/* Medium */}
-                <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center space-x-6">
-                          <div className="w-16 h-16 rounded-3xl bg-[#121214] border border-white/5 flex items-center justify-center text-white text-3xl">
-                            <i className="fa-brands fa-medium"></i>
-                          </div>
-                          <div>
-                            <h4 className="text-2xl font-black tracking-tight">Medium 專欄</h4>
-                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">DIGITAL STORYTELLING</p>
-                          </div>
-                       </div>
-                       <div className="px-5 py-2.5 border border-white/20 text-white text-[10px] font-black rounded-full uppercase tracking-widest">數位出版</div>
-                    </div>
-                    <p className="text-[11px] text-gray-600 font-medium leading-relaxed h-10 line-clamp-2">Content publishing & audience platform</p>
-                    <button 
-                      onClick={() => { setTargetPlatform('Medium'); setStep(PubStep.FINALIZATION); }} 
-                      className="w-full h-20 bg-white text-black rounded-[40px] text-[13px] font-black uppercase tracking-[0.5em] shadow-xl active:scale-[0.98] transition-all"
-                    >
-                      發 佈 至 M E D I U M
                     </button>
                 </div>
 
@@ -291,7 +299,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                     <div className="w-16 h-16 rounded-3xl bg-blue-600/10 border border-blue-600/20 flex items-center justify-center text-2xl text-blue-500"><i className="fa-solid fa-file-lines"></i></div>
                     <div><h5 className="text-xl font-black tracking-tight">Traditional Submission Package</h5><p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mt-1">FOR AGENT & PUBLISHER REVIEW</p></div>
                   </div>
-                  <p className="text-[11px] text-gray-600 font-medium leading-relaxed mb-10">No direct submission required. We prepare industry-standard submission materials including synopsis, bio, and sample chapters.</p>
+                  <p className="text-[11px] text-gray-600 font-medium leading-relaxed mb-10 px-2">No direct submission required. We prepare industry-standard submission materials including synopsis, bio, and sample chapters.</p>
                   <div className="flex justify-end"><i className="fa-solid fa-chevron-right text-gray-800 group-hover:text-blue-500 transition-colors"></i></div>
                 </button>
              </div>
@@ -388,7 +396,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     return (
       <div className="fixed inset-0 z-[5000] bg-black flex flex-col items-center justify-center p-12 animate-in fade-in duration-700 text-center font-sans">
          <div className="w-44 h-44 rounded-full bg-blue-600/10 border-2 border-blue-500/20 flex items-center justify-center text-blue-500 shadow-[0_0_100px_rgba(37,99,235,0.25)] mb-16 animate-in zoom-in duration-1000"><i className="fa-solid fa-check text-6xl"></i></div>
-         <div className="space-y-6 max-w-md"><h1 className="text-5xl font-black tracking-tighter leading-tight text-white">Published successfully.</h1><p className="text-lg text-gray-500 font-medium leading-relaxed">Your work has been delivered to <span className="text-white font-black">{targetPlatform}</span> official distribution channel.</p></div>
+         <div className="space-y-6 max-md"><h1 className="text-5xl font-black tracking-tighter leading-tight text-white">Published successfully.</h1><p className="text-lg text-gray-500 font-medium leading-relaxed">Your work has been delivered to <span className="text-white font-black">{targetPlatform}</span> official distribution channel.</p></div>
          <div className="mt-16 w-full max-w-md bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
             <div className="flex justify-between items-center text-[12px] font-black uppercase tracking-widest"><span className="text-gray-600">CURRENT STATUS</span><span className="text-blue-500 flex items-center"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-3 animate-pulse"></div>UNDER REVIEW</span></div>
             <div className="flex justify-between items-center text-[12px] font-black uppercase tracking-widest"><span className="text-gray-600">EST. PROCESSING TIME</span><span className="text-white">24–72 HOURS</span></div>
