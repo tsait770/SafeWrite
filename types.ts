@@ -64,6 +64,20 @@ export enum PublicationStatus {
   REJECTED = 'REJECTED'
 }
 
+export enum ISBNState {
+  NOT_REQUIRED = 'NOT_REQUIRED',
+  REQUIRED_UNSET = 'REQUIRED_UNSET',
+  PROVIDED = 'PROVIDED',
+  PENDING = 'PENDING'
+}
+
+export interface ChannelRule {
+  requiresISBN: boolean;
+  allowsPlatformISBN: boolean;
+  exclusiveRisk?: boolean;
+  isNonPublishing?: boolean;
+}
+
 export interface PublishingPayload {
   title: string;
   subtitle: string;
