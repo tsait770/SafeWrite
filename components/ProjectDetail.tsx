@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Project, Chapter, StructureType, SpineNodeId, SpineNodeStatus } from '../types';
 import { TEMPLATES, STRUCTURE_DEFINITIONS, SPINE_NODES_CONFIG, INITIAL_SPINE_NODES } from '../constants';
@@ -98,9 +97,6 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
           coverImage: coverUrl
         }
       });
-      
-      // UI Requirement: Decouple automatic compliance checking during generation stage.
-      // Removed: handleCheckCompliance(coverUrl);
       
     } catch (e) {
       alert("封面生成失敗，請稍後再試。");
@@ -283,20 +279,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                        </div>
                     </div>
 
-                    {/* 精確匹配參考圖：滑鼠/手指觸碰顯示 本地儲存 與 重新生成 */}
+                    {/* 精確匹配參考圖：滑鼠/手指觸碰顯示 重新生成(上) 與 本地儲存(下) */}
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-8 space-y-4 pointer-events-auto">
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); handleGenerateCover(); }} 
+                         className="w-full py-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl text-[12px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/20 active:scale-95 transition-all"
+                       >
+                          重新生成
+                       </button>
                        <button 
                          onClick={(e) => { e.stopPropagation(); handleDownloadCover(); }} 
                          className="w-full py-5 bg-[#D4FF5F] text-black rounded-3xl text-[12px] font-black uppercase tracking-[0.3em] shadow-xl active:scale-95 transition-all flex items-center justify-center space-x-3"
                        >
                           <i className="fa-solid fa-download text-sm"></i>
                           <span>本地儲存</span>
-                       </button>
-                       <button 
-                         onClick={(e) => { e.stopPropagation(); handleGenerateCover(); }} 
-                         className="w-full py-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl text-[12px] font-black uppercase tracking-[0.3em] text-white hover:bg-white/20 active:scale-95 transition-all"
-                       >
-                          重新生成
                        </button>
                     </div>
                   </>
