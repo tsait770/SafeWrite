@@ -43,6 +43,20 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ currentMembership
     }
   ];
 
+  const testimonials = [
+    { text: "SafeWrite is the bridge I needed to reach my audience professionally.", author: "SARAH J.", title: "PUBLISHED AUTHOR", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop" },
+    { text: "SafeWrite 不只是寫作工具，它讓我把腦中的想法完美保存，並輕鬆交付給讀者。", author: "MICHAEL L.", title: "NOVELIST", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop" },
+    { text: "每一次使用 SafeWrite，我都覺得自己像有了私人出版助理，創作與出版變得無縫而簡單。", author: "SOPHIA K.", title: "FICTION WRITER", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop" },
+    { text: "SafeWrite 讓我的文字有了永續的生命，從寫作到出版，一切都如此流暢。", author: "DAVID P.", title: "JOURNALIST", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop" },
+    { text: "我從未想過分享作品可以如此輕鬆。SafeWrite 讓我的創作觸及全球讀者。", author: "LUCY H.", title: "AWARD-WINNING POET", img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&h=300&fit=crop" },
+    { text: "SafeWrite 不僅保護我的靈感，更把它轉化為可見的影響力。", author: "JAMES W.", title: "NON-FICTION AUTHOR", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop" },
+    { text: "從草稿到出版，SafeWrite 讓整個流程簡單到令人驚訝，我再也不用擔心技術細節。", author: "EMILY R.", title: "NOVELIST", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=300&fit=crop" },
+    { text: "這個平台讓我專注於寫作本身，而不是繁瑣的出版程序，SafeWrite 成了我的創作夥伴。", author: "OLIVER S.", title: "SHORT STORY WRITER", img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&h=300&fit=crop" },
+    { text: "SafeWrite 幫我把散落的文字串成完整作品，並自信地分享給世界。", author: "HANNAH M.", title: "CHILDREN’S BOOK AUTHOR", img: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=300&h=300&fit=crop" },
+    { text: "有了 SafeWrite，我能在最短時間內把靈感化為實際出版作品，讀者反應超乎預期。", author: "ALEX T.", title: "CREATIVE NON-FICTION WRITER", img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=300&fit=crop" },
+    { text: "SafeWrite 不只是工具，它是我與讀者之間最直接的橋樑。", author: "ELENA R.", title: "AWARD-WINNING AUTHOR", img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop" }
+  ];
+
   return (
     <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-bottom duration-500 overflow-hidden">
       <header className="h-24 px-8 pt-8 flex items-center justify-between border-b border-white/5 shrink-0">
@@ -111,17 +125,39 @@ const SubscriptionPlans: React.FC<SubscriptionPlansProps> = ({ currentMembership
             ))}
           </div>
 
-          <div className="bg-[#1C1C1E] p-10 rounded-[44px] border border-white/5 flex flex-col items-center text-center space-y-6">
-             <div className="flex -space-x-3">
-                {[1,2,3,4,5].map(i => (
-                  <div key={i} className="w-10 h-10 rounded-full bg-gray-800 border-2 border-[#1C1C1E] overflow-hidden">
-                    <img src={`https://i.pravatar.cc/100?img=${i+20}`} alt="avatar" />
-                  </div>
-                ))}
-             </div>
-             <div>
-                <p className="text-white font-bold text-sm">"SafeWrite is the bridge I needed to reach my audience professionally."</p>
-                <p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2">— Sarah J., Published Author</p>
+          <div className="space-y-6 pt-12">
+             <h4 className="text-[12px] font-black text-gray-600 uppercase tracking-[0.4em] text-center mb-10">What Professional Authors Say</h4>
+             <div className="grid grid-cols-1 gap-6">
+                {testimonials.map((t, idx) => {
+                  // 根據用戶截圖實作邊框邏輯
+                  const isWhiteGlow = (idx === 3 || idx === 6 || idx === 9); // David P., Emily R., Alex T.
+                  const isBlueBorder = (idx === 1 || idx === 5 || idx === 10); // Michael L., James W., Elena R.
+                  
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`p-10 rounded-[44px] border flex flex-col md:flex-row items-center md:items-start text-center md:text-left space-y-6 md:space-y-0 md:space-x-10 shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700 transition-all bg-[#1C1C1E] ${
+                        isWhiteGlow 
+                        ? 'border-white ring-4 ring-white/10' 
+                        : isBlueBorder 
+                        ? 'border-blue-500 ring-2 ring-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.15)]' 
+                        : 'border-white/5'
+                      }`} 
+                      style={{ animationDelay: `${idx * 100}ms` }}
+                    >
+                      <div className={`shrink-0 w-24 h-24 rounded-full overflow-hidden border-2 shadow-2xl bg-black/20 ${isWhiteGlow ? 'border-white' : isBlueBorder ? 'border-blue-500' : 'border-white/10'}`}>
+                         <img src={t.img} alt={t.author} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 space-y-4">
+                         <p className="text-white font-bold text-lg leading-relaxed italic">"{t.text}"</p>
+                         <div className="flex flex-col">
+                            <p className="text-blue-500 font-black text-[12px] uppercase tracking-[0.2em]">— {t.author}</p>
+                            <p className="text-[9px] text-gray-600 font-black uppercase tracking-[0.3em] mt-1">{t.title}</p>
+                         </div>
+                      </div>
+                    </div>
+                  );
+                })}
              </div>
           </div>
         </div>

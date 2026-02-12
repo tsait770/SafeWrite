@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 interface PrivacyModalProps {
@@ -227,10 +226,10 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
                 <section className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                    <h3 className="text-white font-black text-xl tracking-tight">3. 訂閱方案與誠信退款</h3>
+                    <h3 className="text-white font-black text-xl tracking-tight">3. 訂閱方案與誠信服務</h3>
                   </div>
                   <p className="text-slate-400 text-[15px] leading-[1.8] font-medium pl-4">
-                    Pro 與 Premium 訂閱為您提供更深度的寫作能量。您可以靈活選擇按月或按年扣費，並隨時取消續訂。考量數位產品之特性，除法律規定外，生效期內恕不退款；然而，若因系統重大故障導致您的核心數據受損，我們將秉持誠懇態度，主動提供按比例的補償或補貼措施。
+                    Pro 與 Premium 訂閱方案，為您提供更深度且持續的寫作能量支援。您可以彈性選擇按月或按年扣費，並隨時取消續約。考慮數位產品之特性，除法律規定外，生效期內恕不退款，若使用過程中發生影響服務正常運作之情況，我們將秉持誠信原則，審慎回應並處理相關問題，持續維持服務質量。
                   </p>
                 </section>
                 <section className="space-y-4">
@@ -239,7 +238,7 @@ const PrivacyModal: React.FC<PrivacyModalProps> = ({ onClose }) => {
                     <h3 className="text-white font-black text-xl tracking-tight">4. 創作準則與守護機制</h3>
                   </div>
                   <p className="text-slate-400 text-[15px] leading-[1.8] font-medium pl-4">
-                    為維護純粹的寫作社群環境，禁止使用本服務生成、儲存或傳播涉及非法、猥褻、仇恨或侵犯他人版權之內容。SafeWrite 堅守內容中立原則，但對任何破壞和諧、違背基本法律道德的行為持零容忍態度，並保留暫停違規帳戶以維護整體平台安全的權利。
+                    為維護純粹的寫作社群環境，禁止使用本服務生成、儲存或傳播涉及非法、猥褻、仇恨或侵犯他人版權之內容。SafeWrite 堅持內容中立原則，但對任何破壞和諧、違背基本法律道德的行為持零容忍態度，並保留暫停違規帳戶以維護整體平台安全的權利。
                   </p>
                 </section>
                 

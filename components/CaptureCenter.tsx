@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Project, OCRBlock, CaptureMode, MembershipLevel } from '../types';
 import VoiceModule from './capture/VoiceModule';
 import QuickNoteModule from './capture/QuickNoteModule';
 import ScanModule from './capture/ScanModule';
+import ImageGenModule from './capture/ImageGenModule';
 import DistributionHub from './capture/DistributionHub';
 
 interface CaptureCenterProps {
@@ -15,7 +17,7 @@ interface CaptureCenterProps {
 }
 
 const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject, onSaveToNotebook, membership, onUpgrade, onToggleFullscreenUI }) => {
-  const [mode, setMode] = useState<CaptureMode>('IDLE');
+  const [mode, setMode] = useState<CaptureMode | 'IMAGE_GEN'>('IDLE');
   const [ocrBlocks, setOcrBlocks] = useState<OCRBlock[]>([]);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const [langConfidence, setLangConfidence] = useState<number | null>(null);
@@ -24,8 +26,7 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
 
   // 當模式改變時決定是否隱藏頂部與底部導航
   useEffect(() => {
-    // 根據需求：相機模式隱藏所有 UI (全螢幕)，語音模式則維持底部導航
-    const isFullscreenMode = mode === 'CAMERA_ACTIVE' || mode === 'SCAN_SELECT';
+    const isFullscreenMode = mode === 'CAMERA_ACTIVE' || mode === 'SCAN_SELECT' || mode === 'IMAGE_GEN';
     onToggleFullscreenUI(isFullscreenMode);
   }, [mode, onToggleFullscreenUI]);
 
@@ -86,6 +87,27 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
 
           <section className="space-y-6">
              <div className="flex items-center justify-between px-2">
+                <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">PRO AI VISUALS</h3>
+             </div>
+             <button 
+                onClick={() => setMode('IMAGE_GEN')}
+                className="w-full bg-[#1C1C1E] p-8 rounded-[44px] border border-white/5 flex items-center justify-between group active:scale-[0.98] transition-all"
+             >
+                <div className="flex items-center space-x-6">
+                   <div className="w-16 h-16 rounded-3xl bg-blue-600/10 flex items-center justify-center text-blue-500 text-3xl border border-blue-600/20">
+                      <i className="fa-solid fa-wand-magic-sparkles"></i>
+                   </div>
+                   <div className="text-left">
+                      <h4 className="text-xl font-black text-white tracking-tight">AI Image Gen</h4>
+                      <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">GEMINI 3 PRO ENGINE</p>
+                   </div>
+                </div>
+                <i className="fa-solid fa-chevron-right text-gray-800 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"></i>
+             </button>
+          </section>
+
+          <section className="space-y-6">
+             <div className="flex items-center justify-between px-2">
                 <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">RECENT CAPTURES</h3>
                 <button className="bg-white/5 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-blue-500">VIEW ALL</button>
              </div>
@@ -110,8 +132,8 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
       )}
 
       <ScanModule 
-        mode={mode} 
-        setMode={setMode} 
+        mode={mode as any} 
+        setMode={setMode as any} 
         setIsProcessing={setIsProcessing}
         setOcrBlocks={setOcrBlocks}
         setDetectedLanguage={setDetectedLanguage}
@@ -121,8 +143,19 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
         onUpgrade={onUpgrade}
       />
 
-      <VoiceModule mode={mode} setMode={setMode} setIsProcessing={setIsProcessing} setOcrBlocks={setOcrBlocks} setDetectedLanguage={setDetectedLanguage} setLangConfidence={setLangConfidence} setShowDistribution={setShowDistribution} />
-      <QuickNoteModule mode={mode} setMode={setMode} setOcrBlocks={setOcrBlocks} setShowDistribution={setShowDistribution} setDetectedLanguage={setDetectedLanguage} setLangConfidence={setLangConfidence} />
+      <VoiceModule mode={mode as any} setMode={setMode as any} setIsProcessing={setIsProcessing} setOcrBlocks={setOcrBlocks} setDetectedLanguage={setDetectedLanguage} setLangConfidence={setLangConfidence} setShowDistribution={setShowDistribution} />
+      <QuickNoteModule mode={mode as any} setMode={setMode as any} setOcrBlocks={setOcrBlocks} setShowDistribution={setShowDistribution} setDetectedLanguage={setDetectedLanguage} setLangConfidence={setLangConfidence} />
+      
+      <ImageGenModule 
+        mode={mode as any} 
+        setMode={setMode as any} 
+        onFinish={(url) => {
+           setOcrBlocks([{ id: `img-${Date.now()}`, text: `[AI GENERATED IMAGE: ${url}]`, type: 'metadata', confidence: 1, isSelected: true }]);
+           setDetectedLanguage("影像生成");
+           setLangConfidence(1);
+           setShowDistribution(true);
+        }} 
+      />
 
       <DistributionHub 
         showDistribution={showDistribution}
@@ -136,29 +169,20 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
         langConfidence={langConfidence}
       />
 
-      {/* 重新設計的極簡現代 AI 處理動畫 - 徹底無邊框、無環繞干擾動效 */}
+      {/* AI 處理動畫 */}
       {isProcessing && (
         <div className="fixed inset-0 z-[5000] bg-black flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-3xl">
-           
-           {/* 背景深度光譜 - 僅透過氛圍光營造處理感 */}
            <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[100vw] h-[100vw] bg-blue-600/[0.03] rounded-full blur-[180px] animate-pulse"></div>
            </div>
-
-           {/* 核心 Logo - 乾淨利落，四周無任何動畫元素 */}
            <div className="relative mb-28">
               <div className="w-32 h-32 flex items-center justify-center relative">
-                 {/* 替換為盾牌圖示，象徵作品保護與 SafeWrite 核心價值 */}
                  <i className="fa-solid fa-shield-halved text-7xl text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.2)] opacity-80 animate-[soft-float_3s_ease-in-out_infinite]"></i>
-                 
-                 {/* 極細微的中心能量點 */}
                  <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-1.5 h-1.5 bg-[#D4FF5F] rounded-full shadow-[0_0_15px_#D4FF5F] opacity-40"></div>
                  </div>
               </div>
            </div>
-
-           {/* 底部現代文字排版與極簡線性進度 */}
            <div className="text-center space-y-10 z-10">
               <div className="space-y-4">
                  <h2 className="text-[32px] font-black text-white tracking-tighter leading-none animate-in slide-in-from-bottom-4">
@@ -168,12 +192,9 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
                     PROPRIETARY NARRATIVE PROTOCOL
                  </p>
               </div>
-
-              {/* 極簡線性掃描器 - 代替圓環動畫 */}
               <div className="w-64 h-[1px] bg-white/10 mx-auto relative overflow-hidden rounded-full">
                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4FF5F] to-transparent animate-[scan-line_2.5s_infinite] w-32 -translate-x-full"></div>
               </div>
-
               <div className="flex flex-col items-center space-y-5 pt-2">
                  <p className="text-[10px] text-[#D4FF5F] font-black uppercase tracking-[0.6em] opacity-80">
                     GEMINI PRO V3 ENGINE ACTIVE
@@ -187,14 +208,8 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
            </div>
 
            <style dangerouslySetInnerHTML={{ __html: `
-              @keyframes scan-line {
-                0% { transform: translateX(-100%); }
-                100% { transform: translateX(200%); }
-              }
-              @keyframes soft-float {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-10px); }
-              }
+              @keyframes scan-line { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+              @keyframes soft-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
            `}} />
         </div>
       )}
