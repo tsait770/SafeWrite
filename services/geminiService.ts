@@ -127,6 +127,15 @@ export const geminiService = {
     return response.text || content;
   },
 
+  async translateText(content: string, targetLanguage: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `You are a professional translator. Translate the following text to ${targetLanguage}. Maintain the original tone, formatting, and nuances. Only return the translated text without any explanation:\n\n${content}`,
+    });
+    return response.text || content;
+  },
+
   async transcribeAudio(base64Data: string, mimeType: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({

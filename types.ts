@@ -27,6 +27,29 @@ export enum StructureType {
   FREE = 'FREE'
 }
 
+export enum SpineNodeId {
+  WRITING = 'WRITING',
+  STRUCTURAL_LOCK = 'STRUCTURAL_LOCK',
+  EDITORIAL_READY = 'EDITORIAL_READY',
+  METADATA_COMPLETE = 'METADATA_COMPLETE',
+  ISBN_ASSIGNED = 'ISBN_ASSIGNED',
+  COVER_READY = 'COVER_READY',
+  PREFLIGHT_CHECK = 'PREFLIGHT_CHECK',
+  DISTRIBUTION_READY = 'DISTRIBUTION_READY',
+  PUBLISHED = 'PUBLISHED'
+}
+
+export interface SpineNodeStatus {
+  id: SpineNodeId;
+  isCompleted: boolean;
+  timestamp?: number;
+}
+
+export interface PublishingSpineState {
+  currentNode: SpineNodeId;
+  nodes: Record<SpineNodeId, SpineNodeStatus>;
+}
+
 export interface StructureDefinition {
   type: StructureType;
   autoNumbering: boolean;
@@ -207,6 +230,7 @@ export interface Project {
   isPinned?: boolean;
   visualOutline?: OutlineNode[];
   publishingPayload?: PublishingPayload;
+  publishingSpine?: PublishingSpineState;
 }
 
 export interface AppState {

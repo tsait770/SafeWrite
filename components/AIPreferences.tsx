@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AIPreferences, SupportedLanguage } from '../types';
 import { geminiService } from '../services/geminiService';
 import { AI_MODEL_GROUPS } from '../constants';
@@ -13,13 +13,29 @@ interface AIPreferencesProps {
 const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate, onClose }) => {
   const [activeTab, setActiveTab] = useState<'SETTINGS' | 'GUIDE'>('SETTINGS');
   const [testStatus, setTestStatus] = useState<'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR'>('IDLE');
-  const [customKey, setCustomKey] = useState('');
+  const [hasSelectedKey, setHasSelectedKey] = useState(false);
   const [customModelId, setCustomModelId] = useState(preferences.customModel || '');
 
+  // Check if an API key has already been selected via the official dialog
+  useEffect(() => {
+    const checkKeyStatus = async () => {
+      const selected = await (window as any).aistudio.hasSelectedApiKey();
+      setHasSelectedKey(selected);
+    };
+    checkKeyStatus();
+  }, []);
+
+  // Handle the official API key selection process
+  const handleSelectKey = async () => {
+    await (window as any).aistudio.openSelectKey();
+    // Guideline: Assume successful after triggering openSelectKey
+    setHasSelectedKey(true);
+  };
+
   const handleTestConnection = async () => {
-    if (!customKey) return;
     setTestStatus('LOADING');
-    const success = await geminiService.testConnection(customKey, 'GOOGLE');
+    // Adheres to SDK rules: uses process.env.API_KEY which is updated by the aistudio selection
+    const success = await geminiService.testConnection(process.env.API_KEY || '', 'GOOGLE');
     setTestStatus(success ? 'SUCCESS' : 'ERROR');
   };
 
@@ -168,39 +184,35 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
                </div>
             </section>
 
-            {/* 4. Custom Model Config - REMOVED Base URL per screenshot request */}
+            {/* 4. API Authorization - Adheres to official key selection protocol */}
             <section className="space-y-4">
               <div className="flex items-center justify-between px-2">
-                <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">自定義模型設定 CUSTOM MODEL</h3>
-                <span className="text-[8px] font-black bg-amber-500 text-black px-2 py-0.5 rounded uppercase tracking-widest">Professional</span>
+                <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">API 授權與配置 API AUTHORIZATION</h3>
+                <span className="text-[8px] font-black bg-amber-500 text-black px-2 py-0.5 rounded uppercase tracking-widest">Required</span>
               </div>
               <div className="bg-[#1C1C1E] p-8 rounded-[3rem] border border-white/5 space-y-8">
                 <div className="flex flex-col space-y-6">
-                   <div className="space-y-2">
-                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">API Provider / Service</label>
-                      <select 
-                        value={preferences.provider}
-                        onChange={(e) => onUpdate({ ...preferences, provider: e.target.value as any })}
-                        className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-5 text-sm font-bold text-white outline-none focus:border-blue-600 transition-colors"
-                      >
-                        <option value="CUSTOM">Custom Google Gemini API</option>
-                        <option value="DEFAULT">OpenAI / Claude / Others</option>
-                      </select>
+                   <div className="p-6 bg-blue-600/5 border border-blue-500/20 rounded-3xl">
+                      <p className="text-xs text-gray-400 leading-relaxed font-medium">
+                        為了使用高品質模型（如 Gemini 3 Pro）與視訊生成功能，您必須選擇一個來自付費 Google Cloud 專案的 API Key。
+                      </p>
+                      <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-[10px] font-black text-blue-400 uppercase tracking-widest border-b border-blue-400/30 hover:text-blue-300">
+                        查看帳單設定與計費說明
+                      </a>
                    </div>
 
-                   <div className="space-y-2">
-                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Google API Key (必填)</label>
-                      <input 
-                        type="password"
-                        value={customKey}
-                        onChange={(e) => setCustomKey(e.target.value)}
-                        placeholder="在此貼上您的 API Key..."
-                        className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-5 text-sm font-bold text-white outline-none focus:border-blue-600 transition-colors"
-                      />
-                   </div>
+                   <button 
+                      onClick={handleSelectKey}
+                      className={`w-full h-16 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] flex items-center justify-center space-x-3 transition-all ${
+                        hasSelectedKey ? 'bg-green-500 text-white shadow-lg' : 'bg-blue-600 text-white shadow-lg'
+                      }`}
+                    >
+                      <i className={`fa-solid ${hasSelectedKey ? 'fa-circle-check' : 'fa-key'}`}></i>
+                      <span>{hasSelectedKey ? '已授權計費 API Key' : '選擇 Google Cloud API Key'}</span>
+                    </button>
 
-                   <div className="space-y-2">
-                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">Model ID / Name (必填)</label>
+                   <div className="space-y-2 pt-4">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">自定義 Model ID (選填)</label>
                       <input 
                         type="text"
                         value={customModelId}
@@ -215,7 +227,7 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
 
                    <button 
                       onClick={handleTestConnection}
-                      disabled={!customKey || testStatus === 'LOADING'}
+                      disabled={!hasSelectedKey || testStatus === 'LOADING'}
                       className={`w-full h-14 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center space-x-3 transition-all ${
                         testStatus === 'SUCCESS' ? 'bg-green-500/10 text-green-500 border border-green-500/20' :
                         testStatus === 'ERROR' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
@@ -230,7 +242,7 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
                       <span>{
                         testStatus === 'LOADING' ? '正在測試連線...' :
                         testStatus === 'SUCCESS' ? '連線成功' :
-                        testStatus === 'ERROR' ? '連線失敗，請檢查金鑰' :
+                        testStatus === 'ERROR' ? '連線失敗' :
                         '測試 API 連線 TEST CONNECTION'
                       }</span>
                     </button>
@@ -256,7 +268,7 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
                     className="mt-8 px-8 py-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-[10px] font-black uppercase tracking-[0.25em] text-white hover:bg-white/20 transition-all flex items-center space-x-3"
                   >
                      <i className="fa-solid fa-play-circle text-lg text-blue-400"></i>
-                     <span>立即申請 Google API Key</span>
+                     <span>立即前往 Google AI Studio 申請</span>
                   </a>
                </div>
             </div>
@@ -264,9 +276,9 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
             <div className="space-y-6">
                <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">申請步驟 STEP-BY-STEP</h3>
                {[
-                 { step: '01', title: '前往 Google AI Studio', desc: '這是最簡單的申請方式，無需信用卡即可獲得免費額度。', link: 'https://aistudio.google.com/', icon: 'fa-rocket' },
-                 { step: '02', title: '建立 API Key', desc: '點擊左側導覽列的 "Get API key"，選擇一個專案或新建專案並生成金鑰。', icon: 'fa-key' },
-                 { step: '03', title: '貼回 SafeWrite', desc: '複製金鑰並返回偏好設定頁面，切換至 Custom API 並貼上金鑰。', icon: 'fa-paste' }
+                 { step: '01', title: '前往 Google AI Studio', desc: '這是在開發環境獲得 API 授權的最快方式，支援計費專案切換。', link: 'https://aistudio.google.com/', icon: 'fa-rocket' },
+                 { step: '02', title: '設定計費專案', desc: '確保您的金鑰來自已連結付款方式的 Google Cloud 專案。', icon: 'fa-credit-card' },
+                 { step: '03', title: '完成 SafeWrite 授權', desc: '在偏好設定中點擊「選擇 Google Cloud API Key」按鈕完成連結。', icon: 'fa-key' }
                ].map((item, idx) => (
                  <div key={idx} className="flex space-x-6 group">
                     <div className="flex flex-col items-center">

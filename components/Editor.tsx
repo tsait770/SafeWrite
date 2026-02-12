@@ -88,6 +88,11 @@ const Editor: React.FC<EditorProps> = ({
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
+  const handleUpdateFromAI = (newContent: string) => {
+    setContent(newContent);
+    onUpdateContent(newContent);
+  };
+
   const isImmersive = uiMode === UIMode.FOCUS || isPreviewMode;
 
   // 線性操作：切換至預覽模式
@@ -274,6 +279,7 @@ const Editor: React.FC<EditorProps> = ({
           isNight={true} 
           onClose={() => setIsAIPanelOpen(false)} 
           onUpdateOutline={onUpdateOutline} 
+          onUpdateContent={handleUpdateFromAI}
         />
       )}
     </div>

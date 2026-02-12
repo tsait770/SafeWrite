@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings, BackupSettings, CreditCard } from './types';
-import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS, TEMPLATE_STRUCTURE_MAP } from './constants';
+import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings, BackupSettings, CreditCard, SpineNodeId } from './types';
+import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS, TEMPLATE_STRUCTURE_MAP, INITIAL_SPINE_NODES } from './constants';
 import Library from './components/Library';
 import CaptureCenter from './components/CaptureCenter';
 import Profile from './components/Profile';
@@ -42,7 +43,11 @@ const App: React.FC = () => {
         createdAt: Date.now() - 86400000,
         updatedAt: Date.now() - 600000,
         tags: ['SCI-FI', 'NOVEL'],
-        isPinned: true
+        isPinned: true,
+        publishingSpine: {
+          currentNode: SpineNodeId.WRITING,
+          nodes: INITIAL_SPINE_NODES()
+        }
       },
       {
         id: 'p2',
@@ -60,43 +65,11 @@ const App: React.FC = () => {
         createdAt: Date.now() - 172800000,
         updatedAt: Date.now() - 7200000,
         tags: ['TECH', 'BLOG'],
-        isPinned: false
-      },
-      {
-        id: 'p3',
-        name: 'Echoes of Silence',
-        writingType: WritingType.DIARY,
-        structureType: StructureType.FREE,
-        targetWordCount: 5000,
-        metadata: 'REVIEW PENDING',
-        progress: 95,
-        color: '#D4FF5F', 
-        icon: 'fa-note-sticky',
-        chapters: [],
-        modules: [],
-        settings: { typography: 'serif', fontSize: 'normal' },
-        createdAt: Date.now() - 259200000,
-        updatedAt: Date.now() - 3600000,
-        tags: ['DRAFTS', 'PENDING'],
-        isPinned: false
-      },
-      {
-        id: 'p4',
-        name: 'Digital Frontier',
-        writingType: WritingType.SCREENPLAY,
-        structureType: StructureType.CHAPTER,
-        targetWordCount: 30000,
-        metadata: 'CREATED YESTERDAY',
-        progress: 10,
-        color: '#B2A4FF', 
-        icon: 'fa-clapperboard',
-        chapters: [],
-        modules: [],
-        settings: { typography: 'sans', fontSize: 'normal' },
-        createdAt: Date.now() - 86400000,
-        updatedAt: Date.now() - 43200000,
-        tags: ['FUTURE', 'SCREENPLAY'],
-        isPinned: false
+        isPinned: false,
+        publishingSpine: {
+          currentNode: SpineNodeId.WRITING,
+          nodes: INITIAL_SPINE_NODES()
+        }
       }
     ],
     currentProject: null,
@@ -155,7 +128,6 @@ const App: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<{ id: MembershipLevel, name: string, price: string } | null>(null);
   const [isUIHidden, setIsUIHidden] = useState(false);
   
-  // Liquid Edge-Swipe States
   const [swipeProgress, setSwipeProgress] = useState(0); 
   const [isDragging, setIsDragging] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -170,7 +142,6 @@ const App: React.FC = () => {
   const currentChapter = state.currentProject?.chapters.find(c => c.id === state.currentChapterId);
   const isTimelineVisible = swipeProgress > 0 || activeOverlay === 'TIMELINE';
 
-  // Responsive Width: 1/3 Desktop (>=1024px), 1/2 iPad/Tablet (>=768px), 85% Mobile
   const timelineWidthPx = screenWidth >= 1024 
     ? screenWidth / 3 
     : screenWidth >= 768 
@@ -260,7 +231,11 @@ const App: React.FC = () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       tags: ['CAPTURED'],
-      settings: { typography: 'serif', fontSize: 'normal' }
+      settings: { typography: 'serif', fontSize: 'normal' },
+      publishingSpine: {
+        currentNode: SpineNodeId.WRITING,
+        nodes: INITIAL_SPINE_NODES()
+      }
     };
 
     setState(prev => ({
@@ -323,17 +298,13 @@ const App: React.FC = () => {
     setSwipeProgress(0);
   };
 
-  // Enhanced Liquid Edge-Swipe Logic
   const handleTouchStart = (e: React.TouchEvent) => {
     const x = e.touches[0].clientX;
     const width = window.innerWidth;
-    
-    // Detect start near right edge to open Timeline
     if (state.activeTab === AppTab.WRITE && currentChapter && x > width * 0.85 && activeOverlay === 'NONE') {
       touchStartX.current = x;
       setIsDragging(true);
     }
-    // Detect start on active Timeline panel to allow Swipe Right to Close
     else if (activeOverlay === 'TIMELINE') {
        if (x > (width - timelineWidthPx)) {
           touchStartX.current = x;
@@ -345,26 +316,20 @@ const App: React.FC = () => {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || touchStartX.current === null) return;
     const currentX = e.touches[0].clientX;
-    
     let progress = 0;
     if (activeOverlay === 'NONE') {
-      // Swiping from right to left to open
       const diff = touchStartX.current - currentX;
       progress = Math.max(0, Math.min(1, diff / timelineWidthPx));
     } else if (activeOverlay === 'TIMELINE') {
-      // Swiping from left to right to close (x increases)
       const diff = currentX - touchStartX.current;
       progress = 1 - Math.max(0, Math.min(1, diff / timelineWidthPx));
     }
-    
     setSwipeProgress(progress);
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    
-    // Snapping logic: Threshold 20%
     if (swipeProgress > 0.2) {
       setActiveOverlay('TIMELINE');
       setSwipeProgress(1);
@@ -384,8 +349,6 @@ const App: React.FC = () => {
   };
 
   const isBottomNavVisible = !isUIHidden && (activeOverlay === 'NONE' && swipeProgress === 0) && (state.activeTab !== AppTab.WRITE || !currentChapter);
-
-  // Dynamic Styles for Liquid Swipe
   const editorScale = 1 - swipeProgress * 0.04; 
   const editorBlur = swipeProgress * 4; 
   const editorOpacity = 1 - swipeProgress * 0.4;
@@ -473,18 +436,14 @@ const App: React.FC = () => {
             />
           ) : (
             <div className="h-full flex flex-col items-center justify-center p-8 bg-black text-center animate-in fade-in duration-700">
-               {/* Icon Container with Glassmorphism */}
                <div className="w-40 h-40 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[44px] flex items-center justify-center mb-10 shadow-2xl relative overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent opacity-50"></div>
                   <i className="fa-solid fa-feather text-[#2563EB] text-6xl relative z-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.4)]"></i>
                </div>
-               
                <h2 className="text-[28px] font-black text-white mb-4 tracking-tighter">尚未選擇作品</h2>
-               
                <p className="text-[14px] text-[#8E8E93] font-medium leading-relaxed max-w-[280px] mb-12">
                  請先從書架選擇一個現有作品，或在書架中建立新專案以開始寫作。
                </p>
-               
                <button 
                  onClick={() => setState(prev => ({ ...prev, activeTab: AppTab.LIBRARY }))} 
                  className="px-14 py-5 bg-[#2563EB] rounded-full text-white font-black text-[13px] uppercase tracking-[0.25em] shadow-[0_20px_40px_rgba(37,99,235,0.25)] active:scale-95 transition-all hover:brightness-110"
@@ -518,7 +477,6 @@ const App: React.FC = () => {
         }}
       />
 
-      {/* Subscription Overlays */}
       {activeOverlay === 'SUBSCRIPTION' && (
         <SubscriptionPlans 
           currentMembership={state.membership}
@@ -543,10 +501,10 @@ const App: React.FC = () => {
         <ProfessionalPublicationCenter 
           project={state.currentProject} 
           onClose={() => setActiveOverlay('NONE')} 
+          onUpdateProject={handleUpdateProject}
         />
       )}
 
-      {/* Responsive Liquid Swipable Timeline Panel */}
       {isTimelineVisible && state.currentProject && state.currentChapterId && (
         <div 
           className="fixed inset-y-0 right-0 z-[200] overflow-hidden"
@@ -556,11 +514,7 @@ const App: React.FC = () => {
             transition: isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
           }}
         >
-           {/* Handle for Gesture Interaction (Grabber area for swiping right to close) */}
-           <div 
-             className="absolute left-0 inset-y-0 w-10 z-[210] cursor-ew-resize active:bg-white/5"
-           />
-           
+           <div className="absolute left-0 inset-y-0 w-10 z-[210] cursor-ew-resize active:bg-white/5" />
            <Timeline 
              history={state.currentProject.chapters.find(c => c.id === state.currentChapterId)?.history || []}
              membership={state.membership}

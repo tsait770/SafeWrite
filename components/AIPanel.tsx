@@ -8,13 +8,39 @@ interface AIPanelProps {
   isNight: boolean;
   onClose: () => void;
   onUpdateOutline: (nodes: OutlineNode[]) => void;
+  onUpdateContent?: (content: string) => void;
 }
 
-const AIPanel: React.FC<AIPanelProps> = ({ content, isNight, onClose, onUpdateOutline }) => {
+const AIPanel: React.FC<AIPanelProps> = ({ content, isNight, onClose, onUpdateOutline, onUpdateContent }) => {
   const [response, setResponse] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
+  const [targetLang, setTargetLang] = useState('English');
 
-  const handleAIAction = async (action: 'analyze' | 'outline' | 'characters') => {
+  const languages = [
+    { label: 'English', value: 'English' },
+    { label: '繁體中文', value: 'Traditional Chinese' },
+    { label: '简体中文', value: 'Simplified Chinese' },
+    { label: 'Español', value: 'Spanish' },
+    { label: 'Português (Brasil)', value: 'Portuguese (Brazil)' },
+    { label: 'Português', value: 'Portuguese' },
+    { label: 'Deutsch', value: 'German' },
+    { label: 'Français', value: 'French' },
+    { label: 'Italiano', value: 'Italian' },
+    { label: 'Nederlands', value: 'Dutch' },
+    { label: 'Svenska', value: 'Swedish' },
+    { label: 'Türkçe', value: 'Turkish' },
+    { label: 'Русский', value: 'Russian' },
+    { label: '日本語', value: 'Japanese' },
+    { label: '한국어', value: 'Korean' },
+    { label: 'ไทย', value: 'Thai' },
+    { label: 'Tiếng Việt', value: 'Vietnamese' },
+    { label: 'Bahasa Indonesia', value: 'Indonesian' },
+    { label: 'Bahasa Melayu', value: 'Malay' },
+    { label: 'हिन्दी', value: 'Hindi' },
+    { label: 'العربية', value: 'Arabic' }
+  ];
+
+  const handleAIAction = async (action: 'analyze' | 'outline' | 'characters' | 'translate') => {
     if (!content.trim()) return;
     setIsLoading(true);
     try {
@@ -22,7 +48,6 @@ const AIPanel: React.FC<AIPanelProps> = ({ content, isNight, onClose, onUpdateOu
       if (action === 'analyze') result = await geminiService.analyzeManuscript(content);
       if (action === 'outline') {
         result = await geminiService.scanOutline(content);
-        // 模擬提取結構化大綱
         const mockNodes: OutlineNode[] = result.split('\n')
           .filter(l => l.trim() && !l.includes('---'))
           .slice(0, 8)
@@ -34,11 +59,20 @@ const AIPanel: React.FC<AIPanelProps> = ({ content, isNight, onClose, onUpdateOu
         onUpdateOutline(mockNodes);
       }
       if (action === 'characters') result = await geminiService.analyzeCharacters(content);
-      setResponse(result || '分析完成。');
+      if (action === 'translate') result = await geminiService.translateText(content, targetLang);
+      setResponse(result || '處理完成。');
     } catch (e) {
       setResponse('AI 服務暫時不可用，請檢查網路連線。');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleApplyContent = () => {
+    if (onUpdateContent && response) {
+      onUpdateContent(response);
+      setResponse('');
+      onClose();
     }
   };
 
@@ -56,6 +90,33 @@ const AIPanel: React.FC<AIPanelProps> = ({ content, isNight, onClose, onUpdateOu
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
         <div className="grid grid-cols-1 gap-3">
+          {/* Translation Widget */}
+          <div className="p-5 rounded-2xl bg-purple-600/10 border border-purple-500/20 space-y-4">
+             <div className="flex items-center space-x-3">
+                <i className="fa-solid fa-language text-purple-400 text-xl"></i>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-white">智慧翻譯</span>
+                  <span className="text-[9px] text-purple-400 font-black uppercase tracking-widest mt-0.5">SMART TRANSLATION</span>
+                </div>
+             </div>
+             <div className="relative">
+                <select 
+                  value={targetLang}
+                  onChange={(e) => setTargetLang(e.target.value)}
+                  className="w-full h-10 bg-black/40 border border-white/10 rounded-xl px-4 text-[11px] font-black text-white appearance-none outline-none focus:border-purple-500 transition-all"
+                >
+                  {languages.map(l => <option key={l.value} value={l.value} className="bg-slate-900">{l.label}</option>)}
+                </select>
+                <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 pointer-events-none"></i>
+             </div>
+             <button 
+               onClick={() => handleAIAction('translate')}
+               className="w-full py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-all"
+             >
+               執行翻譯
+             </button>
+          </div>
+
           <button 
             onClick={() => handleAIAction('analyze')} 
             className="p-5 rounded-2xl bg-[#7b61ff]/10 border border-[#7b61ff]/20 text-left flex items-center space-x-4 transition-all hover:bg-[#7b61ff]/20 group"
@@ -96,12 +157,15 @@ const AIPanel: React.FC<AIPanelProps> = ({ content, isNight, onClose, onUpdateOu
             <p className="text-[10px] font-black text-[#7b61ff] uppercase tracking-[0.3em] animate-pulse">Gemini 正在思考中...</p>
           </div>
         ) : response && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 pb-10">
             <div className="flex items-center justify-between">
-               <span className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">分析結果 RESULT</span>
-               <button onClick={() => setResponse('')} className="text-[9px] font-black text-[#7b61ff] uppercase tracking-widest">清除</button>
+               <span className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">AI 結果 RESULT</span>
+               <div className="flex space-x-2">
+                 <button onClick={handleApplyContent} className="text-[9px] font-black text-green-500 uppercase tracking-widest">套用內容</button>
+                 <button onClick={() => setResponse('')} className="text-[9px] font-black text-red-500 uppercase tracking-widest">清除</button>
+               </div>
             </div>
-            <div className={`p-6 rounded-3xl text-sm leading-relaxed border bg-white/5 border-white/5 text-slate-300 font-serif-editor`}>
+            <div className={`p-6 rounded-3xl text-sm leading-relaxed border bg-white/5 border-white/5 text-slate-300 font-serif-editor whitespace-pre-wrap shadow-inner`}>
               {response}
             </div>
           </div>

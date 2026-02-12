@@ -1,5 +1,5 @@
 
-import { WritingType, StructureType, StructureDefinition } from './types';
+import { WritingType, StructureType, StructureDefinition, SpineNodeId, SpineNodeStatus } from './types';
 
 export const COLORS = {
   PRIMARY: '#1E293B',
@@ -19,6 +19,26 @@ export const PROJECT_ICONS = [
   'fa-paper-plane', 'fa-diagram-project', 'fa-flask', 'fa-graduation-cap',
   'fa-clapperboard', 'fa-layer-group'
 ];
+
+export const SPINE_NODES_CONFIG: Record<SpineNodeId, { label: string, en: string, icon: string, description: string }> = {
+  [SpineNodeId.WRITING]: { label: '內容創作', en: 'WRITING', icon: 'fa-feather', description: '內容尚在草稿階段。' },
+  [SpineNodeId.STRUCTURAL_LOCK]: { label: '結構鎖定', en: 'STRUCTURAL LOCK', icon: 'fa-lock', description: '章節結構已確認，不再變動。' },
+  [SpineNodeId.EDITORIAL_READY]: { label: '編輯完成', en: 'EDITORIAL READY', icon: 'fa-spell-check', description: '內容已通過 AI 或人工審核。' },
+  [SpineNodeId.METADATA_COMPLETE]: { label: '出版資料', en: 'METADATA COMPLETE', icon: 'fa-tags', description: '標題、摘要與分類等資料齊備。' },
+  [SpineNodeId.ISBN_ASSIGNED]: { label: '識別碼分配', en: 'ISBN ASSIGNED', icon: 'fa-barcode', description: '已分配 ISBN 或確認無需 ISBN。' },
+  [SpineNodeId.COVER_READY]: { label: '封面備齊', en: 'COVER READY', icon: 'fa-image', description: '印刷或數位封面已生成。' },
+  [SpineNodeId.PREFLIGHT_CHECK]: { label: '出版前檢查', en: 'PREFLIGHT CHECK', icon: 'fa-clipboard-check', description: '執行最終出版合規性檢查。' },
+  [SpineNodeId.DISTRIBUTION_READY]: { label: '可分發', en: 'DISTRIBUTION READY', icon: 'fa-truck-loading', description: '準備進入分發通道。' },
+  [SpineNodeId.PUBLISHED]: { label: '正式出版', en: 'PUBLISHED', icon: 'fa-earth-americas', description: '作品已成功交付。' }
+};
+
+export const INITIAL_SPINE_NODES = (): Record<SpineNodeId, SpineNodeStatus> => {
+  const nodes = {} as Record<SpineNodeId, SpineNodeStatus>;
+  Object.values(SpineNodeId).forEach(id => {
+    nodes[id] = { id, isCompleted: id === SpineNodeId.WRITING };
+  });
+  return nodes;
+};
 
 export const AI_MODEL_GROUPS = [
   {

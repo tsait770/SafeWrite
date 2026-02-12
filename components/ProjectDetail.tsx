@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Project, Chapter, WritingModule, StructureType } from '../types';
-import { TEMPLATES, STRUCTURE_DEFINITIONS } from '../constants';
+import { Project, Chapter, WritingModule, StructureType, SpineNodeId, SpineNodeStatus } from '../types';
+import { TEMPLATES, STRUCTURE_DEFINITIONS, SPINE_NODES_CONFIG } from '../constants';
 import { geminiService } from '../services/geminiService';
 
 interface ProjectDetailProps {
@@ -174,6 +174,13 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
 
   const shouldHideList = project.structureType === StructureType.FREE;
 
+  // Publishing Spine Progress Calculation
+  const spineNodes = project.publishingSpine?.nodes || {};
+  // FIX: Cast Object.values to SpineNodeStatus[] to avoid unknown type error on property 'isCompleted'
+  const completedCount = (Object.values(spineNodes) as SpineNodeStatus[]).filter(n => n.isCompleted).length;
+  const totalSpineNodes = Object.keys(SPINE_NODES_CONFIG).length;
+  const spineProgress = (completedCount / totalSpineNodes) * 100;
+
   return (
     <div className="flex flex-col h-full animate-in slide-in-from-right duration-500 overflow-y-auto no-scrollbar pb-40">
       <header className="px-8 pt-6 pb-10">
@@ -251,6 +258,51 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
               )}
             </div>
          </div>
+
+         {/* Publishing Spine Dashboard Card */}
+         <section className="bg-gradient-to-br from-[#1E293B] to-black p-8 rounded-[44px] border border-white/10 shadow-2xl mb-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-600/5 rounded-full -mr-20 -mt-20 blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+            <div className="flex justify-between items-center mb-8 relative z-10">
+               <div>
+                  <h3 className="text-xl font-black text-white tracking-tight">出版線性主軸</h3>
+                  <p className="text-[9px] text-[#8E8E93] font-black uppercase tracking-[0.2em] mt-1">PUBLISHING SPINE PROGRESS</p>
+               </div>
+               <button 
+                onClick={onOpenExport}
+                className="px-6 py-2.5 bg-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest text-white shadow-lg active:scale-95 transition-all"
+               >
+                  推進流程
+               </button>
+            </div>
+
+            {/* Spine Progress Bar */}
+            <div className="space-y-3 relative z-10">
+               <div className="flex justify-between items-end px-1 text-[10px] font-black uppercase tracking-widest">
+                  <span className="text-gray-500">當前階段: <span className="text-blue-500">{project.publishingSpine?.currentNode || SpineNodeId.WRITING}</span></span>
+                  <span className="text-white">{Math.round(spineProgress)}%</span>
+               </div>
+               <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.6)] transition-all duration-1000" style={{ width: `${spineProgress}%` }} />
+               </div>
+            </div>
+
+            {/* Quick Nodes Preview */}
+            <div className="flex justify-between mt-8 relative z-10">
+               {Object.values(SpineNodeId).map((id, idx) => {
+                  const node = spineNodes[id];
+                  const isActive = id === project.publishingSpine?.currentNode;
+                  const isCompleted = node?.isCompleted;
+                  return (
+                    <div key={id} className="flex flex-col items-center space-y-2 flex-1">
+                       <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isCompleted ? 'bg-blue-500' : isActive ? 'bg-white animate-pulse scale-150' : 'bg-white/10'}`} />
+                       {idx % 4 === 0 && (
+                          <span className="text-[7px] font-black text-gray-600 uppercase tracking-tighter hidden sm:block">{id}</span>
+                       )}
+                    </div>
+                  );
+               })}
+            </div>
+         </section>
 
          <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#1C1C1E] p-6 rounded-[32px] border border-white/5 space-y-1">
