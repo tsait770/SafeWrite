@@ -30,6 +30,26 @@ export const geminiService = {
     throw new Error("No image data returned from model");
   },
 
+  // 使用 Imagen 4.0 生成高品質封面
+  async generateImagenCover(prompt: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateImages({
+      model: 'imagen-4.0-generate-001',
+      prompt: prompt,
+      config: {
+        numberOfImages: 1,
+        outputMimeType: 'image/jpeg',
+        aspectRatio: '3:4', // Standard book cover aspect ratio
+      },
+    });
+
+    if (response.generatedImages && response.generatedImages.length > 0) {
+      const base64Bytes = response.generatedImages[0].image.imageBytes;
+      return `data:image/jpeg;base64,${base64Bytes}`;
+    }
+    throw new Error("Imagen generation failed: No image returned");
+  },
+
   // 生成影片 (veo-3.1-fast-generate-preview)
   async generateVideo(prompt: string, aspectRatio: '16:9' | '9:16', base64Image?: string) {
     const ai = getAIClient();
@@ -128,7 +148,7 @@ export const geminiService = {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `請分析以下文稿的敘事結構、角色關係及研究重點。並以 JSON 格式回傳 nodes 陣列，每個 node 包含 id, label, type (CHARACTER, NARRATIVE, RESEARCH)：\n\n${content}`,
+      contents: `請分析以下文稿的敘事結構、角色關係及研究重點。並以 JSON格式回傳 nodes 陣列，每個 node 包含 id, label, type (CHARACTER, NARRATIVE, RESEARCH)：\n\n${content}`,
       config: { 
         responseMimeType: "application/json",
         responseSchema: {

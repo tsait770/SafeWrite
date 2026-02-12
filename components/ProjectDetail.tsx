@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Project, Chapter, WritingModule, StructureType } from '../types';
 import { TEMPLATES, STRUCTURE_DEFINITIONS } from '../constants';
+import { geminiService } from '../services/geminiService';
 
 interface ProjectDetailProps {
   project: Project;
@@ -18,6 +19,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const [newTitle, setNewTitle] = useState('');
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   
   // Inline editing states
   const [isEditingName, setIsEditingName] = useState(false);
@@ -92,6 +94,37 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const handleTogglePin = () => {
     onUpdateProject({ ...project, isPinned: !project.isPinned, updatedAt: Date.now() });
     setIsMenuOpen(false);
+  };
+
+  const handleGenerateCover = async () => {
+    setIsGeneratingCover(true);
+    try {
+      const prompt = `A cinematic, professional book cover for a book titled '${project.name}', genre: ${TEMPLATES[project.writingType]?.label || 'Creative Writing'}, dramatic lighting, award-winning illustration style, 8k resolution, artistic masterpiece.`;
+      const coverUrl = await geminiService.generateImagenCover(prompt);
+      
+      onUpdateProject({
+        ...project,
+        updatedAt: Date.now(),
+        publishingPayload: {
+          ...(project.publishingPayload || {
+            title: project.name,
+            subtitle: '',
+            author: 'Author Identity',
+            language: 'zh-TW',
+            description: '',
+            categories: [],
+            keywords: [],
+            contentFormats: ['epub', 'pdf', 'docx']
+          }),
+          coverImage: coverUrl
+        }
+      });
+    } catch (e) {
+      alert("封面生成失敗，請稍後再試。");
+      console.error(e);
+    } finally {
+      setIsGeneratingCover(false);
+    }
   };
 
   // Inline Name Editing Logic
@@ -248,6 +281,51 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
       </header>
 
       <main className="px-8 space-y-12">
+         {/* AI Cover Generation Section */}
+         <section className="space-y-6">
+            <div className="px-2">
+               <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-widest">作品視覺封面 BOOK COVER</h3>
+               <p className="text-[9px] text-blue-500 font-bold uppercase mt-1">IMAGEN 4.0 POWERED</p>
+            </div>
+            
+            <div className="relative aspect-[3/4] w-full max-w-[320px] mx-auto bg-[#1C1C1E] rounded-[44px] border border-white/5 overflow-hidden shadow-2xl group">
+               {project.publishingPayload?.coverImage ? (
+                  <>
+                    <img src={project.publishingPayload.coverImage} alt="Book Cover" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <button onClick={handleGenerateCover} disabled={isGeneratingCover} className="px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/20">
+                          重新生成封面
+                       </button>
+                    </div>
+                  </>
+               ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-10 text-center space-y-6">
+                     <div className="w-20 h-20 rounded-3xl bg-blue-600/10 flex items-center justify-center text-blue-500 text-3xl border border-blue-600/20">
+                        <i className="fa-solid fa-image"></i>
+                     </div>
+                     <div className="space-y-2">
+                        <h4 className="text-sm font-black text-white uppercase tracking-widest">尚未生成封面</h4>
+                        <p className="text-[10px] text-gray-500 leading-relaxed">使用 Gemini Imagen 技術根據您的書名生成高品質封面。</p>
+                     </div>
+                     <button 
+                        onClick={handleGenerateCover}
+                        disabled={isGeneratingCover}
+                        className="w-full py-4 bg-blue-600 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white shadow-xl active:scale-95 transition-all"
+                     >
+                        {isGeneratingCover ? '正在喚醒 Imagen...' : '一鍵生成 AI 封面'}
+                     </button>
+                  </div>
+               )}
+               
+               {isGeneratingCover && (
+                  <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-6 z-20">
+                     <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em] animate-pulse">正在渲染高品質視覺...</p>
+                  </div>
+               )}
+            </div>
+         </section>
+
          {!shouldHideList && (
           <section className="space-y-6">
             <div className="flex items-center justify-between px-2 mb-4">
