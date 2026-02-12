@@ -22,9 +22,13 @@
     "title": "Manuscript Title",
     "subtitle": "Story Tagline",
     "author": "Author Identity",
-    "language": "ISO 639-1",
-    "description": "Blurb or abstract for the work",
-    "categories": [],
+    "shortDescription": "Quick overview for store listings (max 200 characters)",
+    "longDescription": "Detailed abstract, back cover copy, and synopsis",
+    "bisacCategories": [
+      "FIC000000"
+    ],
+    "languageCode": "zh-TW",
+    "regionCode": "TW",
     "keywords": [],
     "isbn13": null,
     "coverImage": null,

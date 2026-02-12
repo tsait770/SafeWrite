@@ -105,9 +105,11 @@ export interface PublishingPayload {
   title: string;
   subtitle: string;
   author: string;
-  language: string;
-  description: string;
-  categories: string[];
+  shortDescription: string;
+  longDescription: string;
+  bisacCategories: string[];
+  languageCode: string;
+  regionCode: string;
   keywords: string[];
   isbn13?: string;
   coverImage?: string;

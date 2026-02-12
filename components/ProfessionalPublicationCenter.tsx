@@ -46,11 +46,13 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     author: project?.publishingPayload?.author || 'Author Identity',
     isbn: project?.publishingPayload?.isbn13 || '',
     pubYear: '2026',
-    language: project?.publishingPayload?.language || 'English',
+    languageCode: project?.publishingPayload?.languageCode || 'zh-TW',
     selectedFont: (project?.settings?.typography as 'serif' | 'sans') || 'serif',
     exportRange: 'all' as 'all' | 'custom',
     isPageNumbering: true,
-    isHeadersFooters: false
+    isHeadersFooters: false,
+    shortDescription: project?.publishingPayload?.shortDescription || '',
+    longDescription: project?.publishingPayload?.longDescription || ''
   });
 
   const handleUpdateConfig = (key: string, value: any) => {
@@ -64,11 +66,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     if (!channelRule.requiresISBN) return ISBNState.NOT_REQUIRED;
     return config.isbn.trim().length >= 10 ? ISBNState.PROVIDED : ISBNState.REQUIRED_UNSET;
   }, [channelRule, config.isbn]);
-
-  const hasConflict = useMemo(() => {
-    if (channelRule.isNonPublishing && project?.metadata?.includes('LIVE')) return true;
-    return false;
-  }, [channelRule, project]);
 
   const handleInitiateDelivery = () => {
     if (channelRule.requiresISBN && isbnState === ISBNState.REQUIRED_UNSET) {
@@ -123,7 +120,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
           <div className="w-12" />
         </header>
         
-        <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12 pb-48">
+        <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12 pb-64">
           <div className="text-center space-y-4 max-w-lg mx-auto">
              <h3 className="text-3xl font-black tracking-tighter">出版成熟度檢查</h3>
              <p className="text-sm text-gray-500 leading-relaxed font-medium">SafeWrite 協助您追蹤從草稿到全球發行的每一個關鍵節點。完成以下清單以解鎖分發功能。</p>
@@ -164,6 +161,23 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                   </div>
                 );
              })}
+          </div>
+
+          {/* New Section: AI Pre-Publish Compliance Intelligence */}
+          <div className="max-w-2xl mx-auto">
+             <button className="w-full p-8 bg-[#1A2538] border border-blue-500/20 rounded-[44px] flex items-center justify-between group hover:border-blue-500/50 transition-all shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
+                <div className="flex items-center space-x-5 relative z-10">
+                   <div className="w-14 h-14 rounded-3xl bg-blue-600/10 flex items-center justify-center text-blue-400 shadow-inner border border-blue-600/20">
+                      <i className="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+                   </div>
+                   <div className="text-left">
+                      <h4 className="text-[15px] font-black text-white uppercase tracking-[0.1em]">AI Pre-Publish Compliance Intelligence</h4>
+                      <p className="text-[11px] text-gray-400 font-medium mt-1">執行全書稿件合規性深度掃描與 AI 預審報告</p>
+                   </div>
+                </div>
+                <i className="fa-solid fa-chevron-right text-gray-700 group-hover:text-blue-500 group-hover:translate-x-1 transition-all relative z-10"></i>
+             </button>
           </div>
         </main>
 
@@ -219,8 +233,21 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         project={project}
         onBack={() => setStep(PubStep.TEMPLATE_GALLERY)}
         onNext={() => setStep(PubStep.DISTRIBUTION_GALLERY)}
-        config={config}
-        onUpdate={handleUpdateConfig}
+        config={{
+          author: config.author,
+          isbn: config.isbn,
+          pubYear: config.pubYear,
+          language: config.languageCode,
+          selectedFont: config.selectedFont,
+          exportRange: config.exportRange,
+          isPageNumbering: config.isPageNumbering,
+          isHeadersFooters: config.isHeadersFooters
+        }}
+        onUpdate={(key, val) => {
+          if (key === 'author') handleUpdateConfig('author', val);
+          else if (key === 'language') handleUpdateConfig('languageCode', val);
+          else handleUpdateConfig(key, val);
+        }}
       />
     );
   }
@@ -238,7 +265,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         <main className="flex-1 px-8 py-12 space-y-16">
           <div className="bg-gradient-to-br from-blue-600/10 to-transparent p-12 rounded-[56px] border border-blue-600/20 text-center">
              <h3 className="text-3xl font-black tracking-tight mb-3 text-white">From Draft to the World</h3>
-             <p className="text-sm text-gray-400 leading-relaxed font-medium max-w-lg mx-auto">Deliver your work through official global publishing channels. This is where your journey from manuscript to published work completes.</p>
+             <p className="text-sm text-gray-400 leading-relaxed font-medium max-w-lg mx-auto">Deliver your work through official global publishing channels.</p>
           </div>
 
           <div className="space-y-6">
@@ -247,7 +274,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
              </div>
 
              <div className="space-y-8">
-                {/* Amazon KDP (Kindle) */}
                 <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center space-x-6">
@@ -268,7 +294,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                     </button>
                 </div>
 
-                {/* Local Device */}
                 <div className="bg-[#121214] rounded-[56px] p-12 space-y-10 border border-white/5 shadow-2xl">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center space-x-6">
@@ -308,17 +333,18 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         </header>
         <main className="flex-1 overflow-y-auto px-8 py-10 no-scrollbar space-y-12">
           <section className="space-y-6">
-            <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">MANUSCRIPT DETAILS</label>
+            <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">AUTHOR INFORMATION</label>
             <div className="space-y-4">
-                <div className="bg-[#121214] h-20 rounded-3xl px-8 flex items-center border border-white/5"><h3 className="text-xl font-black tracking-tight">{project?.name}</h3></div>
                 <input value={config.author} onChange={e => handleUpdateConfig('author', e.target.value)} placeholder="Author Identity" className="w-full h-20 bg-[#121214] border border-white/5 rounded-3xl px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
                 <input value={config.isbn} onChange={e => handleUpdateConfig('isbn', e.target.value)} placeholder="ISBN-13 (Optional)" className="w-full h-20 bg-[#121214] border border-white/5 rounded-3xl px-8 text-sm font-bold text-gray-300 outline-none focus:border-blue-600" />
             </div>
           </section>
 
           <section className="space-y-6">
-             <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">DESCRIPTION / BLURB</label>
-             <textarea placeholder="What is your work about?" className="w-full h-64 bg-[#121214] border border-white/5 rounded-[44px] p-8 text-sm font-medium text-gray-400 outline-none focus:border-blue-600 resize-none leading-relaxed" />
+             <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">SHORT DESCRIPTION (STORE LISTING)</label>
+             <textarea value={config.shortDescription} onChange={e => handleUpdateConfig('shortDescription', e.target.value)} maxLength={200} placeholder="Quick blurb (max 200 chars)..." className="w-full h-32 bg-[#121214] border border-white/5 rounded-3xl p-8 text-sm font-medium text-gray-400 outline-none focus:border-blue-600 resize-none leading-relaxed" />
+             <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest px-2">LONG DESCRIPTION (SYNOPSIS)</label>
+             <textarea value={config.longDescription} onChange={e => handleUpdateConfig('longDescription', e.target.value)} placeholder="Full back cover copy and synopsis..." className="w-full h-64 bg-[#121214] border border-white/5 rounded-[44px] p-8 text-sm font-medium text-gray-400 outline-none focus:border-blue-600 resize-none leading-relaxed" />
           </section>
         </main>
         <footer className="p-8 pb-12 shrink-0">

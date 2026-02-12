@@ -26,7 +26,7 @@ const App: React.FC = () => {
         targetWordCount: 50000,
         metadata: 'EDITED 10M AGO',
         progress: 82,
-        color: '#FADE4B', 
+        color: '#FADE4B', // Solar Yellow
         icon: 'fa-feather-pointed',
         chapters: [{ 
           id: 'c1', 
@@ -57,7 +57,7 @@ const App: React.FC = () => {
         targetWordCount: 10000,
         metadata: 'EDITED 2H AGO',
         progress: 45,
-        color: '#FF6B2C', 
+        color: '#FF6B2C', // Vibrant Orange
         icon: 'fa-pen-nib',
         chapters: [],
         modules: [],
@@ -65,6 +65,50 @@ const App: React.FC = () => {
         createdAt: Date.now() - 172800000,
         updatedAt: Date.now() - 7200000,
         tags: ['TECH', 'BLOG'],
+        isPinned: false,
+        publishingSpine: {
+          currentNode: SpineNodeId.WRITING,
+          nodes: INITIAL_SPINE_NODES()
+        }
+      },
+      {
+        id: 'p3',
+        name: 'Neon Shadows',
+        writingType: WritingType.NOVEL,
+        structureType: StructureType.CHAPTER,
+        targetWordCount: 30000,
+        metadata: 'REVIEW PENDING',
+        progress: 95,
+        color: '#D4FF5F', // Neon Green
+        icon: 'fa-paper-plane',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'serif', fontSize: 'normal' },
+        createdAt: Date.now() - 259200000,
+        updatedAt: Date.now() - 14400000,
+        tags: ['CYBERPUNK', 'NOVEL'],
+        isPinned: false,
+        publishingSpine: {
+          currentNode: SpineNodeId.EDITORIAL_READY,
+          nodes: INITIAL_SPINE_NODES()
+        }
+      },
+      {
+        id: 'p4',
+        name: 'Echoes of Silence',
+        writingType: WritingType.DIARY,
+        structureType: StructureType.FREE,
+        targetWordCount: 5000,
+        metadata: 'CREATED YESTERDAY',
+        progress: 10,
+        color: '#B2A4FF', // Dreamy Purple
+        icon: 'fa-note-sticky',
+        chapters: [],
+        modules: [],
+        settings: { typography: 'serif', fontSize: 'normal' },
+        createdAt: Date.now() - 86400000,
+        updatedAt: Date.now() - 3600000,
+        tags: ['PERSONAL', 'DIARY'],
         isPinned: false,
         publishingSpine: {
           currentNode: SpineNodeId.WRITING,
@@ -216,7 +260,7 @@ const App: React.FC = () => {
       targetWordCount: 1000,
       metadata: '剛剛建立',
       progress: 0,
-      color: PROJECT_COLORS[2],
+      color: '#B2A4FF',
       icon: 'fa-note-sticky',
       chapters: [{
         id: 'c-' + Date.now(),

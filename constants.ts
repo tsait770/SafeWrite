@@ -10,6 +10,7 @@ export const COLORS = {
 };
 
 export const PROJECT_COLORS = [
+  '#FADE4B', '#FF6B2C', '#D4FF5F', '#B2A4FF', // Core brand palette v1.1
   '#827717', '#8D3B1B', '#687D2C', '#5C618A', '#7B61FF', '#8D4E2D',
   '#2E4D23', '#123E66', '#7F1E19', '#6E1B31', '#3E1854', '#083B32',
 ];

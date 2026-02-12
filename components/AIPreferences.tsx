@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { AIPreferences, SupportedLanguage } from '../types';
+import { AIPreferences } from '../types';
 import { geminiService } from '../services/geminiService';
 import { AI_MODEL_GROUPS } from '../constants';
 
@@ -14,29 +14,37 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
   const [activeTab, setActiveTab] = useState<'SETTINGS' | 'GUIDE'>('SETTINGS');
   const [testStatus, setTestStatus] = useState<'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR'>('IDLE');
   const [hasSelectedKey, setHasSelectedKey] = useState(false);
-  const [customModelId, setCustomModelId] = useState(preferences.customModel || '');
+  const [customModelId, setCustomModelId] = useState(preferences.customModel || 'gemini-3-pro-preview');
 
   // Check if an API key has already been selected via the official dialog
   useEffect(() => {
     const checkKeyStatus = async () => {
-      const selected = await (window as any).aistudio.hasSelectedApiKey();
-      setHasSelectedKey(selected);
+      if ((window as any).aistudio && (window as any).aistudio.hasSelectedApiKey) {
+        const selected = await (window as any).aistudio.hasSelectedApiKey();
+        setHasSelectedKey(selected);
+      }
     };
     checkKeyStatus();
   }, []);
 
   // Handle the official API key selection process
   const handleSelectKey = async () => {
-    await (window as any).aistudio.openSelectKey();
-    // Guideline: Assume successful after triggering openSelectKey
-    setHasSelectedKey(true);
+    if ((window as any).aistudio && (window as any).aistudio.openSelectKey) {
+      await (window as any).aistudio.openSelectKey();
+      // Guideline: Proceed immediately assuming success to avoid race conditions
+      setHasSelectedKey(true);
+    }
   };
 
   const handleTestConnection = async () => {
     setTestStatus('LOADING');
-    // Adheres to SDK rules: uses process.env.API_KEY which is updated by the aistudio selection
-    const success = await geminiService.testConnection(process.env.API_KEY || '', 'GOOGLE');
-    setTestStatus(success ? 'SUCCESS' : 'ERROR');
+    try {
+      // Create new instance per call for up-to-date key
+      const success = await geminiService.testConnection(process.env.API_KEY || '', 'GOOGLE');
+      setTestStatus(success ? 'SUCCESS' : 'ERROR');
+    } catch (e) {
+      setTestStatus('ERROR');
+    }
   };
 
   return (
@@ -71,95 +79,11 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
         {activeTab === 'SETTINGS' ? (
           <div className="space-y-12 max-w-2xl mx-auto">
             
-            {/* 1. AI Personality */}
-            <section className="space-y-4">
-              <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">寫作性格 AI PERSONALITY</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { id: 'CREATIVE', label: '創意無限', icon: 'fa-wand-magic-sparkles', color: 'text-purple-400' },
-                  { id: 'PROFESSIONAL', label: '專業嚴謹', icon: 'fa-briefcase', color: 'text-blue-400' },
-                  { id: 'ACADEMIC', label: '學術邏輯', icon: 'fa-graduation-cap', color: 'text-green-400' },
-                  { id: 'CASUAL', label: '輕鬆生活', icon: 'fa-mug-hot', color: 'text-orange-400' }
-                ].map((tone) => (
-                  <button 
-                    key={tone.id}
-                    onClick={() => onUpdate({ ...preferences, tone: tone.id as any })}
-                    className={`p-6 rounded-[2.5rem] border transition-all text-left flex items-center space-x-4 ${preferences.tone === tone.id ? 'bg-blue-600 border-blue-600 text-white' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
-                  >
-                    <i className={`fa-solid ${tone.icon} text-xl ${preferences.tone === tone.id ? 'text-white' : tone.color}`}></i>
-                    <span className="text-sm font-bold">{tone.label}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* 2. Model Config */}
-            <section className="space-y-4">
-              <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">模型配置 MODEL CONFIG</h3>
-              <div className="bg-[#1C1C1E] rounded-[2.5rem] border border-white/5 overflow-hidden">
-                <div className="p-6 border-b border-white/5 bg-white/5">
-                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">目前啟用模型: <span className="text-blue-500">{preferences.selectedModel}</span></p>
-                </div>
-                <div className="h-64 overflow-y-auto no-scrollbar p-4 space-y-6">
-                  {AI_MODEL_GROUPS.map((group) => (
-                    <div key={group.name} className="space-y-2">
-                       <h4 className="text-[9px] font-black text-gray-600 uppercase tracking-widest px-2">{group.name}</h4>
-                       <div className="grid grid-cols-1 gap-1">
-                          {group.models.map(model => (
-                            <button 
-                              key={model.id}
-                              onClick={() => onUpdate({ ...preferences, selectedModel: model.id })}
-                              className={`w-full flex items-center justify-between p-3 rounded-xl transition-all ${preferences.selectedModel === model.id ? 'bg-blue-600/10 text-white' : 'hover:bg-white/5 text-gray-500'}`}
-                            >
-                               <div className="flex items-center space-x-3">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${preferences.selectedModel === model.id ? 'bg-blue-500 shadow-[0_0_8px_#3b82f6]' : 'bg-transparent'}`}></span>
-                                  <span className="text-[13px] font-bold">{model.name}</span>
-                                  {model.isRecommended && <span className="text-[8px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded uppercase tracking-widest">PRO</span>}
-                               </div>
-                               {preferences.selectedModel === model.id && <i className="fa-solid fa-circle-check text-blue-500 text-xs"></i>}
-                            </button>
-                          ))}
-                       </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* 3. AI Usage Budget */}
+            {/* 1. AI Usage Budget */}
             <section className="space-y-4">
                <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em] px-2">使用預算管理 AI USAGE BUDGET</h3>
                <div className="bg-[#1C1C1E] p-8 rounded-[3rem] border border-white/5 space-y-8 shadow-xl">
-                  <div className="space-y-4">
-                     <div className="flex justify-between items-end">
-                        <div>
-                           <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">每月預算上限 (USD)</p>
-                           <p className="text-[9px] text-gray-600 font-bold mt-1">MONTHLY LIMIT</p>
-                        </div>
-                        <input 
-                           type="number"
-                           value={preferences.budgetLimit}
-                           onChange={(e) => onUpdate({...preferences, budgetLimit: parseFloat(e.target.value) || 0})}
-                           className="w-24 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-right text-lg font-black text-white focus:border-blue-600 outline-none"
-                        />
-                     </div>
-                     <div className="space-y-2">
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                           <span className="text-gray-500">已使用金額: <span className="text-white">${preferences.currentUsage.toFixed(2)}</span></span>
-                           <span className={preferences.currentUsage >= preferences.budgetLimit ? 'text-red-500' : 'text-blue-500'}>
-                              {Math.min(100, Math.floor((preferences.currentUsage / (preferences.budgetLimit || 1)) * 100))}%
-                           </span>
-                        </div>
-                        <div className="h-2 w-full bg-black rounded-full overflow-hidden">
-                           <div 
-                              className={`h-full transition-all duration-1000 ${preferences.currentUsage >= preferences.budgetLimit ? 'bg-red-500' : 'bg-blue-600'}`} 
-                              style={{ width: `${Math.min(100, (preferences.currentUsage / (preferences.budgetLimit || 1)) * 100)}%` }}
-                           />
-                        </div>
-                     </div>
-                  </div>
-
-                  <div className="space-y-4 pt-4 border-t border-white/5">
+                  <div className="space-y-4 pt-4">
                      <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">達預算上限時行為</label>
                      <div className="grid grid-cols-1 gap-2">
                         {[
@@ -184,16 +108,18 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
                </div>
             </section>
 
-            {/* 4. API Authorization - Adheres to official key selection protocol */}
+            {/* 2. API Authorization - Precisely matching the screenshot */}
             <section className="space-y-4">
               <div className="flex items-center justify-between px-2">
                 <h3 className="text-[11px] font-black text-slate-500 uppercase tracking-[0.2em]">API 授權與配置 API AUTHORIZATION</h3>
-                <span className="text-[8px] font-black bg-amber-500 text-black px-2 py-0.5 rounded uppercase tracking-widest">Required</span>
+                <span className="text-[8px] font-black bg-[#FADE4B] text-black px-2 py-0.5 rounded-sm uppercase tracking-widest">REQUIRED</span>
               </div>
-              <div className="bg-[#1C1C1E] p-8 rounded-[3rem] border border-white/5 space-y-8">
+              
+              <div className="bg-[#1C1C1E] p-8 rounded-[3rem] border border-white/5 space-y-8 shadow-2xl">
                 <div className="flex flex-col space-y-6">
-                   <div className="p-6 bg-blue-600/5 border border-blue-500/20 rounded-3xl">
-                      <p className="text-xs text-gray-400 leading-relaxed font-medium">
+                   {/* Info Box */}
+                   <div className="p-8 bg-[#1A2538] border border-blue-500/20 rounded-[2rem]">
+                      <p className="text-[13px] text-gray-400 leading-relaxed font-medium">
                         為了使用高品質模型（如 Gemini 3 Pro）與視訊生成功能，您必須選擇一個來自付費 Google Cloud 專案的 API Key。
                       </p>
                       <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="inline-block mt-4 text-[10px] font-black text-blue-400 uppercase tracking-widest border-b border-blue-400/30 hover:text-blue-300">
@@ -201,37 +127,45 @@ const AIPreferencesPage: React.FC<AIPreferencesProps> = ({ preferences, onUpdate
                       </a>
                    </div>
 
+                   {/* Main Action Button - Green if successful */}
                    <button 
                       onClick={handleSelectKey}
-                      className={`w-full h-16 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] flex items-center justify-center space-x-3 transition-all ${
-                        hasSelectedKey ? 'bg-green-500 text-white shadow-lg' : 'bg-blue-600 text-white shadow-lg'
+                      className={`w-full h-20 rounded-[1.5rem] font-black text-[12px] uppercase tracking-[0.3em] flex items-center justify-center space-x-3 transition-all ${
+                        hasSelectedKey ? 'bg-[#22C55E] text-white shadow-lg' : 'bg-blue-600 text-white shadow-lg'
                       }`}
                     >
-                      <i className={`fa-solid ${hasSelectedKey ? 'fa-circle-check' : 'fa-key'}`}></i>
-                      <span>{hasSelectedKey ? '已授權計費 API Key' : '選擇 Google Cloud API Key'}</span>
+                      {hasSelectedKey && <i className="fa-solid fa-circle-check text-base"></i>}
+                      <span>{hasSelectedKey ? '已授權計費 API KEY' : '選擇 Google Cloud API KEY'}</span>
                     </button>
 
-                   <div className="space-y-2 pt-4">
-                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">自定義 Model ID (選填)</label>
-                      <input 
-                        type="text"
-                        value={customModelId}
-                        onChange={(e) => {
-                          setCustomModelId(e.target.value);
-                          onUpdate({...preferences, customModel: e.target.value});
-                        }}
-                        placeholder="gemini-3-pro-preview"
-                        className="w-full h-14 bg-black/40 border border-white/5 rounded-2xl px-5 text-sm font-bold text-white outline-none focus:border-blue-600 transition-colors"
-                      />
+                   {/* Custom Model ID Input */}
+                   <div className="space-y-3 pt-2">
+                      <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest ml-1">自定義 MODEL ID (選填)</label>
+                      <div className="relative group">
+                        <input 
+                          type="text"
+                          value={customModelId}
+                          onChange={(e) => {
+                            setCustomModelId(e.target.value);
+                            onUpdate({...preferences, customModel: e.target.value});
+                          }}
+                          placeholder="gemini-3-pro-preview"
+                          className="w-full h-16 bg-[#121212] border border-white/5 rounded-2xl px-6 text-sm font-black text-white outline-none focus:border-blue-600 transition-all placeholder-white/10"
+                        />
+                        <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <i className="fa-solid fa-pen text-[10px] text-gray-600"></i>
+                        </div>
+                      </div>
                    </div>
 
+                   {/* Test Connection Button */}
                    <button 
                       onClick={handleTestConnection}
                       disabled={!hasSelectedKey || testStatus === 'LOADING'}
-                      className={`w-full h-14 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center space-x-3 transition-all ${
+                      className={`w-full h-16 rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] flex items-center justify-center space-x-3 transition-all ${
                         testStatus === 'SUCCESS' ? 'bg-green-500/10 text-green-500 border border-green-500/20' :
                         testStatus === 'ERROR' ? 'bg-red-500/10 text-red-500 border border-red-500/20' :
-                        'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                        'bg-[#2C2C2E]/60 text-gray-400 border border-white/5 hover:bg-white/5'
                       }`}
                     >
                       {testStatus === 'LOADING' ? (

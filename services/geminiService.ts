@@ -1,6 +1,8 @@
 
+// @google/genai SDK implementation for SafeWrite core AI services.
 import { GoogleGenAI, Type } from "@google/genai";
 
+// Initialize AI client with environment API key.
 const getAIClient = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API Key is missing");
@@ -39,7 +41,7 @@ export const geminiService = {
       config: {
         numberOfImages: 1,
         outputMimeType: 'image/jpeg',
-        aspectRatio: '3:4', // Standard book cover aspect ratio
+        aspectRatio: '3:4', 
       },
     });
 
@@ -50,36 +52,39 @@ export const geminiService = {
     throw new Error("Imagen generation failed: No image returned");
   },
 
-  // 生成影片 (veo-3.1-fast-generate-preview)
-  async generateVideo(prompt: string, aspectRatio: '16:9' | '9:16', base64Image?: string) {
+  // 出版導向審計功能
+  async auditManuscript(content: string, type: 'tone' | 'pacing' | 'style') {
     const ai = getAIClient();
-    let operation = await ai.models.generateVideos({
-      model: 'veo-3.1-fast-generate-preview',
-      prompt: prompt,
-      ...(base64Image ? {
-        image: {
-          imageBytes: base64Image,
-          mimeType: 'image/png'
-        }
-      } : {}),
-      config: {
-        numberOfVideos: 1,
-        resolution: '720p',
-        aspectRatio: aspectRatio
-      }
+    const promptMap = {
+      tone: "請針對以下文稿進行「語氣校對」。分析敘事者口吻是否一致，並指出語氣突兀的片段與改進建議。",
+      pacing: "請針對以下文稿進行「節奏一致性檢查」。分析情節推進的快慢，是否有拖沓或跳躍過快的部分。",
+      style: "請針對以下文稿進行「書籍體例檢查」。檢查標點符號規範、段落排版邏輯，確保符合專業出版美學。"
+    };
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: `${promptMap[type]}\n\n${content}`,
     });
+    return response.text || "審計結果暫不可用。";
+  },
 
-    while (!operation.done) {
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      operation = await ai.operations.getVideosOperation({ operation });
-    }
+  // 封面視覺合規性 AI 檢測
+  async checkCoverCompliance(base64Image: string, title: string) {
+    const ai = getAIClient();
+    const prompt = `作為專業印刷與出版專家，請分析這張封面圖（針對書名「${title}」）：
+    1. 視覺中心是否避開了底部的「條碼預留區」（右下角 3x2cm 區域）？
+    2. 文字與背景的對比度是否足以在實體書架辨識？
+    3. 整體設計是否具有市場競爭力？
+    請給出精簡的建議。`;
 
-    const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-    if (!downloadLink) throw new Error("Video generation failed: No download link");
-    
-    const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: [
+        { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
+        { text: prompt }
+      ]
+    });
+    return response.text || "合規檢測完成。";
   },
 
   async analyzeManuscript(content: string) {
@@ -100,13 +105,13 @@ export const geminiService = {
     return response.text || "大綱提取為空。";
   },
 
-  async analyzeCharacters(content: string) {
+  async translateText(content: string, targetLanguage: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: `請分析以下文稿中的主要角色心理建模。描述其性格特徵、動機及成長弧線：\n\n${content}`,
+      model: 'gemini-3-flash-preview',
+      contents: `You are a professional translator. Translate the following text to ${targetLanguage}. Maintain the original tone, formatting, and nuances. Only return the translated text without any explanation:\n\n${content}`,
     });
-    return response.text || "角色分析為空。";
+    return response.text || content;
   },
 
   async summarizeText(content: string) {
@@ -127,38 +132,28 @@ export const geminiService = {
     return response.text || content;
   },
 
-  async translateText(content: string, targetLanguage: string) {
-    const ai = getAIClient();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `You are a professional translator. Translate the following text to ${targetLanguage}. Maintain the original tone, formatting, and nuances. Only return the translated text without any explanation:\n\n${content}`,
-    });
-    return response.text || content;
+  // 測試連線功能 (Fix for components/AIPreferences.tsx)
+  async testConnection(apiKey: string, provider: string) {
+    if (provider !== 'GOOGLE') return true;
+    try {
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: 'ping',
+      });
+      return !!response.text;
+    } catch (e) {
+      return false;
+    }
   },
 
-  async transcribeAudio(base64Data: string, mimeType: string) {
-    const ai = getAIClient();
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: [
-        {
-          inlineData: {
-            mimeType: mimeType,
-            data: base64Data
-          }
-        },
-        { text: "請準確地將這段音檔轉換為繁體中文文字。僅回傳轉換後的文字內容，不需要任何解釋或引號。" }
-      ]
-    });
-    return response.text || "";
-  },
-
+  // 提取專案結構 (Fix for components/StructureGraph.tsx)
   async analyzeProjectStructure(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `請分析以下文稿的敘事結構、角色關係及研究重點。並以 JSON格式回傳 nodes 陣列，每個 node 包含 id, label, type (CHARACTER, NARRATIVE, RESEARCH)：\n\n${content}`,
-      config: { 
+      contents: `請分析以下內容的敘事結構，並提取出核心的主題、人物及關鍵情節點。請以 JSON 格式回傳，包含一個 nodes 陣列，每個物件包含 id, label, type (其中 type 必須是 CHARACTER, NARRATIVE, RESEARCH 之一)。\n\n${content}`,
+      config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -170,7 +165,7 @@ export const geminiService = {
                 properties: {
                   id: { type: Type.STRING },
                   label: { type: Type.STRING },
-                  type: { type: Type.STRING, description: 'CHARACTER, NARRATIVE, or RESEARCH' }
+                  type: { type: Type.STRING }
                 },
                 required: ['id', 'label', 'type']
               }
@@ -183,31 +178,20 @@ export const geminiService = {
     try {
       return JSON.parse(response.text || '{"nodes": []}');
     } catch (e) {
-      console.error("Failed to parse JSON for project structure:", e);
       return { nodes: [] };
     }
   },
 
+  // 圖片文字擷取 (Fix for components/capture/ScanModule.tsx)
   async extractTextFromImage(base64Data: string) {
     const ai = getAIClient();
-    const imagePart = {
-      inlineData: {
-        mimeType: 'image/jpeg',
-        data: base64Data,
-      },
-    };
-    const prompt = `你是一個世界級的 OCR 與文檔視覺結構分析專家。請執行深度文本提取任務：
-1. **精確提取**：捕捉所有文字，包含極小字體與特殊符號。
-2. **自動語言偵測**：識別文本主語言（如：繁體中文、English 等），並提供 0.0 至 1.0 的信心分數。
-3. **邏輯層級分析**：識別文檔的視覺邏輯，區分標題、次標題、正文與引用區塊。
-4. **Markdown 保存**：在正文片段中保留基本的 Markdown 語法（如 - 列表、** 粗體）。
-5. **語義分類**：將文字劃分為「title (大標)」、「heading (小標)」、「body (正文)」、「quote (引用)」或「metadata (腳註)」。
-請嚴格以 JSON 格式回傳結果。`;
-    
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: { parts: [imagePart, { text: prompt }] },
-      config: { 
+      model: 'gemini-3-flash-preview',
+      contents: [
+        { inlineData: { mimeType: 'image/jpeg', data: base64Data } },
+        { text: "請辨識圖片中的所有文字，並將其拆分為邏輯段落。回傳 JSON 格式，包含 detectedLanguage (string), languageConfidence (number, 0-1), 以及 segments 陣列 (每個物件包含 text, type, confidence)。" }
+      ],
+      config: {
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -220,7 +204,7 @@ export const geminiService = {
                 type: Type.OBJECT,
                 properties: {
                   text: { type: Type.STRING },
-                  type: { type: Type.STRING, description: "One of: title, heading, body, quote, metadata" },
+                  type: { type: Type.STRING },
                   confidence: { type: Type.NUMBER }
                 },
                 required: ['text', 'type', 'confidence']
@@ -231,28 +215,23 @@ export const geminiService = {
         }
       }
     });
-    
     try {
-      return JSON.parse(response.text || '{"detectedLanguage": "Unknown", "languageConfidence": 0, "segments": []}');
+      return JSON.parse(response.text || '{}');
     } catch (e) {
-      return { 
-        detectedLanguage: "偵測失敗", 
-        languageConfidence: 0, 
-        segments: [{ text: response.text || "解析異常", type: "body", confidence: 0.5 }] 
-      };
+      throw new Error("OCR 分析失敗");
     }
   },
 
-  async testConnection(apiKey: string, provider: string) {
-    try {
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: "Hello, connection test. Respond with 'OK'.",
-      });
-      return response.text?.includes('OK');
-    } catch (e) {
-      return false;
-    }
+  // 語音轉錄功能 (Fix for components/capture/VoiceModule.tsx)
+  async transcribeAudio(base64Data: string, mimeType: string) {
+    const ai = getAIClient();
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: [
+        { inlineData: { mimeType, data: base64Data } },
+        { text: "請將這段錄音內容精確地轉錄為文字。" }
+      ]
+    });
+    return response.text || "";
   }
 };
