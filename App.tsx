@@ -443,6 +443,8 @@ const App: React.FC = () => {
               projects={state.projects} 
               onSaveToProject={handleSaveToProject} 
               onSaveToNotebook={handleCreateNoteFromCapture}
+              membership={state.membership}
+              onUpgrade={() => setActiveOverlay('SUBSCRIPTION')}
             />
           )
         ) : state.activeTab === AppTab.PROJECT_DETAIL ? (

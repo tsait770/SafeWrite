@@ -109,7 +109,6 @@ export interface VersionSnapshot {
   content: string;
   title: string;
   type: SnapshotType;
-  milestoneName?: string;
 }
 
 export interface StructureUnit {

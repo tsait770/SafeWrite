@@ -153,9 +153,28 @@ const DistributionHub: React.FC<DistributionHubProps> = ({
                                    </div>
                                 </div>
                                 
-                                <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-all">
-                                   <button onClick={() => handleBlockAction(block.id, 'summarize')} className="p-2 bg-blue-600/10 text-blue-400 rounded-lg hover:bg-blue-600 hover:text-white transition-all"><i className="fa-solid fa-compress text-xs"></i></button>
-                                   <button onClick={() => handleBlockAction(block.id, 'rewrite')} className="p-2 bg-purple-600/10 text-purple-400 rounded-lg hover:bg-purple-600 hover:text-white transition-all"><i className="fa-solid fa-wand-sparkles text-xs"></i></button>
+                                <div className="flex items-center space-x-2 shrink-0">
+                                   <button 
+                                     onClick={() => handleBlockAction(block.id, 'copy')} 
+                                     className="flex items-center space-x-2 px-3 py-1.5 bg-white/5 text-gray-400 rounded-xl hover:bg-white/10 transition-all active:scale-95"
+                                   >
+                                      <i className="fa-solid fa-copy text-[10px]"></i>
+                                      <span className="text-[10px] font-bold">複製</span>
+                                   </button>
+                                   <button 
+                                     onClick={() => handleBlockAction(block.id, 'summarize')} 
+                                     className="flex items-center space-x-2 px-3 py-1.5 bg-blue-600/10 text-blue-400 rounded-xl hover:bg-blue-600/20 transition-all active:scale-95"
+                                   >
+                                      <i className="fa-solid fa-compress text-[10px]"></i>
+                                      <span className="text-[10px] font-bold">AI 摘要</span>
+                                   </button>
+                                   <button 
+                                     onClick={() => handleBlockAction(block.id, 'rewrite')} 
+                                     className="flex items-center space-x-2 px-3 py-1.5 bg-purple-600/10 text-purple-400 rounded-xl hover:bg-purple-600/20 transition-all active:scale-95"
+                                   >
+                                      <i className="fa-solid fa-wand-sparkles text-[10px]"></i>
+                                      <span className="text-[10px] font-bold">AI 改寫</span>
+                                   </button>
                                 </div>
                              </div>
                              
