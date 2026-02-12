@@ -233,3 +233,14 @@ export interface AppState {
 
 export type ImageSize = '1K' | '2K' | '4K';
 export type VideoAspectRatio = '16:9' | '9:16';
+
+export interface OCRBlock {
+  id: string;
+  text: string;
+  type: string;
+  confidence: number;
+  isSelected: boolean;
+  isProcessing?: boolean;
+}
+
+export type CaptureMode = 'IDLE' | 'SCAN_SELECT' | 'CAMERA_ACTIVE' | 'VOICE_RECORDING' | 'QUICK_NOTE_INPUT';
