@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings, BackupSettings, CreditCard } from './types';
 import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS, TEMPLATE_STRUCTURE_MAP } from './constants';
@@ -154,6 +153,7 @@ const App: React.FC = () => {
 
   const [activeOverlay, setActiveOverlay] = useState<'NONE' | 'TIMELINE' | 'GRAPH' | 'EXPORT' | 'COLLABORATION' | 'SUBSCRIPTION' | 'CHECKOUT'>('NONE');
   const [selectedPlan, setSelectedPlan] = useState<{ id: MembershipLevel, name: string, price: string } | null>(null);
+  const [isUIHidden, setIsUIHidden] = useState(false);
   
   // Liquid Edge-Swipe States
   const [swipeProgress, setSwipeProgress] = useState(0); 
@@ -383,7 +383,7 @@ const App: React.FC = () => {
     }
   };
 
-  const isBottomNavVisible = (activeOverlay === 'NONE' && swipeProgress === 0) && (state.activeTab !== AppTab.WRITE || !currentChapter);
+  const isBottomNavVisible = !isUIHidden && (activeOverlay === 'NONE' && swipeProgress === 0) && (state.activeTab !== AppTab.WRITE || !currentChapter);
 
   // Dynamic Styles for Liquid Swipe
   const editorScale = 1 - swipeProgress * 0.04; 
@@ -398,7 +398,7 @@ const App: React.FC = () => {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {state.activeTab !== AppTab.WRITE && (
+      {state.activeTab !== AppTab.WRITE && !isUIHidden && (
         <header className="fixed top-0 w-full z-[100] h-24 pt-[env(safe-area-inset-top,0px)] flex items-end justify-between px-8 pb-4 bg-black/60 backdrop-blur-3xl border-b border-white/5">
           <div className="flex flex-col">
             <h1 className="text-2xl font-black tracking-tighter text-white">SafeWrite</h1>
@@ -428,7 +428,7 @@ const App: React.FC = () => {
         onClick={() => {
           if (activeOverlay === 'TIMELINE') closeTimeline();
         }}
-        className={`flex-1 overflow-y-auto no-scrollbar ${(state.activeTab === AppTab.WRITE && currentChapter) ? 'p-0' : (state.activeTab === AppTab.WRITE ? 'p-0' : 'pt-24 pb-32')}`}
+        className={`flex-1 overflow-y-auto no-scrollbar ${(state.activeTab === AppTab.WRITE && currentChapter) || isUIHidden ? 'p-0' : (state.activeTab === AppTab.WRITE ? 'p-0' : 'pt-24 pb-32')}`}
       >
         {state.activeTab === AppTab.LIBRARY ? (
           state.appMode === AppMode.REPOSITORY ? (
@@ -445,6 +445,7 @@ const App: React.FC = () => {
               onSaveToNotebook={handleCreateNoteFromCapture}
               membership={state.membership}
               onUpgrade={() => setActiveOverlay('SUBSCRIPTION')}
+              onToggleFullscreenUI={setIsUIHidden}
             />
           )
         ) : state.activeTab === AppTab.PROJECT_DETAIL ? (

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { geminiService } from '../../services/geminiService';
 import { OCRBlock, CaptureMode } from '../../types';
@@ -112,18 +111,35 @@ const VoiceModule: React.FC<VoiceModuleProps> = ({
   if (mode !== 'VOICE_RECORDING') return null;
 
   return (
-    <div className="fixed inset-0 z-[2000] bg-[#0A0A0B] flex flex-col items-center justify-center p-12 animate-in zoom-in duration-500">
-       <div className="relative w-72 h-72 mb-20 flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full bg-[#B2A4FF]/10 animate-ping"></div>
-          <div className="absolute inset-4 rounded-full bg-[#B2A4FF]/20 animate-pulse"></div>
-          <div className="relative w-40 h-40 bg-[#B2A4FF] rounded-full flex items-center justify-center shadow-[0_0_60px_#B2A4FF] shadow-purple-500/20">
-             <i className="fa-solid fa-microphone text-white text-6xl"></i>
+    <div className="fixed inset-0 z-[105] bg-black flex flex-col items-center justify-center px-12 animate-in fade-in duration-500">
+       {/* 精確匹配參考圖 2：同心波紋與麥克風 */}
+       <div className="relative w-[340px] h-[340px] mb-20 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full bg-[#B2A4FF]/[0.03] animate-[pulse_3s_infinite]"></div>
+          <div className="absolute inset-10 rounded-full bg-[#B2A4FF]/[0.08]"></div>
+          <div className="absolute inset-20 rounded-full bg-[#B2A4FF]/[0.15] animate-[ping_4s_infinite]"></div>
+          <div className="relative w-[120px] h-[120px] bg-[#B2A4FF] rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(178,164,255,0.4)]">
+             <i className="fa-solid fa-microphone text-white text-5xl"></i>
           </div>
        </div>
-       <h2 className="text-3xl font-black text-white tracking-tighter text-center">正在聆聽靈感...</h2>
-       <p className="text-5xl font-black text-white/20 mt-4 tabular-nums">{formatTime(recordingTime)}</p>
-       <p className="text-[12px] text-[#B2A4FF] font-black uppercase tracking-[0.4em] mt-6 animate-pulse">TRANSCRIBING WITH GEMINI AI</p>
-       <button onClick={stopVoiceRecording} className="mt-28 w-full py-7 bg-white rounded-[44px] text-black font-black text-sm uppercase tracking-[0.4em] active:scale-95 transition-all shadow-2xl">停止並完成擷取</button>
+
+       {/* 狀態文字與計時器 */}
+       <div className="text-center space-y-6">
+          <h2 className="text-[28px] font-black text-white tracking-tighter">正在聆聽靈感...</h2>
+          <p className="text-[52px] font-black text-gray-700/80 tabular-nums leading-none">{formatTime(recordingTime)}</p>
+          <p className="text-[11px] text-[#B2A4FF] font-black uppercase tracking-[0.4em] pt-6 opacity-80 animate-pulse">
+            TRANSCRIBING WITH GEMINI AI
+          </p>
+       </div>
+
+       {/* 底部按鈕：位置經過調整以避開底部導航列 */}
+       <div className="absolute bottom-[calc(8rem+env(safe-area-inset-bottom,0px))] w-full px-12">
+          <button 
+            onClick={stopVoiceRecording} 
+            className="w-full py-8 bg-white rounded-full text-black font-black text-[13px] uppercase tracking-[0.3em] shadow-[0_20px_60px_rgba(255,255,255,0.15)] active:scale-[0.98] transition-all"
+          >
+            停止 並 完成 擷取
+          </button>
+       </div>
     </div>
   );
 };
