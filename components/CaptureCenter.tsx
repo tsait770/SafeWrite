@@ -40,46 +40,48 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
     <div className="flex flex-col h-full bg-black text-white px-8 pb-40 overflow-y-auto no-scrollbar">
       
       {mode === 'IDLE' && (
-        <div className="space-y-12 py-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-10 py-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          
+          {/* Main Scan Card - Precise match for screenshot 2 */}
           <button 
             onClick={() => setMode('SCAN_SELECT')}
-            className="w-full h-[280px] bg-[#D4FF5F] rounded-[44px] p-10 flex flex-col justify-between items-start text-black shadow-[0_30px_60px_rgba(212,255,95,0.15)] active:scale-98 transition-all relative overflow-hidden"
+            className="w-full h-[240px] bg-[#D4FF5F] rounded-[44px] p-10 flex flex-col justify-between items-start text-black shadow-[0_30px_60px_rgba(212,255,95,0.15)] active:scale-[0.98] transition-all relative overflow-hidden"
           >
             <div className="flex justify-between w-full items-start">
-               <div className="w-14 h-14 rounded-2xl bg-black/5 flex items-center justify-center">
-                  <i className="fa-solid fa-camera text-3xl"></i>
+               <div className="w-14 h-14 rounded-2xl bg-black/10 flex items-center justify-center">
+                  <i className="fa-solid fa-camera text-2xl"></i>
                </div>
-               <span className="text-5xl font-black tracking-tighter opacity-100 uppercase">Scan</span>
+               <span className="text-5xl font-black tracking-tighter opacity-100 uppercase mt-[-4px]">SCAN</span>
             </div>
             <div className="text-left z-10">
               <h4 className="text-4xl font-black leading-[1.1] tracking-tighter">Scan<br/>Document</h4>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mt-3">PRO OCR ENGINE</p>
             </div>
-            <i className="fa-solid fa-expand absolute -bottom-10 -right-10 text-[180px] opacity-5 pointer-events-none"></i>
           </button>
 
+          {/* Split row - Precise match for screenshot 2 */}
           <div className="grid grid-cols-2 gap-6">
             <button 
               onClick={() => setMode('VOICE_RECORDING')}
-              className="bg-[#B2A4FF] rounded-[44px] aspect-square p-8 flex flex-col justify-between items-start text-[#121212] shadow-[0_30px_60px_rgba(178,164,255,0.15)] active:scale-98 transition-all"
+              className="bg-[#B2A4FF] rounded-[44px] aspect-square p-8 flex flex-col justify-between items-start text-[#121212] shadow-[0_30px_60px_rgba(178,164,255,0.15)] active:scale-[0.98] transition-all relative"
             >
               <div className="flex justify-end w-full">
-                <i className="fa-solid fa-microphone-lines text-3xl opacity-30"></i>
+                <i className="fa-solid fa-microphone-lines text-2xl opacity-20"></i>
               </div>
               <div className="text-left">
-                <h4 className="text-2xl font-black leading-tight tracking-tight">Voice<br/>Note</h4>
+                <h4 className="text-2xl font-black leading-tight tracking-tighter">Voice<br/>Note</h4>
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mt-2">TRANSCRIBE</p>
               </div>
             </button>
             <button 
               onClick={() => setMode('QUICK_NOTE_INPUT')}
-              className="bg-[#FF6B2C] rounded-[44px] aspect-square p-8 flex flex-col justify-between items-start text-white shadow-[0_30px_60px_rgba(255,107,44,0.15)] active:scale-98 transition-all"
+              className="bg-[#FF6B2C] rounded-[44px] aspect-square p-8 flex flex-col justify-between items-start text-white shadow-[0_30px_60px_rgba(255,107,44,0.15)] active:scale-[0.98] transition-all relative"
             >
               <div className="flex justify-end w-full">
-                <i className="fa-solid fa-pen-to-square text-3xl opacity-30"></i>
+                <i className="fa-solid fa-pen-to-square text-2xl opacity-30"></i>
               </div>
               <div className="text-left">
-                <h4 className="text-2xl font-black leading-tight tracking-tight">Quick<br/>Note</h4>
+                <h4 className="text-2xl font-black leading-tight tracking-tighter">Quick<br/>Note</h4>
                 <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 mt-2">DRAFT NOW</p>
               </div>
             </button>
@@ -87,28 +89,7 @@ const CaptureCenter: React.FC<CaptureCenterProps> = ({ projects, onSaveToProject
 
           <section className="space-y-6">
              <div className="flex items-center justify-between px-2">
-                <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">PRO AI VISUALS</h3>
-             </div>
-             <button 
-                onClick={() => setMode('IMAGE_GEN')}
-                className="w-full bg-[#1C1C1E] p-8 rounded-[44px] border border-white/5 flex items-center justify-between group active:scale-[0.98] transition-all"
-             >
-                <div className="flex items-center space-x-6">
-                   <div className="w-16 h-16 rounded-3xl bg-blue-600/10 flex items-center justify-center text-blue-500 text-3xl border border-blue-600/20">
-                      <i className="fa-solid fa-wand-magic-sparkles"></i>
-                   </div>
-                   <div className="text-left">
-                      <h4 className="text-xl font-black text-white tracking-tight">AI Image Gen</h4>
-                      <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">GEMINI 3 PRO ENGINE</p>
-                   </div>
-                </div>
-                <i className="fa-solid fa-chevron-right text-gray-800 group-hover:text-blue-500 group-hover:translate-x-1 transition-all"></i>
-             </button>
-          </section>
-
-          <section className="space-y-6">
-             <div className="flex items-center justify-between px-2">
-                <h3 className="text-[11px] font-black text-gray-500 uppercase tracking-[0.25em]">RECENT CAPTURES</h3>
+                <h3 className="text-[11px] font-black text-gray-700 uppercase tracking-[0.25em]">RECENT CAPTURES</h3>
                 <button className="bg-white/5 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-blue-500">VIEW ALL</button>
              </div>
              <div className="space-y-4">

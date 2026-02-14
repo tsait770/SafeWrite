@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Project, WritingType, StructureUnit, StructureType } from '../types';
 import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES, TEMPLATE_STRUCTURE_MAP, STRUCTURE_DEFINITIONS } from '../constants';
@@ -16,18 +15,17 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   const [isTemplatesExpanded, setIsTemplatesExpanded] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   
-  // Directly edit name state
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [tempName, setTempName] = useState('');
 
-  // SafeWrite Core Palette: Strictly enforced 4-color scheme from Mission Book v1.1
-  const cardColors = ['#FADE4B', '#FF6B2C', '#D4FF5F', '#B2A4FF'];
+  // Core brand palette v1.1 for default cards
+  const coreBrandColors = ['#FADE4B', '#FF6B2C', '#D4FF5F', '#B2A4FF'];
 
   const [formData, setFormData] = useState({
     name: '',
     type: WritingType.NOVEL,
     targetWordCount: 5000,
-    color: '#FADE4B',
+    color: PROJECT_COLORS[3], // Default to Lavender per screenshot
     icon: PROJECT_ICONS[0]
   });
 
@@ -40,7 +38,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
   }, []);
 
   const resetForm = () => {
-    setFormData({ name: '', type: WritingType.NOVEL, targetWordCount: 5000, color: '#FADE4B', icon: PROJECT_ICONS[0] });
+    setFormData({ name: '', type: WritingType.NOVEL, targetWordCount: 5000, color: PROJECT_COLORS[3], icon: PROJECT_ICONS[0] });
     setIsCreating(false);
     setIsTemplatesExpanded(false);
   };
@@ -177,8 +175,8 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
         {/* Balanced Vertical Arrangement Stack */}
         <div className="stack-container relative">
           {sortedProjects.map((proj, idx) => {
-            // Priority: Use the actual project color if it matches mandated palette, otherwise cycle
-            const displayColor = cardColors.includes(proj.color) ? proj.color : cardColors[idx % cardColors.length];
+            // Priority: Use actual project color, else cycle through core palette
+            const displayColor = proj.color || coreBrandColors[idx % coreBrandColors.length];
             return (
               <div 
                 key={proj.id} 
@@ -269,7 +267,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </div>
                   </div>
                   
-                  {/* Bottom Stats & Progress - Optimized per Snippet */}
                   <div className="mt-auto pb-6">
                     <div className="flex justify-between items-end mb-4">
                       <div className="text-[12px] font-black uppercase tracking-[0.3em] opacity-40 flex items-center">
@@ -291,25 +288,28 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
         </div>
       </section>
 
-      {/* Modern Creation Protocol UI */}
+      {/* Modern Creation Protocol UI - Optimized RWD for Mobile, Tablet, Web */}
       {isCreating && (
-        <div className="fixed inset-0 z-[500] flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-           <div className="absolute inset-0 bg-black/95 backdrop-blur-md" onClick={resetForm} />
-           <div className="relative w-full max-w-3xl bg-[#0F0F10] rounded-t-[48px] sm:rounded-[48px] p-0 flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in duration-500 overflow-hidden shadow-3xl border border-white/5 h-[92vh] sm:h-auto sm:max-h-[85vh]">
+        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center animate-in fade-in duration-500">
+           {/* Deep dark blurry mask to fix "overlapping UI" complaint - Apple HIG style */}
+           <div className="absolute inset-0 bg-black/95 backdrop-blur-[40px]" onClick={resetForm} />
+           
+           <div className="relative w-full max-w-full sm:max-w-2xl lg:max-w-3xl bg-[#0F0F10] rounded-t-[44px] sm:rounded-[44px] p-0 flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in duration-700 cubic-bezier(0.16, 1, 0.3, 1) overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,1)] border border-white/5 h-[94vh] sm:h-auto sm:max-h-[90vh]">
               
-              <header className="px-8 sm:px-12 py-8 sm:py-10 border-b border-white/5 shrink-0 flex justify-between items-start">
-                 <div>
+              <header className="px-8 sm:px-12 py-8 sm:py-10 border-b border-white/5 shrink-0 flex justify-between items-start bg-[#0F0F10] z-20">
+                 <div className="space-y-1">
                     <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter">啟動寫作倉庫</h2>
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mt-2">NEW SMART REPOSITORY PROTOCOL</p>
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em]">NEW SMART REPOSITORY PROTOCOL</p>
                  </div>
-                 <button onClick={resetForm} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                 <button onClick={resetForm} className="w-12 h-12 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-90">
                     <i className="fa-solid fa-xmark text-xl"></i>
                  </button>
               </header>
 
-              <div className="flex-1 overflow-y-auto no-scrollbar px-8 sm:px-12 pt-8 sm:pt-10 pb-40 space-y-10">
+              <div className="flex-1 overflow-y-auto no-scrollbar px-8 sm:px-12 pt-8 sm:pt-10 pb-64 space-y-12">
                  
-                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                 {/* Basic Info Section - Responsive Grid */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10">
                     <div className="space-y-4">
                        <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">資料夾名稱 FOLDER NAME</label>
                        <input 
@@ -317,24 +317,24 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                          value={formData.name} 
                          onChange={e => setFormData({...formData, name: e.target.value})} 
                          placeholder="例如：量子幽靈的小說..." 
-                         className="w-full bg-[#1C1C1E] h-20 px-8 rounded-[2.5rem] text-xl font-black text-white outline-none border border-white/5 focus:border-[#7b61ff] transition-all placeholder-white/5" 
+                         className="w-full bg-[#1C1C1E] h-16 sm:h-20 px-8 rounded-[2rem] sm:rounded-[2.5rem] text-lg sm:text-xl font-black text-white outline-none border border-white/5 focus:border-[#7b61ff] transition-all placeholder-white/5" 
                        />
                     </div>
 
                     <div className="space-y-4">
                        <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">目標字數 TARGET WORDS</label>
-                       <div className="flex gap-2">
+                       <div className="grid grid-cols-4 gap-2">
                           {[3000, 5000, 10000, 50000].map(count => (
                              <button 
                                 key={count} 
                                 onClick={() => setFormData({...formData, targetWordCount: count})}
-                                className={`h-12 flex-1 rounded-2xl text-[11px] font-black transition-all ${formData.targetWordCount === count ? 'bg-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] text-gray-500 border border-white/5 hover:bg-white/5'}`}
+                                className={`h-10 sm:h-12 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black transition-all ${formData.targetWordCount === count ? 'bg-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] text-gray-500 border border-white/5 hover:bg-white/5'}`}
                              >
                                 {count >= 1000 ? `${count/1000}K` : count}
                              </button>
                           ))}
                        </div>
-                       <div className="w-full bg-[#1C1C1E] h-14 px-8 rounded-2xl border border-white/5 flex items-center">
+                       <div className="w-full bg-[#1C1C1E] h-12 sm:h-14 px-8 rounded-xl sm:rounded-2xl border border-white/5 flex items-center mt-2">
                           <input 
                              type="number" 
                              value={formData.targetWordCount} 
@@ -345,9 +345,10 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </div>
                  </div>
 
+                 {/* Core Paradigms - Adaptive Layout */}
                  <div className="space-y-6">
                     <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">寫作範式 CORE PARADIGMS</label>
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                        {mainParadigms.map((type) => {
                           const t = TEMPLATES[type];
                           const active = formData.type === type;
@@ -355,13 +356,13 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                             <button 
                               key={type} 
                               onClick={() => setFormData({...formData, type})} 
-                              className={`flex flex-col items-start p-8 rounded-[3rem] border transition-all h-[240px] text-left relative group ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-[0_20px_50px_rgba(123,97,255,0.4)] scale-[1.02]' : 'bg-[#1C1C1E] border-white/5 text-gray-400 hover:border-white/10'}`}
+                              className={`flex flex-col items-start p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] border transition-all min-h-[180px] sm:min-h-[220px] text-left relative group ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-[0_20px_50px_rgba(123,97,255,0.4)] scale-[1.02]' : 'bg-[#1C1C1E] border-white/5 text-gray-400 hover:border-white/10'}`}
                             >
-                               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110 ${active ? 'bg-white/20' : 'bg-white/5'}`}>
-                                  <i className={`fa-solid ${t.icon} text-2xl`} style={{ color: active ? 'white' : '#7b61ff' }}></i>
+                               <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 transition-transform group-hover:scale-110 ${active ? 'bg-white/20' : 'bg-white/5'}`}>
+                                  <i className={`fa-solid ${t.icon} text-xl sm:text-2xl`} style={{ color: active ? 'white' : '#7b61ff' }}></i>
                                </div>
-                               <span className={`text-[16px] font-black uppercase tracking-widest leading-none mb-3 ${active ? 'text-white' : 'text-slate-200'}`}>{t.label}</span>
-                               <p className={`text-[11px] font-medium line-clamp-3 leading-relaxed ${active ? 'text-white/80' : 'text-gray-500'}`}>{t.description}</p>
+                               <span className={`text-sm sm:text-[16px] font-black uppercase tracking-widest leading-none mb-2 sm:mb-3 ${active ? 'text-white' : 'text-slate-200'}`}>{t.label}</span>
+                               <p className={`text-[10px] sm:text-[11px] font-medium line-clamp-2 sm:line-clamp-3 leading-relaxed ${active ? 'text-white/80' : 'text-gray-500'}`}>{t.description}</p>
                             </button>
                           );
                        })}
@@ -377,7 +378,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                        </button>
                     </div>
 
-                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-700 ${isTemplatesExpanded ? 'opacity-100 max-h-[1000px] visible mt-4' : 'opacity-0 max-h-0 invisible overflow-hidden'}`}>
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 transition-all duration-700 ${isTemplatesExpanded ? 'opacity-100 max-h-[1200px] visible mt-4' : 'opacity-0 max-h-0 invisible overflow-hidden'}`}>
                        {scrollParadigms.map(type => {
                           const t = TEMPLATES[type];
                           const active = formData.type === type;
@@ -385,46 +386,53 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                              <button 
                                 key={type} 
                                 onClick={() => setFormData({...formData, type})}
-                                className={`flex items-center justify-between p-6 rounded-[2.5rem] border transition-all ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
+                                className={`flex items-center justify-between p-5 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border transition-all ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
                              >
-                                <div className="flex items-center space-x-5 text-left">
-                                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${active ? 'bg-white/20' : 'bg-white/5'}`}>
-                                      <i className={`fa-solid ${t.icon} text-lg`} style={{ color: active ? 'white' : '#7b61ff' }}></i>
+                                <div className="flex items-center space-x-4 sm:space-x-5 text-left">
+                                   <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center ${active ? 'bg-white/20' : 'bg-white/5'}`}>
+                                      <i className={`fa-solid ${t.icon} text-base sm:text-lg`} style={{ color: active ? 'white' : '#7b61ff' }}></i>
                                    </div>
                                    <div>
-                                      <h4 className={`text-[13px] font-black uppercase tracking-widest leading-none ${active ? 'text-white' : 'text-slate-200'}`}>{t.label}</h4>
-                                      <p className="text-[9px] font-bold opacity-40 mt-1">{t.enLabel}</p>
+                                      <h4 className={`text-xs sm:text-[13px] font-black uppercase tracking-widest leading-none ${active ? 'text-white' : 'text-slate-200'}`}>{t.label}</h4>
+                                      <p className="text-[8px] sm:text-[9px] font-bold opacity-40 mt-1">{t.enLabel}</p>
                                    </div>
                                 </div>
-                                {active && <i className="fa-solid fa-circle-check text-white"></i>}
+                                {active && <i className="fa-solid fa-circle-check text-white text-xs"></i>}
                              </button>
                           );
                        })}
                     </div>
                  </div>
 
-                 <div className="space-y-6 pb-20">
+                 {/* Visual Coding Section - Refined Responsive Grid */}
+                 <div className="space-y-6">
                     <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">視覺編碼 VISUAL CODING</label>
-                    <div className="flex flex-wrap gap-5 justify-start">
-                       {cardColors.map(c => (
+                    <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-3 sm:gap-x-4 gap-y-6 sm:gap-y-8 justify-items-center sm:justify-items-start">
+                       {PROJECT_COLORS.map(c => (
                           <button 
                             key={c} 
                             onClick={() => setFormData({...formData, color: c})} 
-                            className={`w-10 h-10 rounded-full transition-all flex items-center justify-center border-4 ${formData.color === c ? 'scale-125 border-white shadow-2xl z-10' : 'border-transparent opacity-40 hover:opacity-100'}`} 
+                            className={`w-10 h-10 sm:w-11 sm:w-12 sm:h-12 rounded-full transition-all duration-300 flex items-center justify-center relative active:scale-90 ${
+                              formData.color === c 
+                                ? 'ring-[4px] sm:ring-[5px] ring-white ring-offset-[4px] sm:ring-offset-[5px] ring-offset-black scale-110 z-10 shadow-[0_0_30px_rgba(255,255,255,0.3)]' 
+                                : 'opacity-60 hover:opacity-100 hover:scale-105'
+                            }`} 
                             style={{ backgroundColor: c }}
-                          >
-                             {formData.color === c && <i className="fa-solid fa-check text-[10px] text-black/40"></i>}
-                          </button>
+                          />
                        ))}
                     </div>
                  </div>
+                 
+                 {/* Layout Bottom Padding to ensure Visual Coding is never hidden by fixed footer */}
+                 <div className="h-32" />
               </div>
 
-              <div className="absolute bottom-0 inset-x-0 p-8 sm:p-12 bg-gradient-to-t from-[#0F0F10] via-[#0F0F10] to-transparent shrink-0">
+              {/* Fixed Bottom Action Area - Depth Optimized */}
+              <div className="absolute bottom-0 inset-x-0 p-8 sm:p-12 bg-gradient-to-t from-[#0F0F10] via-[#0F0F10] to-transparent shrink-0 z-30">
                  <button 
                     onClick={handleCreate} 
                     disabled={!formData.name.trim()} 
-                    className={`w-full py-8 rounded-[3rem] text-white font-black text-[13px] sm:text-[14px] uppercase tracking-[0.5em] shadow-2xl transition-all active:scale-[0.97] hover:scale-[1.01] ${!formData.name.trim() ? 'bg-gray-800 opacity-40 cursor-not-allowed' : 'bg-[#2563eb] shadow-[0_25px_60px_rgba(37,99,235,0.4)]'}`}
+                    className={`w-full h-16 sm:h-24 rounded-[2rem] sm:rounded-[3rem] text-white font-black text-[12px] sm:text-[15px] uppercase tracking-[0.4em] sm:tracking-[0.5em] shadow-2xl transition-all active:scale-[0.97] hover:scale-[1.01] ${!formData.name.trim() ? 'bg-gray-800 opacity-40 cursor-not-allowed' : 'bg-blue-600 shadow-[0_25px_60px_rgba(37,99,235,0.4)] hover:brightness-110'}`}
                  >
                     啟 動 寫 作 存 檔 PROTOCOL
                  </button>

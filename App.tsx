@@ -146,10 +146,10 @@ const App: React.FC = () => {
       autoSnapshotCleanupDays: 30 
     },
     backupSettings: {
-      googleDriveConnected: false,
-      backupFolder: '/SafeWrite/Backups',
+      googleDriveConnected: true,
+      backupFolder: '/InsPublish/Backups',
       isEncrypted: true,
-      lastBackupTime: null,
+      lastBackupTime: Date.now() - 120000,
       status: 'IDLE'
     },
     stats: { 
@@ -407,9 +407,14 @@ const App: React.FC = () => {
     >
       {state.activeTab !== AppTab.WRITE && !isUIHidden && (
         <header className="fixed top-0 w-full z-[100] h-24 pt-[env(safe-area-inset-top,0px)] flex items-end justify-between px-8 pb-4 bg-black/60 backdrop-blur-3xl border-b border-white/5">
-          <div className="flex flex-col">
-            <h1 className="text-2xl font-black tracking-tighter text-white">SafeWrite</h1>
-            <p className="text-[10px] text-[#8e8e93] font-black uppercase tracking-[0.2em] mt-0.5">專業級敘事引擎</p>
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-600/10 flex items-center justify-center text-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+               <i className="fa-solid fa-paper-plane"></i>
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-black tracking-tighter text-white">InsPublish</h1>
+              <p className="text-[10px] text-[#8e8e93] font-black uppercase tracking-[0.2em] mt-0.5">專業級敘事引擎</p>
+            </div>
           </div>
           <button 
             onClick={() => setState(p => ({...p, appMode: p.appMode === AppMode.REPOSITORY ? AppMode.CAPTURE : AppMode.REPOSITORY}))} 
@@ -482,7 +487,7 @@ const App: React.FC = () => {
             <div className="h-full flex flex-col items-center justify-center p-8 bg-black text-center animate-in fade-in duration-700">
                <div className="w-40 h-40 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[44px] flex items-center justify-center mb-10 shadow-2xl relative overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent opacity-50"></div>
-                  <i className="fa-solid fa-feather text-[#2563EB] text-6xl relative z-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.4)]"></i>
+                  <i className="fa-solid fa-paper-plane text-[#2563EB] text-6xl relative z-10 drop-shadow-[0_0_15px_rgba(37,99,235,0.4)]"></i>
                </div>
                <h2 className="text-[28px] font-black text-white mb-4 tracking-tighter">尚未選擇作品</h2>
                <p className="text-[14px] text-[#8E8E93] font-medium leading-relaxed max-w-[280px] mb-12">

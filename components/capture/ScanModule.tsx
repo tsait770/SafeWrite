@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { geminiService } from '../../services/geminiService';
 import { OCRBlock, CaptureMode, MembershipLevel } from '../../types';
@@ -149,44 +150,47 @@ const ScanModule: React.FC<ScanModuleProps> = ({
     return (
       <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in fade-in duration-500 overflow-hidden font-sans">
         
-        {/* 精確匹配參考圖：左上角 X 按鈕 */}
+        {/* Header - Matching screenshot 1 */}
         <header className="absolute top-0 inset-x-0 h-24 px-8 flex items-center justify-start z-50 pt-[env(safe-area-inset-top,20px)]">
           <button onClick={closeModule} className="w-12 h-12 flex items-center justify-center text-white active:scale-90 transition-all opacity-80">
             <i className="fa-solid fa-xmark text-3xl"></i>
           </button>
         </header>
 
-        {/* 取景器區域 */}
+        {/* Viewfinder area */}
         <div className="flex-1 relative bg-black overflow-hidden">
           {capturedImage ? (
             <img src={capturedImage} className="w-full h-full object-cover" alt="Captured" />
           ) : (
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover brightness-[0.85]" />
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover brightness-[0.7]" />
           )}
 
-          {/* 精確匹配參考圖：掃描區域疊加層 */}
+          {/* Scan Box Overlay - Matching screenshot 1 */}
           {!showResults && (
             <div className="absolute inset-0 flex items-center justify-center p-8 sm:p-14 pointer-events-none">
-              <div className="w-full aspect-[3/4] border-[1.5px] border-blue-400/40 rounded-[44px] relative">
+              <div className="w-full aspect-[3/4] border-[2px] border-blue-400/30 rounded-[44px] relative">
                 
-                {/* 參考圖特色：白色粗體 L 角 */}
-                <div className="absolute -top-1 -left-1 w-20 h-20 border-t-[10px] border-l-[10px] border-white rounded-tl-[44px]" />
-                <div className="absolute -top-1 -right-1 w-20 h-20 border-t-[10px] border-r-[10px] border-white rounded-tr-[44px]" />
-                <div className="absolute -bottom-1 -left-1 w-20 h-20 border-b-[10px] border-l-[10px] border-white rounded-bl-[44px]" />
-                <div className="absolute -bottom-1 -right-1 w-20 h-20 border-b-[10px] border-r-[10px] border-white rounded-br-[44px]" />
-                
-                {/* 根據要求已移除 AI SCAN ACTIVE 標籤 */}
+                {/* Status Badge - Matching screenshot 1 */}
+                <div className="absolute top-14 left-1/2 -translate-x-1/2 px-10 py-4 bg-[#D4FF5F] rounded-[24px] shadow-2xl">
+                   <span className="text-[12px] font-black text-black uppercase tracking-[0.25em] whitespace-nowrap">AI SCAN ACTIVE</span>
+                </div>
+
+                {/* Corners - Thick white markers as seen in screenshot 1 */}
+                <div className="absolute -top-[3px] -left-[3px] w-24 h-24 border-t-[10px] border-l-[10px] border-white rounded-tl-[44px]" />
+                <div className="absolute -top-[3px] -right-[3px] w-24 h-24 border-t-[10px] border-r-[10px] border-white rounded-tr-[44px]" />
+                <div className="absolute -bottom-[3px] -left-[3px] w-24 h-24 border-b-[10px] border-l-[10px] border-white rounded-bl-[44px]" />
+                <div className="absolute -bottom-[3px] -right-[3px] w-24 h-24 border-b-[10px] border-r-[10px] border-white rounded-br-[44px]" />
               </div>
             </div>
           )}
 
-          {/* 精確匹配參考圖：大型白色快門按鈕 */}
+          {/* Large Shutter Button - Matching screenshot 1 */}
           {!showResults && (
             <div className="absolute bottom-16 left-1/2 -translate-x-1/2">
               <button 
                 onClick={handleCapture}
                 disabled={isCapturing}
-                className="w-32 h-32 rounded-full border-[10px] border-white/20 p-2 active:scale-95 transition-all shadow-3xl"
+                className="w-32 h-32 rounded-full border-[6px] border-white/30 p-1.5 active:scale-95 transition-all shadow-3xl flex items-center justify-center"
               >
                 <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
                    {isCapturing && <div className="w-14 h-14 border-[6px] border-black/10 border-t-black rounded-full animate-spin"></div>}
@@ -196,7 +200,7 @@ const ScanModule: React.FC<ScanModuleProps> = ({
           )}
         </div>
 
-        {/* 擷取結果面板 */}
+        {/* Results Panel */}
         {showResults && (
           <div className="bg-[#0F1420] rounded-t-[48px] p-10 animate-in slide-in-from-bottom duration-700 z-[100] border-t border-white/5 shadow-[0_-40px_100px_rgba(0,0,0,0.9)] flex flex-col">
             <div className="w-16 h-1.5 bg-white/10 rounded-full mx-auto mb-10" />
@@ -255,7 +259,6 @@ const ScanModule: React.FC<ScanModuleProps> = ({
         )}
 
         <canvas ref={canvasRef} className="hidden" />
-        <style dangerouslySetInnerHTML={{ __html: `.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }` }} />
       </div>
     );
   }

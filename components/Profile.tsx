@@ -95,7 +95,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
                 {state.language.slice(0, 1).toUpperCase()}
               </div>
               <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-[#D4FF5F] rounded-full border-4 border-[#1C1C1E] flex items-center justify-center text-black text-xs shadow-lg">
-                <i className="fa-solid fa-feather-pointed"></i>
+                <i className="fa-solid fa-paper-plane"></i>
               </div>
             </div>
             
@@ -318,7 +318,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
       </div>
       
       <div className="text-center pt-10 pb-20 border-t border-white/5">
-        <p className="text-[10px] text-gray-800 font-black uppercase tracking-[0.6em]">SafeWrite Narrative Protocol v1.1.0-RC</p>
+        <p className="text-[10px] text-gray-800 font-black uppercase tracking-[0.6em]">InsPublish Narrative Protocol v1.1.0-RC</p>
         <p className="text-[9px] text-gray-900 font-bold uppercase tracking-[0.2em] mt-2">All rights reserved to the author's legacy</p>
       </div>
 

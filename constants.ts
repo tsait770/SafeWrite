@@ -9,10 +9,12 @@ export const COLORS = {
   BG_NIGHT: '#0F172A',
 };
 
+// Precise match for the 20 colors in the user's screenshot
 export const PROJECT_COLORS = [
-  '#FADE4B', '#FF6B2C', '#D4FF5F', '#B2A4FF', // Core brand palette v1.1
-  '#827717', '#8D3B1B', '#687D2C', '#5C618A', '#7B61FF', '#8D4E2D',
-  '#2E4D23', '#123E66', '#7F1E19', '#6E1B31', '#3E1854', '#083B32',
+  /* Row 1 */
+  '#9A8C35', '#AB522A', '#96AB48', '#B2A4FF', '#6A767A', '#7A6956', '#7D8260', '#8C5E5E', '#4D5E46', '#828A94',
+  /* Row 2 */
+  '#8C8276', '#5E5452', '#4A5582', '#708259', '#9E8D82', '#465E6B', '#9482AB', '#8C7256', '#56697A', '#7A8C70'
 ];
 
 export const PROJECT_ICONS = [
@@ -43,7 +45,8 @@ export const INITIAL_SPINE_NODES = (): Record<SpineNodeId, SpineNodeStatus> => {
 
 export const AI_MODEL_GROUPS = [
   {
-    name: 'Google (Gemini)',
+    name: 'Google Gemini',
+    placeholder: 'AIza...',
     models: [
       { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', isRecommended: true },
       { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash' },
@@ -52,58 +55,73 @@ export const AI_MODEL_GROUPS = [
       { id: 'gemini-2.5-flash-preview', name: 'Gemini 2.5 Flash' },
       { id: 'gemini-2.5-flash-lite-preview', name: 'Gemini 2.5 Flash-Lite' },
       { id: 'gemini-2.0-pro-preview', name: 'Gemini 2.0 Pro' },
-      { id: 'gemini-2.0-flash-preview', name: 'Gemini 2.0 Flash' },
-      { id: 'gemini-1.5-pro-preview', name: 'Gemini 1.5 Pro' },
-      { id: 'gemini-1.5-flash-preview', name: 'Gemini 1.5 Flash' }
+      { id: 'gemini-2.0-flash-preview', name: 'Gemini 2.0 Flash' }
     ]
   },
   {
     name: 'OpenAI',
+    placeholder: 'sk-...',
     models: [
-      { id: 'gpt-5', name: 'GPT-5' },
+      { id: 'gpt-5', name: 'GPT-5', isRecommended: true },
       { id: 'gpt-4.1', name: 'GPT-4.1' },
-      { id: 'gpt-4', name: 'GPT-4' }
+      { id: 'gpt-4', name: 'GPT-4' },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' }
     ]
   },
   {
     name: 'Anthropic',
+    placeholder: 'sk-ant-...',
     models: [
-      { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet' },
+      { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', isRecommended: true },
       { id: 'claude-3-opus', name: 'Claude 3 Opus' },
       { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet' }
     ]
   },
   {
-    name: 'Microsoft / Azure OpenAI',
+    name: 'Microsoft Azure OpenAI',
+    placeholder: 'Endpoint Key...',
     models: [
-      { id: 'azure-gpt-4.1', name: 'Azure GPT-4.1' },
+      { id: 'azure-gpt-4.1', name: 'Azure GPT-4.1', isRecommended: true },
       { id: 'azure-gpt-4', name: 'Azure GPT-4' },
       { id: 'azure-gpt-35-turbo', name: 'Azure GPT-35 Turbo' }
     ]
   },
   {
     name: 'Mistral AI',
+    placeholder: 'Mistral Key...',
     models: [
-      { id: 'mistral-large', name: 'Mistral Large' }
+      { id: 'mistral-large', name: 'Mistral Large', isRecommended: true },
+      { id: 'mistral-medium', name: 'Mistral Medium' }
     ]
   },
   {
     name: 'Meta',
+    placeholder: 'Meta API Key...',
     models: [
-      { id: 'llama-3-70b', name: 'LLaMA 3 70B' }
+      { id: 'llama-3-70b', name: 'LLaMA 3 70B', isRecommended: true },
+      { id: 'llama-3-8b', name: 'LLaMA 3 8B' }
     ]
   },
   {
     name: 'Cohere',
+    placeholder: 'Cohere Key...',
     models: [
-      { id: 'command-r-plus', name: 'Command R+' }
+      { id: 'command-r-plus', name: 'Command R+', isRecommended: true },
+      { id: 'command-r', name: 'Command R' }
     ]
   },
   {
-    name: '常用開源 / 企業模型',
+    name: 'Open Source / Enterprise',
+    placeholder: 'API Key...',
     models: [
-      { id: 'falcon-180b', name: 'Falcon 180B' }
+      { id: 'falcon-180b', name: 'Falcon 180B', isRecommended: true },
+      { id: 'mixtral-8x22b', name: 'Mixtral 8x22B' }
     ]
+  },
+  {
+    name: 'Custom (Bring Your Own API)',
+    placeholder: 'Enter Custom API Key...',
+    models: []
   }
 ];
 

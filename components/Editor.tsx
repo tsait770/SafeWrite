@@ -183,7 +183,7 @@ const Editor: React.FC<EditorProps> = ({
                <i className="fa-solid fa-chevron-left"></i>
             </button>
             <div className="flex flex-col">
-              <p className="text-[8px] font-black text-[#8E8E93] uppercase tracking-[0.2em]">SAFEWRITE</p>
+              <p className="text-[8px] font-black text-[#8E8E93] uppercase tracking-[0.2em]">INSPUBLISH</p>
               <h2 className="text-xs font-bold text-white tracking-tight truncate max-w-[140px]">{chapter.title}</h2>
             </div>
           </div>

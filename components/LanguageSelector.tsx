@@ -1,5 +1,5 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SupportedLanguage } from '../types';
 
 interface LanguageOption {
@@ -7,7 +7,7 @@ interface LanguageOption {
   name: string;
 }
 
-const LANGUAGES: LanguageOption[] = [
+const ALL_LANGUAGES: LanguageOption[] = [
   { code: 'en', name: 'English' },
   { code: 'zh-TW', name: '繁體中文' },
   { code: 'zh-CN', name: '简体中文' },
@@ -39,159 +39,107 @@ interface LanguageSelectorProps {
   onClose: () => void;
 }
 
-// 修正 TypeScript 錯誤：將 LanguageItem 移出並明確定義 Props 型別，以支援 key 屬性
-interface LanguageItemProps {
-  lang: LanguageOption;
-  currentLanguage: SupportedLanguage;
-  onSelect: (lang: SupportedLanguage) => void;
-  onClose: () => void;
-}
-
-const LanguageItem: React.FC<LanguageItemProps> = ({ lang, currentLanguage, onSelect, onClose }) => (
-  <button
-    onClick={() => {
-      onSelect(lang.code);
-      onClose();
-    }}
-    className={`w-full h-[52px] px-6 flex items-center justify-between transition-all active:scale-[0.98] ${
-      currentLanguage === lang.code ? 'bg-blue-600/10 text-blue-500' : 'text-slate-200 hover:bg-white/5'
-    }`}
-  >
-    <span className="text-[16px] font-medium leading-[1.4]">{lang.name}</span>
-    {currentLanguage === lang.code && (
-      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-      </svg>
-    )}
-  </button>
-);
-
 const LanguageSelector: React.FC<LanguageSelectorProps> = ({ currentLanguage, onSelect, onClose }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showAll, setShowAll] = useState(false);
 
-  // 1. Recommended (Current + 2 system-like guesses, here simplified)
+  // Layer 1: Recommended (Current + Standard defaults)
   const recommended = useMemo(() => {
-    return LANGUAGES.filter(l => l.code === currentLanguage || l.code === 'en' || l.code === 'zh-TW').slice(0, 3);
+    return ALL_LANGUAGES.filter(l => l.code === currentLanguage || l.code === 'en' || l.code === 'zh-TW').slice(0, 3);
   }, [currentLanguage]);
 
-  // 2. Primary
+  // Layer 2: Primary (Fixed top-tier languages)
   const primary = useMemo(() => {
-    return LANGUAGES.filter(l => PRIMARY_CODES.includes(l.code) && !recommended.find(r => r.code === l.code));
-  }, [recommended]);
-
-  // 3. All (Sorted)
-  const allSorted = useMemo(() => {
-    return [...LANGUAGES].sort((a, b) => a.name.localeCompare(b.name));
+    return ALL_LANGUAGES.filter(l => PRIMARY_CODES.includes(l.code));
   }, []);
 
-  const filteredAll = useMemo(() => {
-    if (!searchQuery) return allSorted;
-    return allSorted.filter(l => l.name.toLowerCase().includes(searchQuery.toLowerCase()) || l.code.includes(searchQuery.toLowerCase()));
-  }, [allSorted, searchQuery]);
+  const handleLanguageClick = (code: SupportedLanguage) => {
+    onSelect(code);
+    onClose();
+  };
 
-  return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center animate-in fade-in duration-300 px-0 sm:px-4">
-      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
+  const renderItem = (lang: LanguageOption) => (
+    <button
+      key={lang.code}
+      onClick={() => handleLanguageClick(lang.code)}
+      className={`w-full h-16 px-8 flex items-center justify-between transition-all active:scale-[0.98] ${
+        currentLanguage === lang.code ? 'bg-blue-600/10' : 'hover:bg-white/5'
+      }`}
+    >
+      <span className={`text-[15px] font-bold ${currentLanguage === lang.code ? 'text-blue-500' : 'text-gray-200'}`}>
+        {lang.name}
+      </span>
+      {currentLanguage === lang.code && (
+        <i className="fa-solid fa-check text-blue-500 text-xs"></i>
+      )}
+    </button>
+  );
+
+  return createPortal(
+    <div className="fixed inset-0 z-[6000] flex items-end sm:items-center justify-center font-sans">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-500" onClick={onClose} />
       
-      <div className="relative w-full max-w-lg bg-[#1E293B]/80 backdrop-blur-2xl border-t sm:border border-slate-700/50 rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      {/* Panel */}
+      <div className="relative w-full max-w-xl bg-[#0F0F10] border-t sm:border border-white/10 rounded-t-[44px] sm:rounded-[44px] shadow-[0_50px_100px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-700 cubic-bezier(0.16, 1, 0.3, 1)">
+        
         {/* Header */}
-        <div className="p-6 border-b border-white/5 flex items-center justify-between shrink-0">
-          <h2 className="text-lg font-bold text-white tracking-tight">語言設定 / Language</h2>
-          <button onClick={onClose} className="p-2 rounded-full bg-white/5 text-slate-400 hover:text-white transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        <header className="px-8 pt-10 pb-6 shrink-0 flex items-center justify-between border-b border-white/5">
+          <div>
+            <h2 className="text-xl font-black text-white tracking-tight">語言設定 / Language</h2>
+            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">Interface Preferences</p>
+          </div>
+          <button onClick={onClose} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-500 hover:text-white transition-colors">
+            <i className="fa-solid fa-xmark text-lg"></i>
           </button>
-        </div>
+        </header>
 
-        <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
-          {!isExpanded ? (
-            <div className="space-y-6 pt-4 animate-in slide-in-from-bottom-4 duration-500">
-              {/* Recommended Section */}
-              <section>
-                <h3 className="px-6 text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2">Recommended</h3>
-                <div className="space-y-0.5">
-                  {recommended.map(l => (
-                    <LanguageItem 
-                      key={l.code} 
-                      lang={l} 
-                      currentLanguage={currentLanguage} 
-                      onSelect={onSelect} 
-                      onClose={onClose} 
-                    />
-                  ))}
-                </div>
-              </section>
-
-              {/* Primary Section */}
-              <section>
-                <h3 className="px-6 text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em] mb-2">Primary Languages</h3>
-                <div className="space-y-0.5">
-                  {primary.map(l => (
-                    <LanguageItem 
-                      key={l.code} 
-                      lang={l} 
-                      currentLanguage={currentLanguage} 
-                      onSelect={onSelect} 
-                      onClose={onClose} 
-                    />
-                  ))}
-                </div>
-              </section>
-
-              {/* View All Button */}
-              <div className="px-6 pt-2">
-                <button 
-                  onClick={() => setIsExpanded(true)}
-                  className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-[0.98]"
-                >
-                  查看所有語言 / View All
-                </button>
-              </div>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto no-scrollbar py-6 space-y-10">
+          {/* Section 1: Recommended */}
+          <section className="space-y-3">
+            <h3 className="px-8 text-[11px] font-black text-gray-600 uppercase tracking-[0.3em]">Recommended</h3>
+            <div className="divide-y divide-white/5 border-y border-white/5">
+              {recommended.map(renderItem)}
             </div>
-          ) : (
-            <div className="animate-in slide-in-from-right duration-500">
-              {/* Search Bar */}
-              <div className="p-4 sticky top-0 bg-[#1E293B] z-10">
-                <div className="relative">
-                  <input
-                    autoFocus
-                    type="text"
-                    placeholder="搜尋語言 / Search languages..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-12 pl-12 pr-4 rounded-xl bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-blue-500 transition-all"
-                  />
-                  <svg className="absolute left-4 top-3.5 w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-              </div>
+          </section>
 
-              {/* Back to main */}
+          {/* Section 2: Primary Languages */}
+          <section className="space-y-3">
+            <h3 className="px-8 text-[11px] font-black text-gray-600 uppercase tracking-[0.3em]">Primary Languages</h3>
+            <div className="divide-y divide-white/5 border-y border-white/5">
+              {primary.map(renderItem)}
+            </div>
+          </section>
+
+          {/* Section 3: All Languages (Collapsed/Expandable) */}
+          <section className="px-8 pb-10">
+            {!showAll ? (
               <button 
-                onClick={() => setIsExpanded(false)}
-                className="px-6 py-3 text-xs font-bold text-blue-500 flex items-center space-x-2"
+                onClick={() => setShowAll(true)}
+                className="w-full py-5 rounded-2xl bg-white/5 border border-white/5 text-[11px] font-black text-blue-500 uppercase tracking-[0.3em] hover:bg-white/10 transition-all"
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                <span>返回建議列表 / Back</span>
+                View All Languages ({ALL_LANGUAGES.length})
               </button>
-
-              <div className="space-y-0.5 mt-2">
-                {filteredAll.map(l => (
-                  <LanguageItem 
-                    key={l.code} 
-                    lang={l} 
-                    currentLanguage={currentLanguage} 
-                    onSelect={onSelect} 
-                    onClose={onClose} 
-                  />
-                ))}
+            ) : (
+              <div className="space-y-3 animate-in slide-in-from-top-4 duration-500">
+                <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.3em]">All Languages</h3>
+                <div className="divide-y divide-white/5 border border-white/5 rounded-3xl overflow-hidden bg-black/20">
+                  {ALL_LANGUAGES.map(renderItem)}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </section>
         </div>
+
+        {/* Footer */}
+        <footer className="p-8 bg-[#0F0F10] border-t border-white/5 shrink-0">
+          <button onClick={onClose} className="w-full py-6 rounded-[32px] bg-white text-black font-black text-xs uppercase tracking-[0.4em] shadow-2xl active:scale-[0.98] transition-all">
+             Close Settings
+          </button>
+        </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
