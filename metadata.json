@@ -1,6 +1,6 @@
 {
-  "name": "InsPublish",
-  "short_name": "InsPublish",
+  "name": "SafeWrite",
+  "short_name": "SafeWrite",
   "description": "專業、安全的跨平台寫作系統",
   "start_url": "./index.html",
   "display": "standalone",
@@ -8,7 +8,7 @@
   "theme_color": "#1E293B",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3682/3682321.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/3596/3596080.png",
       "sizes": "512x512",
       "type": "image/png"
     }

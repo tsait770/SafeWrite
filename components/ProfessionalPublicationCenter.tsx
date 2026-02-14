@@ -89,6 +89,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     { id: 't4', name: 'Technical Manual', subtitle: 'Structured technical guide', type: 'FREE', image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=400&auto=format&fit=crop' }
   ];
 
+  // Updated mission logos for the 5 linear stages
   const deliverySteps = [
     { title: '內容標準化與 AST 解析', en: 'CONTENT NORMALIZATION & AST PARSING', icon: 'fa-microchip' },
     { title: '生成 DOCX 編輯母檔', en: 'GENERATING EDITORIAL DOCX ARTIFACT', icon: 'fa-file-lines' },
@@ -268,14 +269,12 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         </header>
 
         <main className="flex-1 px-6 sm:px-12 py-10 space-y-12 max-w-4xl mx-auto w-full">
-          {/* Hero Section */}
           <div className="bg-gradient-to-br from-blue-600/10 to-transparent p-10 sm:p-14 rounded-[56px] border border-blue-600/20 text-center relative overflow-hidden shadow-2xl">
              <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl opacity-50" />
              <h3 className="text-4xl sm:text-5xl font-black tracking-tighter mb-4 text-white">From Draft to the World</h3>
              <p className="text-[16px] text-gray-400 leading-relaxed font-medium max-w-xl mx-auto">Deliver your work through official global publishing channels. This is where your journey from manuscript to published work completes.</p>
           </div>
 
-          {/* Direct Publishing Card */}
           <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
              <div className="flex items-center space-x-6">
                 <div className="w-16 h-16 rounded-3xl bg-blue-600 flex items-center justify-center text-white text-2xl shadow-lg">
@@ -302,7 +301,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
              </button>
           </div>
 
-          {/* Section Header */}
           <div className="space-y-10">
              <div className="px-4">
                 <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em]">一 鍵 自 動 投 遞 D I R E C T P U B L I S H I N G</h3>
@@ -351,6 +349,31 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                       className="w-full h-[86px] bg-[#FADE4B] text-black rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
                     >
                       投 遞 至 A M A Z O N 實 體 版
+                    </button>
+                </div>
+
+                {/* IngramSpark */}
+                <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group hover:border-white/10 transition-all">
+                    <div className="flex items-center justify-between">
+                       <div className="flex items-center space-x-8">
+                          <div className="w-20 h-20 rounded-[28px] bg-black border border-white/5 flex items-center justify-center text-blue-500 text-4xl">
+                            <i className="fa-solid fa-earth-americas"></i>
+                          </div>
+                          <div>
+                            <h4 className="text-3xl font-black tracking-tight">IngramSpark</h4>
+                            <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">GLOBAL RETAIL NETWORK</p>
+                          </div>
+                       </div>
+                       <div className="px-6 py-3 bg-[#FF9F0A] text-black text-[10px] font-black rounded-[20px] uppercase tracking-widest shadow-lg flex flex-col items-center leading-tight">
+                         <span className="mb-0.5">ISBN</span>
+                         <span>必備</span>
+                       </div>
+                    </div>
+                    <button 
+                      onClick={() => { setTargetPlatform('IngramSpark'); setStep(PubStep.FINALIZATION); }} 
+                      className="w-full h-[86px] bg-blue-600 text-white rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
+                    >
+                      投 遞 至 I N G R A M S P A R K
                     </button>
                 </div>
 
@@ -417,6 +440,29 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                       className="w-full h-[86px] bg-[#FF6719] text-black rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
                     >
                       發 佈 至 S U B S T A C K
+                    </button>
+                </div>
+
+                {/* Draft2Digital Card */}
+                <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group hover:border-white/10 transition-all">
+                    <div className="flex items-center justify-between">
+                       <div className="flex items-center space-x-8">
+                          <div className="w-20 h-20 rounded-[28px] bg-black border border-white/5 flex items-center justify-center text-[#2ECC71] text-4xl shadow-inner">
+                            <i className="fa-solid fa-share-nodes"></i>
+                          </div>
+                          <div>
+                            <h4 className="text-3xl font-black tracking-tight">Draft2Digital</h4>
+                            <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">MULTI-PLATFORM AGGREGATOR</p>
+                          </div>
+                       </div>
+                       <div className="px-6 py-3 border border-white/20 text-white text-[11px] font-black rounded-full uppercase tracking-widest">數位出版</div>
+                    </div>
+                    <p className="text-[15px] text-gray-500 font-medium leading-relaxed px-2">Global distribution to Apple, Kobo, and libraries.</p>
+                    <button 
+                      onClick={() => { setTargetPlatform('Draft2Digital'); setStep(PubStep.FINALIZATION); }} 
+                      className="w-full h-[86px] bg-[#2ECC71] text-black rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
+                    >
+                      發 佈 至 D R A F T 2 D I G I T A L
                     </button>
                 </div>
 
@@ -496,31 +542,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                 </div>
              </div>
           </div>
-
-          <div className="space-y-10 pt-16 border-t border-white/5">
-             <div className="px-4">
-                <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em]">儲 存 至 本 地 設 備 L O C A L S T O R A G E</h3>
-                <p className="text-[14px] text-[#D4FF5F] font-black tracking-tight uppercase mt-3">直接儲存至您的手機或電腦硬碟中</p>
-             </div>
-
-             <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group transition-all">
-                <div className="flex items-center space-x-8">
-                   <div className="w-20 h-20 rounded-[28px] bg-black border border-white/5 flex items-center justify-center text-[#D4FF5F] text-4xl shadow-inner">
-                     <i className="fa-solid fa-download"></i>
-                   </div>
-                   <div>
-                     <h4 className="text-3xl font-black tracking-tight">下載至本地</h4>
-                     <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">OFFLINE PERSISTENCE</p>
-                   </div>
-                </div>
-                <button 
-                  onClick={() => { setTargetPlatform('Local Device'); setStep(PubStep.FINALIZATION); }} 
-                  className="w-full h-[86px] bg-[#D4FF5F] text-black rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
-                >
-                  儲 存 檔 案 至 此 裝 置
-                </button>
-             </div>
-          </div>
           
           <div className="h-40" />
         </main>
@@ -593,7 +614,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                  <i className="fa-solid fa-info text-[16px]"></i>
               </div>
               <p className="text-[14px] text-gray-500 font-medium leading-relaxed">
-                Your work will be delivered as a professional publication package. All content remains under your full ownership through the responsibility protocol.
+                Your work will be delivered as a professional publication package. All content remains under your full ownership through the responsibility transfer protocol.
               </p>
            </div>
         </main>
@@ -621,46 +642,42 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     const circumference = 753.98; // 2 * PI * r (120)
 
     return (
-      <div className="fixed inset-0 z-[3000] bg-black flex flex-col items-center justify-center animate-in fade-in duration-700 text-center px-8 font-sans overflow-hidden">
-        {/* Main Central Animation Ring - Optimized per Screenshot */}
-        <div className="relative w-[320px] h-[320px] sm:w-[400px] sm:h-[400px] flex items-center justify-center mb-16">
+      <div className="fixed inset-0 z-[3000] bg-black flex flex-col items-center justify-center animate-in fade-in duration-700 text-center px-8 font-sans">
+        {/* Main Central Animation */}
+        <div className="relative w-80 h-80 flex items-center justify-center mb-20">
            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
-              <circle cx="150" cy="150" r="120" className="stroke-white/5 fill-none" strokeWidth="3" />
+              <circle cx="150" cy="150" r="120" className="stroke-white/5 fill-none" strokeWidth="6" />
               <circle 
                 cx="150" 
                 cy="150" 
                 r="120" 
                 className="stroke-blue-600 fill-none transition-all duration-[2000ms] ease-in-out" 
-                strokeWidth="5" 
+                strokeWidth="8" 
                 strokeDasharray={circumference} 
                 strokeDashoffset={circumference * (1 - progressPercent / 100)} 
                 strokeLinecap="round" 
               />
            </svg>
-           <div className="w-24 h-24 bg-[#121214] rounded-full flex items-center justify-center text-blue-500 text-6xl animate-[pulse_2s_infinite] shadow-[0_0_50px_rgba(37,99,235,0.25)] relative">
-              <i className={`fa-solid ${currentStep.icon} transition-transform duration-1000`}></i>
+           <div className="w-24 h-24 bg-blue-600/10 rounded-[32px] flex items-center justify-center text-blue-500 text-5xl animate-pulse border border-blue-600/20 shadow-[0_0_50px_rgba(37,99,235,0.2)]">
+              <i className={`fa-solid ${currentStep.icon}`}></i>
            </div>
         </div>
 
-        {/* Title System - Bold & Precise */}
-        <div className="space-y-6 max-w-2xl mb-24 z-10">
-           <h2 className="text-4xl sm:text-5xl font-black tracking-tighter text-white animate-in slide-in-from-bottom-4 duration-700 leading-tight">
-             {currentStep.title}
-           </h2>
-           <p className="text-[11px] sm:text-[13px] text-blue-500 font-black uppercase tracking-[0.5em] opacity-90">
-             {currentStep.en}
-           </p>
+        {/* Primary Phase Labels */}
+        <div className="space-y-6 max-w-xl mb-24">
+           <h2 className="text-4xl font-black tracking-tighter text-white animate-in slide-in-from-bottom-4 duration-700">{currentStep.title}</h2>
+           <p className="text-[11px] text-blue-500 font-black uppercase tracking-[0.5em] opacity-80">{currentStep.en}</p>
         </div>
 
-        {/* Sequential Step List - Precise Logic Match */}
-        <div className="w-full max-w-sm space-y-7 relative z-10 px-4">
+        {/* Sequential Step List Tracking */}
+        <div className="w-full max-w-sm space-y-6">
            {deliverySteps.map((s, i) => (
              <div 
                key={i} 
-               className={`flex items-center space-x-7 transition-all duration-700 ${i === deliveryPhase ? 'opacity-100' : i < deliveryPhase ? 'opacity-30' : 'opacity-[0.05]'}`}
+               className={`flex items-center space-x-6 transition-all duration-700 ${i === deliveryPhase ? 'opacity-100 scale-105' : i < deliveryPhase ? 'opacity-30' : 'opacity-10'}`}
              >
-                <div className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${i <= deliveryPhase ? 'bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.8)]' : 'bg-gray-800'}`} />
-                <span className={`text-[13px] sm:text-[14px] font-black uppercase tracking-widest text-left ${i === deliveryPhase ? 'text-white' : 'text-gray-500'}`}>
+                <div className={`w-3 h-3 rounded-full ${i <= deliveryPhase ? 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.6)]' : 'bg-gray-800'}`} />
+                <span className={`text-[12px] font-black uppercase tracking-widest text-left ${i === deliveryPhase ? 'text-white' : 'text-gray-500'}`}>
                   {s.title}
                 </span>
              </div>
@@ -668,7 +685,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         </div>
 
         {/* Global Footer Identifier */}
-        <div className="absolute bottom-12 text-[8px] font-black text-white/5 uppercase tracking-[1em]">
+        <div className="absolute bottom-16 text-[9px] font-black text-gray-700 uppercase tracking-[0.8em]">
            INSPUBLISH PUBLISHING AGENT ACTIVE
         </div>
       </div>

@@ -219,7 +219,7 @@ const AIPanel: React.FC<AIPanelProps> = ({ content, isNight, onClose, onUpdateOu
         <div className="flex items-start space-x-3 opacity-40">
            <i className="fa-solid fa-circle-info text-[10px] mt-1"></i>
            <p className="text-[9px] font-black text-[#8E8E93] uppercase tracking-widest leading-normal">
-             審計建議基於商業出版數據模型，旨在提升稿件市場競爭力。所有數據均受 InsPublish 安全協定保護。
+             審計建議基於商業出版數據模型，旨在提升稿件市場競爭力。所有數據均受 SafeWrite 安全協定保護。
            </p>
         </div>
       </footer>
