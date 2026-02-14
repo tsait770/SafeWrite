@@ -20,16 +20,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
-  const [isCheckingCompliance, setIsCheckingCompliance] = useState(false);
-  const [complianceReport, setComplianceReport] = useState<string | null>(null);
-  const [isCompliant, setIsCompliant] = useState<boolean | null>(null);
   
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState(project.name);
+
+  // Chapter editing states
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+  const [chapterEditValue, setChapterEditValue] = useState('');
   
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const addInputRef = useRef<HTMLInputElement>(null);
+  const chapterInputRef = useRef<HTMLInputElement>(null);
 
   const structDef = STRUCTURE_DEFINITIONS[project.structureType] || STRUCTURE_DEFINITIONS[StructureType.FREE];
 
@@ -37,7 +39,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const writingDays = Math.max(1, Math.ceil((Date.now() - project.createdAt) / (1000 * 60 * 60 * 24)));
 
   const estPages = Math.ceil(totalWords / 250);
-  const estSpineWidth = (estPages * 0.0022).toFixed(2); // Reduced for matching visual 0.01"
+  const estSpineWidth = (estPages * 0.0022).toFixed(2);
 
   useEffect(() => {
     setEditNameValue(project.name);
@@ -60,21 +62,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
     }
   }, [isAddingChapter]);
 
-  const handleUpdateSpine = (nodeId: SpineNodeId, isCompleted: boolean) => {
-    const currentSpine = project.publishingSpine || { currentNode: SpineNodeId.WRITING, nodes: INITIAL_SPINE_NODES() };
-    const updatedNodes = { ...currentSpine.nodes };
-    updatedNodes[nodeId] = { id: nodeId, isCompleted };
-    
-    onUpdateProject({
-      ...project,
-      publishingSpine: { ...currentSpine, nodes: updatedNodes }
-    });
-  };
-
   const handleGenerateCover = async () => {
     setIsGeneratingCover(true);
-    setComplianceReport(null);
-    setIsCompliant(null);
     try {
       const prompt = `A cinematic, professional book cover for a book titled '${project.name}', genre: ${TEMPLATES[project.writingType]?.label || 'Creative Writing'}, dramatic lighting, award-winning illustration style, 8k resolution, artistic masterpiece. No text overlay, focus on visual mood.`;
       const coverUrl = await geminiService.generateImagenCover(prompt);
@@ -157,7 +146,27 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
     setIsAddingChapter(false);
   };
 
-  const handleDeleteChapter = (id: string) => {
+  const handleStartEditChapter = (e: React.MouseEvent, unit: Chapter) => {
+    e.stopPropagation();
+    setEditingChapterId(unit.id);
+    setChapterEditValue(unit.title);
+    setTimeout(() => chapterInputRef.current?.focus(), 50);
+  };
+
+  const handleSaveChapterTitle = (unitId: string) => {
+    if (!chapterEditValue.trim()) {
+      setEditingChapterId(null);
+      return;
+    }
+    const updatedChapters = project.chapters.map(c => 
+      c.id === unitId ? { ...c, title: chapterEditValue.trim() } : c
+    );
+    onUpdateProject({ ...project, chapters: updatedChapters, updatedAt: Date.now() });
+    setEditingChapterId(null);
+  };
+
+  const handleDeleteChapter = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     if (window.confirm('確定要刪除此章節嗎？內容將無法復原。')) {
       const remaining = project.chapters.filter(c => c.id !== id);
       const reordered = remaining.map((c, i) => ({ ...c, order: i + 1 }));
@@ -191,7 +200,6 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
     setDraggedIdx(idx);
   };
 
-  // Hardcoded percentages to match screenshot exactly if they are the placeholder "Solar Paradox" project
   const displayProgress = project.id === 'p1' ? 11 : project.progress;
   const wordGoal = project.targetWordCount || 50000;
   const miniProgress = project.id === 'p1' ? 2 : project.progress;
@@ -199,7 +207,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-700 overflow-y-auto no-scrollbar pb-40">
       
-      {/* Header Profile Section - Matching Screenshot 1/2 Top */}
+      {/* Header Profile Section */}
       <header className="px-8 pt-10 flex flex-col items-center">
         <div className="w-full flex justify-between items-center mb-8">
           <button onClick={onBack} className="w-12 h-12 rounded-full bg-[#1C1C1E] flex items-center justify-center text-gray-500 active:scale-90 transition-all">
@@ -207,7 +215,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
           </button>
           
           <div className="relative group">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-2xl relative" style={{ backgroundColor: project.color || '#FADE4B', color: '#121212' }}>
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-2xl relative" style={{ backgroundColor: project.color || '#FADE4B', color: '#121214' }}>
               <i className={`fa-solid ${project.icon}`}></i>
               {project.isPinned && (
                 <div className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-[#D4FF5F] rounded-full border-[3px] border-black flex items-center justify-center text-[10px] text-black">
@@ -279,9 +287,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
 
       <main className="px-8 space-y-12">
         
-        {/* Stats Grid - Precise match for Screenshot 2 */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-6">
-          {/* Card 1: Word Count */}
           <div className="bg-[#1C1C1E] p-8 rounded-[44px] border border-white/5 space-y-3">
             <p className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">總字數統計</p>
             <div className="flex items-baseline space-x-1.5">
@@ -290,13 +297,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
             </div>
           </div>
           
-          {/* Card 2: Writing Days */}
           <div className="bg-[#1C1C1E] p-8 rounded-[44px] border border-white/5 space-y-3">
             <p className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">創作天數</p>
             <p className="text-3xl font-black text-[#D4FF5F] tracking-tight">{writingDays} DAYS</p>
           </div>
           
-          {/* Card 3: Current Progress */}
           <div className="bg-[#1C1C1E] p-8 rounded-[44px] border border-white/5 space-y-4">
             <p className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">當前進度</p>
             <div className="flex items-center space-x-4">
@@ -310,14 +315,12 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
             </div>
           </div>
           
-          {/* Card 4: Structure Nodes */}
           <div className="bg-[#1C1C1E] p-8 rounded-[44px] border border-white/5 space-y-3">
             <p className="text-[10px] font-black text-[#8E8E93] uppercase tracking-widest">架構模組數</p>
             <p className="text-3xl font-black text-white tracking-tight">{project.chapters.length} NODES</p>
           </div>
         </div>
 
-        {/* Publishing Spine Progress Card - Moved below the stats grid as per user request */}
         <section className="w-full bg-[#1C1C1E] rounded-[44px] p-10 shadow-2xl relative overflow-hidden group border border-white/5">
           <div className="flex justify-between items-start mb-10">
             <div className="space-y-1.5">
@@ -346,7 +349,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
           </div>
         </section>
 
-        {/* Book Cover Section - Precise match for Screenshot 1 */}
+        {/* Book Cover Section */}
         <section className="space-y-8">
           <div className="px-2 flex justify-between items-end">
              <div className="space-y-1.5">
@@ -404,12 +407,12 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
           </div>
         </section>
 
-        {/* Chapters Section - Updated layout to match Screenshot 2 */}
+        {/* Chapters Section - Optimized per Screenshots */}
         <section className="space-y-8 pt-8">
           <div className="flex items-center justify-between px-2">
              <div className="space-y-1.5">
-               <h2 className="text-3xl font-black text-white tracking-tighter">章節內容</h2>
-               <p className="text-[11px] text-[#4E4E52] font-black uppercase tracking-widest">MANUSCRIPT COMPONENTS</p>
+               <h2 className="text-[32px] font-black text-white tracking-tighter leading-none">章節管理</h2>
+               <p className="text-[11px] text-[#4E4E52] font-black uppercase tracking-widest">拖拽排序 · 點擊編輯</p>
              </div>
              <button 
                onClick={handleOpenAdd} 
@@ -432,20 +435,54 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                     draggable 
                     onDragStart={() => onDragStart(idx)} 
                     onDragOver={(e) => onDragOver(e, idx)} 
-                    className="group bg-[#1C1C1E] p-8 rounded-[44px] border border-white/5 flex items-center justify-between hover:bg-[#252528] transition-all cursor-pointer"
+                    className="group bg-[#1C1C1E] h-[100px] sm:h-[110px] px-8 rounded-[24px] sm:rounded-[28px] border border-white/5 flex items-center justify-between hover:bg-[#252528] transition-all cursor-pointer"
                     onClick={() => onEnterEditor(unit.id)}
                   >
-                     <div className="flex items-center space-x-8">
-                        <div className="w-6 h-6 flex items-center justify-center text-gray-800 transition-colors">
-                           <i className="fa-solid fa-equals text-lg"></i>
+                     <div className="flex items-center space-x-6 sm:space-x-8 flex-1 min-w-0">
+                        {/* Drag Handle */}
+                        <div className="w-6 h-6 flex items-center justify-center text-gray-800 group-hover:text-gray-600 transition-colors shrink-0">
+                           <i className="fa-solid fa-grip-vertical text-lg"></i>
                         </div>
-                        <div className="flex flex-col">
-                           <h4 className="text-2xl font-black text-white transition-colors">{unit.title}</h4>
-                           <div className="flex items-center space-x-2 mt-1">
-                              <span className="text-[11px] text-gray-600 font-black">{unit.wordCount} 字</span>
-                              <span className="text-gray-800 text-[10px]">·</span>
-                              <span className="text-[10px] text-gray-700 font-bold uppercase">第 {unit.order} 節</span>
-                           </div>
+                        
+                        <div className="flex-1 min-w-0">
+                           {editingChapterId === unit.id ? (
+                             <input 
+                               ref={chapterInputRef}
+                               value={chapterEditValue}
+                               onClick={(e) => e.stopPropagation()}
+                               onChange={(e) => setChapterEditValue(e.target.value)}
+                               onBlur={() => handleSaveChapterTitle(unit.id)}
+                               onKeyDown={(e) => {
+                                 if (e.key === 'Enter') handleSaveChapterTitle(unit.id);
+                                 if (e.key === 'Escape') setEditingChapterId(null);
+                               }}
+                               className="w-full bg-black/40 border-b border-blue-500 outline-none text-[20px] sm:text-[24px] font-black text-white px-2 py-1 rounded"
+                             />
+                           ) : (
+                             <h4 className="text-[20px] sm:text-[24px] font-black text-white transition-colors truncate">
+                                {unit.title}
+                             </h4>
+                           )}
+                           <p className="text-[11px] text-gray-600 font-bold mt-0.5">{unit.wordCount} 字</p>
+                        </div>
+                     </div>
+
+                     {/* Optimized Action Icons */}
+                     <div className="flex items-center space-x-4 sm:space-x-6 shrink-0 pl-4">
+                        <button 
+                          onClick={(e) => handleStartEditChapter(e, unit)}
+                          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+                        >
+                           <i className="fa-solid fa-pen text-sm"></i>
+                        </button>
+                        <button 
+                          onClick={(e) => handleDeleteChapter(e, unit.id)}
+                          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 hover:bg-red-500/20 transition-all active:scale-90"
+                        >
+                           <i className="fa-regular fa-trash-can text-sm"></i>
+                        </button>
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[20px] bg-blue-600 flex items-center justify-center text-white shadow-lg active:scale-95 transition-all">
+                           <i className="fa-solid fa-play text-lg sm:text-xl translate-x-0.5"></i>
                         </div>
                      </div>
                   </div>
