@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { SecuritySettings } from '../types';
@@ -33,8 +34,8 @@ const SecuritySettingsPage: React.FC<SecuritySettingsPageProps> = ({ settings, o
             <i className="fa-solid fa-chevron-left text-base sm:text-lg"></i>
           </button>
           <div>
-            <h2 className="text-lg sm:text-2xl font-black text-white tracking-tighter">安全與備份設定</h2>
-            <p className="text-[7px] sm:text-[9px] text-[#8E8E93] font-black uppercase tracking-[0.25em] mt-0.5 sm:mt-1">SECURITY & PROTECTION PROTOCOL</p>
+            <h2 className="text-lg sm:text-2xl font-black text-white tracking-tighter">安全與備份</h2>
+            <p className="text-[7px] sm:text-[9px] text-[#8E8E93] font-black uppercase tracking-[0.25em] mt-0.5 sm:mt-1">SECURITY & PROTECTION</p>
           </div>
         </div>
         <div className="hidden xs:block">
@@ -56,12 +57,12 @@ const SecuritySettingsPage: React.FC<SecuritySettingsPageProps> = ({ settings, o
                 <i className="fa-solid fa-shield-halved text-xl sm:text-2xl"></i>
               </div>
               <div>
-                <h4 className="text-base sm:text-lg font-black text-white tracking-tight">自動快照與救贖機制</h4>
+                <h4 className="text-base sm:text-lg font-black text-white tracking-tight">系統保護機制</h4>
                 <p className="text-[8px] sm:text-[9px] text-[#D4FF5F] font-black uppercase tracking-[0.2em]">PROTECTION PROTOCOL</p>
               </div>
             </div>
             <p className="text-[13px] sm:text-[14px] text-slate-400 leading-relaxed font-medium relative z-10">
-              自動快照能確保您的文字在意外中獲得救贖。系統將根據設定自動清理過期快照以節省空間，但<span className="text-white font-black">「里程碑」版本將獲得最高等級保護，永久保留</span>。
+              自動快照能確保您的文字在意外中獲得救贖。快照保留期限設定後，系統將根據您的選擇自動清理過期快照以節省空間，但<span className="text-[#D4FF5F] font-black">「里程碑」版本將永遠保留</span>。
             </p>
           </section>
 
@@ -70,10 +71,10 @@ const SecuritySettingsPage: React.FC<SecuritySettingsPageProps> = ({ settings, o
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-5 sm:space-x-8">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[28px] bg-blue-600/10 flex items-center justify-center text-blue-500 shadow-inner border border-blue-500/10">
-                  <i className="fa-solid fa-clock-rotate-left text-xl sm:text-2xl"></i>
+                  <i className="fa-solid fa-rotate-left text-xl sm:text-2xl"></i>
                 </div>
                 <div>
-                  <h4 className="text-lg sm:text-xl font-black text-white tracking-tight">啟動自動快照</h4>
+                  <h4 className="text-lg sm:text-xl font-black text-white tracking-tight">自動快照保護</h4>
                   <p className="text-[9px] sm:text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] mt-1">AUTO SNAPSHOT MASTER</p>
                 </div>
               </div>
@@ -116,7 +117,7 @@ const SecuritySettingsPage: React.FC<SecuritySettingsPageProps> = ({ settings, o
                    <div className="mt-8 p-5 sm:p-8 bg-amber-500/5 rounded-[32px] border border-amber-500/10">
                       <p className="text-[11px] sm:text-[12px] text-amber-500/80 leading-relaxed font-bold">
                         <i className="fa-solid fa-circle-exclamation mr-2"></i>
-                        注意：清理程序僅針對自動生成的快照。您手動標記的里程碑版本將不受此限。
+                        僅自動快照受清理期限影響，里程碑版本將獲得終身永久保留保障，不受此限制。
                       </p>
                    </div>
                 </div>
@@ -126,7 +127,7 @@ const SecuritySettingsPage: React.FC<SecuritySettingsPageProps> = ({ settings, o
               <section className="space-y-6">
                 <h3 className="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] px-2 flex items-center">
                   <i className="fa-solid fa-sliders mr-3 text-blue-500/40 text-xs"></i>
-                  觸發邏輯設定 TRIGGERING
+                  觸發設定 TRIGGERING
                 </h3>
                 <div className="bg-[#0F0F11] rounded-[44px] p-8 sm:p-10 space-y-10 sm:space-y-14 border border-white/5">
                   <div className="flex bg-black/40 rounded-[2rem] p-1.5 h-16 border border-white/5 relative">
@@ -149,9 +150,9 @@ const SecuritySettingsPage: React.FC<SecuritySettingsPageProps> = ({ settings, o
                     <div className="flex justify-between items-end px-1">
                       <div>
                         <p className="text-[10px] sm:text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                          {settings.autoSnapshotMode === 'interval' ? '備份間隔時間' : '偵測靜止秒數'}
+                          時間間隔
                         </p>
-                        <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-widest mt-0.5">Precise Adjustment Range</p>
+                        <p className="text-[7px] sm:text-[8px] text-gray-600 font-black uppercase tracking-widest mt-0.5">ADJUSTMENT RANGE</p>
                       </div>
                       <span className="text-2xl sm:text-4xl font-black text-blue-400 tracking-tighter">
                         {settings.autoSnapshotMode === 'interval' ? `${settings.autoSnapshotIntervalMinutes} MIN` : `${settings.autoSnapshotIdleSeconds} SEC`}
@@ -202,7 +203,7 @@ const SecuritySettingsPage: React.FC<SecuritySettingsPageProps> = ({ settings, o
              <div className="space-y-4 text-center max-w-md">
                 <h4 className="text-[15px] sm:text-[18px] font-black text-white uppercase tracking-[0.3em]">SAFEWRITE 數據救贖保障</h4>
                 <p className="text-[13px] sm:text-[14px] text-gray-500 leading-relaxed font-medium">
-                  採用「本地先行」與「即時快照」分散式存儲。即使在極端斷電或環境崩潰下，我們仍能救贖您每一道珍貴的創作光影。
+                  採用「本地先行」與「即時快照」技術。即使發生斷電或程式閃退，系統仍能精準救贖每一道創作思緒。
                 </p>
              </div>
           </section>
