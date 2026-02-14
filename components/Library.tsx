@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Project, WritingType, StructureUnit, StructureType } from '../types';
 import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES, TEMPLATE_STRUCTURE_MAP, STRUCTURE_DEFINITIONS } from '../constants';
@@ -251,8 +252,8 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                             onClick={(e) => handleStartInlineEdit(e, proj)}
                             className="w-full flex items-center space-x-4 px-5 py-4 rounded-2xl hover:bg-white/5 text-left transition-colors"
                           >
-                            <i className="fa-solid fa-pen-to-square text-blue-400"></i>
-                            <span className="text-[12px] font-black text-white uppercase tracking-widest">編輯名稱</span>
+                            <i className="fa-solid fa-pen-to-square text-blue-500 text-lg"></i>
+                            <span className="text-[13px] font-bold text-white tracking-tight">編輯名稱</span>
                           </button>
                           <div className="h-px bg-white/5 my-1.5 mx-2"></div>
                           <button 

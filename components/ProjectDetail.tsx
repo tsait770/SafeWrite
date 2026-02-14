@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Project, Chapter, StructureType, SpineNodeId, SpineNodeStatus } from '../types';
 import { TEMPLATES, STRUCTURE_DEFINITIONS, SPINE_NODES_CONFIG, INITIAL_SPINE_NODES } from '../constants';
@@ -223,8 +224,12 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
             {isMenuOpen && (
               <div className="absolute right-0 top-14 w-52 bg-[#1C1C1E] border border-white/10 rounded-[28px] shadow-3xl z-[100] p-2 animate-in fade-in zoom-in duration-300">
                 <button onClick={handleTogglePin} className="w-full flex items-center space-x-4 p-4 rounded-2xl hover:bg-white/5 text-left text-white">
-                  <i className={`fa-solid fa-thumbtack ${project.isPinned ? 'text-[#D4FF5F]' : ''}`}></i>
+                  <i className={`fa-solid ${project.isPinned ? 'fa-thumbtack text-[#D4FF5F]' : 'fa-thumbtack text-gray-400'}`}></i>
                   <span className="text-[11px] font-black uppercase tracking-widest">{project.isPinned ? '取消置頂' : '置頂專案'}</span>
+                </button>
+                <button onClick={() => { setIsEditingName(true); setIsMenuOpen(false); }} className="w-full flex items-center space-x-4 p-4 rounded-2xl hover:bg-white/5 text-left text-white">
+                  <i className="fa-solid fa-pen-to-square text-blue-500 text-lg"></i>
+                  <span className="text-[13px] font-bold tracking-tight">編輯名稱</span>
                 </button>
                 <button onClick={onOpenExport} className="w-full flex items-center space-x-4 p-4 rounded-2xl hover:bg-white/5 text-left text-white">
                   <i className="fa-solid fa-file-export text-blue-400"></i>
@@ -241,24 +246,31 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
         </div>
 
         <div className="text-center mb-12">
-          {isEditingName ? (
-            <input 
-              ref={inputRef} 
-              autoFocus 
-              value={editNameValue} 
-              onChange={(e) => setEditNameValue(e.target.value)} 
-              onBlur={handleNameSave}
-              onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
-              className="bg-transparent border-b-2 border-blue-600 outline-none text-3xl font-black text-center text-white w-full max-w-sm" 
-            />
-          ) : (
-            <h1 
-              onClick={() => setIsEditingName(true)}
-              className="text-4xl font-black tracking-tighter text-white cursor-text"
-            >
-              {project.name}
-            </h1>
-          )}
+          <div className="flex items-center justify-center space-x-4 group">
+            {isEditingName ? (
+              <input 
+                ref={inputRef} 
+                autoFocus 
+                value={editNameValue} 
+                onChange={(e) => setEditNameValue(e.target.value)} 
+                onBlur={handleNameSave}
+                onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
+                className="bg-transparent border-b-2 border-blue-600 outline-none text-3xl font-black text-center text-white w-full max-w-sm" 
+              />
+            ) : (
+              <h1 
+                onClick={() => setIsEditingName(true)}
+                className="text-4xl font-black tracking-tighter text-white cursor-text"
+              >
+                {project.name}
+              </h1>
+            )}
+            {!isEditingName && (
+              <button onClick={() => setIsEditingName(true)} className="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                 <i className="fa-solid fa-pen-to-square text-xl"></i>
+              </button>
+            )}
+          </div>
           <p className="text-[11px] text-[#8E8E93] font-black uppercase tracking-[0.4em] mt-2.5">
             {TEMPLATES[project.writingType]?.label}
           </p>

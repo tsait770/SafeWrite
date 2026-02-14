@@ -89,7 +89,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     { id: 't4', name: 'Technical Manual', subtitle: 'Structured technical guide', type: 'FREE', image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?q=80&w=400&auto=format&fit=crop' }
   ];
 
-  // Updated mission logos for the 5 linear stages
   const deliverySteps = [
     { title: '內容標準化與 AST 解析', en: 'CONTENT NORMALIZATION & AST PARSING', icon: 'fa-microchip' },
     { title: '生成 DOCX 編輯母檔', en: 'GENERATING EDITORIAL DOCX ARTIFACT', icon: 'fa-file-lines' },
@@ -260,7 +259,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
 
   if (step === PubStep.DISTRIBUTION_GALLERY) {
     return (
-      <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-y-auto no-scrollbar text-white font-sans pb-[env(safe-area-inset-bottom,0px)]">
+      <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-y-auto no-scrollbar text-white font-sans pb-48">
         <header className="h-[86px] px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-center shrink-0 relative border-b border-white/5 bg-black z-50">
           <button onClick={() => setStep(PubStep.CONFIG)} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full absolute left-8 active:scale-90 transition-all">
             <i className="fa-solid fa-chevron-left text-lg"></i>
@@ -269,12 +268,14 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         </header>
 
         <main className="flex-1 px-6 sm:px-12 py-10 space-y-12 max-w-4xl mx-auto w-full">
+          {/* Hero Section */}
           <div className="bg-gradient-to-br from-blue-600/10 to-transparent p-10 sm:p-14 rounded-[56px] border border-blue-600/20 text-center relative overflow-hidden shadow-2xl">
              <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/5 rounded-full blur-3xl opacity-50" />
              <h3 className="text-4xl sm:text-5xl font-black tracking-tighter mb-4 text-white">From Draft to the World</h3>
              <p className="text-[16px] text-gray-400 leading-relaxed font-medium max-w-xl mx-auto">Deliver your work through official global publishing channels. This is where your journey from manuscript to published work completes.</p>
           </div>
 
+          {/* Main Direct Publishing Card */}
           <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
              <div className="flex items-center space-x-6">
                 <div className="w-16 h-16 rounded-3xl bg-blue-600 flex items-center justify-center text-white text-2xl shadow-lg">
@@ -301,6 +302,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
              </button>
           </div>
 
+          {/* Platforms Grid */}
           <div className="space-y-10">
              <div className="px-4">
                 <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em]">一 鍵 自 動 投 遞 D I R E C T P U B L I S H I N G</h3>
@@ -316,7 +318,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                             <i className="fa-brands fa-amazon"></i>
                           </div>
                           <div>
-                            <h4 className="text-3xl font-black tracking-tight">Amazon KDP (Kindle)</h4>
+                            <h4 className="text-3xl font-black tracking-tight text-white">Amazon KDP (Kindle)</h4>
                             <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">E-BOOK DISTRIBUTION</p>
                           </div>
                        </div>
@@ -338,7 +340,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                             <i className="fa-solid fa-book-bookmark"></i>
                           </div>
                           <div>
-                            <h4 className="text-3xl font-black tracking-tight">Amazon KDP (Paperback)</h4>
+                            <h4 className="text-3xl font-black tracking-tight text-white">Amazon KDP (Paperback)</h4>
                             <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">PRINT ON DEMAND</p>
                           </div>
                        </div>
@@ -352,31 +354,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                     </button>
                 </div>
 
-                {/* IngramSpark */}
-                <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group hover:border-white/10 transition-all">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center space-x-8">
-                          <div className="w-20 h-20 rounded-[28px] bg-black border border-white/5 flex items-center justify-center text-blue-500 text-4xl">
-                            <i className="fa-solid fa-earth-americas"></i>
-                          </div>
-                          <div>
-                            <h4 className="text-3xl font-black tracking-tight">IngramSpark</h4>
-                            <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">GLOBAL RETAIL NETWORK</p>
-                          </div>
-                       </div>
-                       <div className="px-6 py-3 bg-[#FF9F0A] text-black text-[10px] font-black rounded-[20px] uppercase tracking-widest shadow-lg flex flex-col items-center leading-tight">
-                         <span className="mb-0.5">ISBN</span>
-                         <span>必備</span>
-                       </div>
-                    </div>
-                    <button 
-                      onClick={() => { setTargetPlatform('IngramSpark'); setStep(PubStep.FINALIZATION); }} 
-                      className="w-full h-[86px] bg-blue-600 text-white rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
-                    >
-                      投 遞 至 I N G R A M S P A R K
-                    </button>
-                </div>
-
                 {/* Apple Books */}
                 <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group hover:border-white/10 transition-all">
                     <div className="flex items-center justify-between">
@@ -385,11 +362,11 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                             <i className="fa-brands fa-apple"></i>
                           </div>
                           <div>
-                            <h4 className="text-3xl font-black tracking-tight">Apple Books</h4>
+                            <h4 className="text-3xl font-black tracking-tight text-white">Apple Books</h4>
                             <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">APPLE PUBLISHING</p>
                           </div>
                        </div>
-                       <div className="px-6 py-3 border border-white/20 text-white text-[11px] font-black rounded-full uppercase tracking-widest">數位出版</div>
+                       <div className="px-6 py-3 bg-[#2C2C2E] text-white text-[11px] font-black rounded-full uppercase tracking-widest shadow-lg">數位出版</div>
                     </div>
                     <button 
                       onClick={() => { setTargetPlatform('Apple Books'); setStep(PubStep.FINALIZATION); }} 
@@ -407,11 +384,11 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                             <i className="fa-brands fa-medium"></i>
                           </div>
                           <div>
-                            <h4 className="text-3xl font-black tracking-tight">Medium 專欄</h4>
+                            <h4 className="text-3xl font-black tracking-tight text-white">Medium 專欄</h4>
                             <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">DIGITAL STORYTELLING</p>
                           </div>
                        </div>
-                       <div className="px-6 py-3 border border-white/20 text-white text-[11px] font-black rounded-full uppercase tracking-widest">專欄分發</div>
+                       <div className="px-6 py-3 bg-[#2C2C2E] text-white text-[11px] font-black rounded-full uppercase tracking-widest shadow-lg">專欄分發</div>
                     </div>
                     <button 
                       onClick={() => { setTargetPlatform('Medium'); setStep(PubStep.FINALIZATION); }} 
@@ -429,40 +406,17 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                             <i className="fa-brands fa-substack"></i>
                           </div>
                           <div>
-                            <h4 className="text-3xl font-black tracking-tight">Substack</h4>
+                            <h4 className="text-3xl font-black tracking-tight text-white">Substack</h4>
                             <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">建立您的訂閱電子報與寫作社群。</p>
                           </div>
                        </div>
-                       <div className="px-6 py-3 border border-white/20 text-[#FF6719] text-[11px] font-black rounded-full uppercase tracking-widest">專欄分發</div>
+                       <div className="px-6 py-3 bg-[#2C2C2E] text-white text-[11px] font-black rounded-full uppercase tracking-widest shadow-lg">專欄分發</div>
                     </div>
                     <button 
                       onClick={() => { setTargetPlatform('Substack'); setStep(PubStep.FINALIZATION); }} 
                       className="w-full h-[86px] bg-[#FF6719] text-black rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
                     >
                       發 佈 至 S U B S T A C K
-                    </button>
-                </div>
-
-                {/* Draft2Digital Card */}
-                <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group hover:border-white/10 transition-all">
-                    <div className="flex items-center justify-between">
-                       <div className="flex items-center space-x-8">
-                          <div className="w-20 h-20 rounded-[28px] bg-black border border-white/5 flex items-center justify-center text-[#2ECC71] text-4xl shadow-inner">
-                            <i className="fa-solid fa-share-nodes"></i>
-                          </div>
-                          <div>
-                            <h4 className="text-3xl font-black tracking-tight">Draft2Digital</h4>
-                            <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">MULTI-PLATFORM AGGREGATOR</p>
-                          </div>
-                       </div>
-                       <div className="px-6 py-3 border border-white/20 text-white text-[11px] font-black rounded-full uppercase tracking-widest">數位出版</div>
-                    </div>
-                    <p className="text-[15px] text-gray-500 font-medium leading-relaxed px-2">Global distribution to Apple, Kobo, and libraries.</p>
-                    <button 
-                      onClick={() => { setTargetPlatform('Draft2Digital'); setStep(PubStep.FINALIZATION); }} 
-                      className="w-full h-[86px] bg-[#2ECC71] text-black rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
-                    >
-                      發 佈 至 D R A F T 2 D I G I T A L
                     </button>
                 </div>
 
@@ -481,7 +435,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                     </div>
                   </div>
                   <p className="text-[15px] text-gray-500 font-medium leading-relaxed mb-12 px-2 max-w-2xl">
-                    No direct submission required. We prepare industry-standard submission materials including synopsis, bio, and sample chapters tailored for mainstream literary agents and traditional publishing houses.
+                    No direct submission required. We prepare industry-standard submission materials including synopsis, bio, and sample chapters.
                   </p>
                   <div className="flex justify-end pr-4">
                     <i className="fa-solid fa-arrow-right-long text-gray-800 group-hover:text-blue-500 group-hover:translate-x-3 transition-all text-2xl"></i>
@@ -490,6 +444,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
              </div>
           </div>
 
+          {/* Cloud Section */}
           <div className="space-y-10 pt-16 border-t border-white/5">
              <div className="px-4">
                 <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em]">雲 端 儲 存 與 持 久 化 CLOUD & PERSISTENCE</h3>
@@ -497,7 +452,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
              </div>
 
              <div className="grid grid-cols-1 gap-10">
-                {/* Google Drive Card */}
                 <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group transition-all">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center space-x-8">
@@ -505,7 +459,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                             <i className="fa-brands fa-google-drive"></i>
                           </div>
                           <div>
-                            <h4 className="text-3xl font-black tracking-tight">Google Drive</h4>
+                            <h4 className="text-3xl font-black tracking-tight text-white">Google Drive</h4>
                             <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">DRIVE.GOOGLE.COM</p>
                           </div>
                        </div>
@@ -519,7 +473,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                     </button>
                 </div>
 
-                {/* Apple iCloud Card */}
                 <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group transition-all">
                     <div className="flex items-center justify-between">
                        <div className="flex items-center space-x-8">
@@ -527,7 +480,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                             <i className="fa-brands fa-apple"></i>
                           </div>
                           <div>
-                            <h4 className="text-3xl font-black tracking-tight">Apple iCloud</h4>
+                            <h4 className="text-3xl font-black tracking-tight text-white">Apple iCloud</h4>
                             <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">ICLOUD.COM</p>
                           </div>
                        </div>
@@ -540,6 +493,32 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                       傳 送 至 A P P L E I C L O U D
                     </button>
                 </div>
+             </div>
+          </div>
+
+          {/* Local Storage Section */}
+          <div className="space-y-10 pt-16 border-t border-white/5">
+             <div className="px-4">
+                <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em]">儲 存 至 本 地 設 備 LOCAL STORAGE</h3>
+                <p className="text-[14px] text-gray-400 font-black tracking-tight uppercase mt-3">直接儲存至您的手機或電腦硬碟中</p>
+             </div>
+
+             <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl group transition-all">
+                <div className="flex items-center space-x-8">
+                   <div className="w-20 h-20 rounded-[28px] bg-black border border-white/5 flex items-center justify-center text-[#D4FF5F] text-4xl shadow-inner">
+                      <i className="fa-solid fa-download"></i>
+                   </div>
+                   <div>
+                      <h4 className="text-3xl font-black tracking-tight text-white">下載至本地</h4>
+                      <p className="text-[11px] text-gray-500 font-black uppercase tracking-[0.3em] mt-1.5">OFFLINE PERSISTENCE</p>
+                   </div>
+                </div>
+                <button 
+                  onClick={() => { setTargetPlatform('Local Device'); setStep(PubStep.FINALIZATION); }} 
+                  className="w-full h-[86px] bg-[#D4FF5F] text-black rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-xl active:scale-[0.98] transition-all"
+                >
+                   儲 存 檔 案 至 此 裝 置
+                </button>
              </div>
           </div>
           
@@ -643,7 +622,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
 
     return (
       <div className="fixed inset-0 z-[3000] bg-black flex flex-col items-center justify-center animate-in fade-in duration-700 text-center px-8 font-sans">
-        {/* Main Central Animation */}
         <div className="relative w-80 h-80 flex items-center justify-center mb-20">
            <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
               <circle cx="150" cy="150" r="120" className="stroke-white/5 fill-none" strokeWidth="6" />
@@ -663,13 +641,11 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
            </div>
         </div>
 
-        {/* Primary Phase Labels */}
         <div className="space-y-6 max-w-xl mb-24">
            <h2 className="text-4xl font-black tracking-tighter text-white animate-in slide-in-from-bottom-4 duration-700">{currentStep.title}</h2>
            <p className="text-[11px] text-blue-500 font-black uppercase tracking-[0.5em] opacity-80">{currentStep.en}</p>
         </div>
 
-        {/* Sequential Step List Tracking */}
         <div className="w-full max-w-sm space-y-6">
            {deliverySteps.map((s, i) => (
              <div 
@@ -684,7 +660,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
            ))}
         </div>
 
-        {/* Global Footer Identifier */}
         <div className="absolute bottom-16 text-[9px] font-black text-gray-700 uppercase tracking-[0.8em]">
            INSPUBLISH PUBLISHING AGENT ACTIVE
         </div>
@@ -695,7 +670,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   if (step === PubStep.SUCCESS) {
     return (
       <div className="fixed inset-0 z-[5000] bg-black flex flex-col items-center justify-center p-8 animate-in fade-in duration-700 text-center font-sans overflow-hidden">
-         {/* Success Tick Circle */}
          <div className="relative w-52 h-52 flex items-center justify-center mb-20 animate-in zoom-in duration-1000">
             <div className="absolute inset-0 bg-blue-600/5 rounded-full blur-[80px]" />
             <div className="w-44 h-44 rounded-full border-2 border-blue-600/20 bg-blue-600/10 flex items-center justify-center text-blue-600 shadow-[0_0_60px_rgba(37,99,235,0.2)]">
@@ -703,7 +677,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
             </div>
          </div>
 
-         {/* Success Headline */}
          <div className="space-y-6 max-w-lg mb-20">
            <h1 className="text-5xl font-black tracking-tighter leading-tight text-white animate-in slide-in-from-bottom-4 duration-700">Published successfully.</h1>
            <p className="text-lg text-gray-500 font-medium leading-relaxed animate-in slide-in-from-bottom-8 duration-1000">
@@ -711,7 +684,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
            </p>
          </div>
 
-         {/* Distribution Status Summary Card */}
          <div className="w-full max-w-[420px] bg-[#121214] border border-white/5 rounded-[44px] p-10 space-y-8 animate-in slide-in-from-bottom-12 duration-1000 shadow-3xl">
             <div className="flex justify-between items-center px-4">
                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">CURRENT STATUS</span>
@@ -727,7 +699,6 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
             </p>
          </div>
 
-         {/* Main Footer Button */}
          <div className="mt-20 w-full max-w-md animate-in slide-in-from-bottom-16 duration-1000">
             <button onClick={onClose} className="w-full h-24 bg-white text-black rounded-[44px] text-[13px] font-black uppercase tracking-[0.4em] shadow-2xl active:scale-[0.95] transition-all hover:scale-102">
               VIEW PUBLISHING STATUS
