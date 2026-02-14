@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MembershipLevel, UIMode, AppState, Project, AppMode, AppTab, ThemeMode, VersionSnapshot, SnapshotType, Chapter, WritingType, StructureType, AIPreferences, SecuritySettings, BackupSettings, CreditCard, SpineNodeId } from './types';
 import { TEMPLATES, PROJECT_COLORS, PROJECT_ICONS, TEMPLATE_STRUCTURE_MAP, INITIAL_SPINE_NODES } from './constants';
@@ -30,7 +29,7 @@ const App: React.FC = () => {
         icon: 'fa-feather-pointed',
         chapters: [{ 
           id: 'c1', 
-          title: '第 1 章 · Chapter 1', 
+          title: '第 1 章', 
           content: '故事開始於太陽不再升起的那一天...', 
           order: 1, 
           history: [], 
