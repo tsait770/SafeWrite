@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Project, WritingType, StructureUnit, StructureType } from '../types';
 import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES, TEMPLATE_STRUCTURE_MAP, STRUCTURE_DEFINITIONS } from '../constants';
@@ -289,146 +288,152 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
         </div>
       </section>
 
-      {/* Modern Creation Protocol UI - Optimized RWD for Mobile, Tablet, Web */}
+      {/* Modern Creation Protocol UI - Optimized RWD for Mobile, Tablet, Web App */}
       {isCreating && (
         <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center animate-in fade-in duration-500">
            {/* Deep dark blurry mask to fix "overlapping UI" complaint - Apple HIG style */}
            <div className="absolute inset-0 bg-black/95 backdrop-blur-[40px]" onClick={resetForm} />
            
-           <div className="relative w-full max-w-full sm:max-w-2xl lg:max-w-3xl bg-[#0F0F10] rounded-t-[44px] sm:rounded-[44px] p-0 flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in duration-700 cubic-bezier(0.16, 1, 0.3, 1) overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,1)] border border-white/5 h-[94vh] sm:h-auto sm:max-h-[90vh]">
+           <div className="relative w-full max-w-full sm:max-w-3xl lg:max-w-6xl bg-[#0F0F10] rounded-t-[44px] sm:rounded-[44px] p-0 flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in duration-700 cubic-bezier(0.16, 1, 0.3, 1) overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,1)] border border-white/5 h-[94vh] sm:h-auto sm:max-h-[90vh]">
               
               <header className="px-8 sm:px-12 py-8 sm:py-10 border-b border-white/5 shrink-0 flex justify-between items-start bg-[#0F0F10] z-20">
                  <div className="space-y-1">
                     <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tighter">啟動寫作倉庫</h2>
                     <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.3em]">NEW SMART REPOSITORY PROTOCOL</p>
                  </div>
-                 <button onClick={resetForm} className="w-12 h-12 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-90">
+                 <button onClick={resetForm} className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all active:scale-90">
                     <i className="fa-solid fa-xmark text-xl"></i>
                  </button>
               </header>
 
-              <div className="flex-1 overflow-y-auto no-scrollbar px-8 sm:px-12 pt-8 sm:pt-10 pb-64 space-y-12">
-                 
-                 {/* Basic Info Section - Responsive Grid */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10">
-                    <div className="space-y-4">
-                       <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">資料夾名稱 FOLDER NAME</label>
-                       <input 
-                         autoFocus
-                         value={formData.name} 
-                         onChange={e => setFormData({...formData, name: e.target.value})} 
-                         placeholder="例如：量子幽靈的小說..." 
-                         className="w-full bg-[#1C1C1E] h-16 sm:h-20 px-8 rounded-[2rem] sm:rounded-[2.5rem] text-lg sm:text-xl font-black text-white outline-none border border-white/5 focus:border-[#7b61ff] transition-all placeholder-white/5" 
-                       />
-                    </div>
+              <div className="flex-1 overflow-y-auto no-scrollbar px-8 sm:px-12 pt-8 sm:pt-10 pb-64">
+                 <div className="lg:flex lg:gap-20">
+                    {/* Left Column: Basic Info */}
+                    <div className="lg:w-2/5 space-y-12">
+                       <div className="space-y-10">
+                          <div className="space-y-4">
+                             <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">資料夾名稱 FOLDER NAME</label>
+                             <input 
+                               autoFocus
+                               value={formData.name} 
+                               onChange={e => setFormData({...formData, name: e.target.value})} 
+                               placeholder="例如：量子幽靈的小說..." 
+                               className="w-full bg-[#1C1C1E] h-16 sm:h-20 px-8 rounded-[2rem] sm:rounded-[2.5rem] text-lg sm:text-xl font-black text-white outline-none border border-white/5 focus:border-[#7b61ff] transition-all placeholder-white/5" 
+                             />
+                          </div>
 
-                    <div className="space-y-4">
-                       <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">目標字數 TARGET WORDS</label>
-                       <div className="grid grid-cols-4 gap-2">
-                          {[3000, 5000, 10000, 50000].map(count => (
-                             <button 
-                                key={count} 
-                                onClick={() => setFormData({...formData, targetWordCount: count})}
-                                className={`h-10 sm:h-12 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black transition-all ${formData.targetWordCount === count ? 'bg-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] text-gray-500 border border-white/5 hover:bg-white/5'}`}
-                             >
-                                {count >= 1000 ? `${count/1000}K` : count}
-                             </button>
-                          ))}
+                          <div className="space-y-4">
+                             <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">目標字數 TARGET WORDS</label>
+                             <div className="grid grid-cols-4 gap-2">
+                                {[3000, 5000, 10000, 50000].map(count => (
+                                   <button 
+                                      key={count} 
+                                      onClick={() => setFormData({...formData, targetWordCount: count})}
+                                      className={`h-10 sm:h-12 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black transition-all ${formData.targetWordCount === count ? 'bg-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] text-gray-500 border border-white/5 hover:bg-white/5'}`}
+                                   >
+                                      {count >= 1000 ? `${count/1000}K` : count}
+                                   </button>
+                                ))}
+                             </div>
+                             <div className="w-full bg-[#1C1C1E] h-12 sm:h-14 px-8 rounded-xl sm:rounded-2xl border border-white/5 flex items-center mt-2">
+                                <input 
+                                   type="number" 
+                                   value={formData.targetWordCount} 
+                                   onChange={e => setFormData({...formData, targetWordCount: parseInt(e.target.value) || 0})}
+                                   className="w-full bg-transparent text-lg font-black text-white outline-none"
+                                />
+                             </div>
+                          </div>
                        </div>
-                       <div className="w-full bg-[#1C1C1E] h-12 sm:h-14 px-8 rounded-xl sm:rounded-2xl border border-white/5 flex items-center mt-2">
-                          <input 
-                             type="number" 
-                             value={formData.targetWordCount} 
-                             onChange={e => setFormData({...formData, targetWordCount: parseInt(e.target.value) || 0})}
-                             className="w-full bg-transparent text-lg font-black text-white outline-none"
-                          />
+                    </div>
+
+                    {/* Right Column: Paradigms, Specialized Archives & Visual Coding */}
+                    <div className="lg:w-3/5 space-y-12 mt-12 lg:mt-0">
+                       {/* Core Paradigms */}
+                       <div className="space-y-6">
+                          <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">寫作範式 CORE PARADIGMS</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                             {mainParadigms.map((type) => {
+                                const t = TEMPLATES[type];
+                                const active = formData.type === type;
+                                return (
+                                  <button 
+                                    key={type} 
+                                    onClick={() => setFormData({...formData, type})} 
+                                    className={`flex flex-col items-start p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] border transition-all min-h-[180px] sm:min-h-[220px] text-left relative group ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-[0_20px_50px_rgba(123,97,255,0.4)] scale-[1.02]' : 'bg-[#1C1C1E] border-white/5 text-gray-400 hover:border-white/10'}`}
+                                  >
+                                     <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 transition-transform group-hover:scale-110 ${active ? 'bg-white/20' : 'bg-white/5'}`}>
+                                        <i className={`fa-solid ${t.icon} text-xl sm:text-2xl`} style={{ color: active ? 'white' : '#7b61ff' }}></i>
+                                     </div>
+                                     <span className={`text-sm sm:text-[16px] font-black uppercase tracking-widest leading-none mb-2 sm:mb-3 ${active ? 'text-white' : 'text-slate-200'}`}>{t.label}</span>
+                                     <p className={`text-[10px] sm:text-[11px] font-medium line-clamp-2 sm:line-clamp-3 leading-relaxed ${active ? 'text-white/80' : 'text-gray-500'}`}>{t.description}</p>
+                                  </button>
+                                );
+                             })}
+                          </div>
+                       </div>
+
+                       <div className="space-y-6">
+                          <div className="flex items-center justify-between px-1">
+                             <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest">其他專業存檔 SPECIALIZED ARCHIVES</label>
+                             <button onClick={() => setIsTemplatesExpanded(!isTemplatesExpanded)} className="text-[10px] font-black text-[#7b61ff] uppercase tracking-[0.2em] flex items-center gap-2">
+                                {isTemplatesExpanded ? '收起 COLLAPSE' : '瀏覽全部 VIEW ALL'}
+                                <i className={`fa-solid fa-chevron-${isTemplatesExpanded ? 'up' : 'down'}`}></i>
+                             </button>
+                          </div>
+
+                          <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 transition-all duration-700 ${isTemplatesExpanded ? 'opacity-100 max-h-[1200px] visible mt-4' : 'opacity-0 max-h-0 invisible overflow-hidden'}`}>
+                             {scrollParadigms.map(type => {
+                                const t = TEMPLATES[type];
+                                const active = formData.type === type;
+                                return (
+                                   <button 
+                                      key={type} 
+                                      onClick={() => setFormData({...formData, type})}
+                                      className={`flex items-center justify-between p-5 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border transition-all ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
+                                   >
+                                      <div className="flex items-center space-x-4 sm:space-x-5 text-left">
+                                         <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center ${active ? 'bg-white/20' : 'bg-white/5'}`}>
+                                            <i className={`fa-solid ${t.icon} text-base sm:text-lg`} style={{ color: active ? 'white' : '#7b61ff' }}></i>
+                                         </div>
+                                         <div>
+                                            <h4 className={`text-xs sm:text-[13px] font-black uppercase tracking-widest leading-none ${active ? 'text-white' : 'text-slate-200'}`}>{t.label}</h4>
+                                            <p className="text-[8px] sm:text-[9px] font-bold opacity-40 mt-1">{t.enLabel}</p>
+                                         </div>
+                                      </div>
+                                   </button>
+                                );
+                             })}
+                          </div>
+                       </div>
+
+                       {/* Visual Coding Section - Moved below Specialized Archives with checkmark removed and ring width reduced by 40% */}
+                       <div className="space-y-6 pt-6 border-t border-white/5">
+                          <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">視覺編碼 VISUAL CODING</label>
+                          <div className="grid grid-cols-5 sm:grid-cols-11 gap-x-3 sm:gap-x-4 gap-y-6 sm:gap-y-8 justify-items-center sm:justify-items-start">
+                             {PROJECT_COLORS.map(c => (
+                                <button 
+                                  key={c} 
+                                  onClick={() => setFormData({...formData, color: c})} 
+                                  className={`w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-full transition-all duration-300 flex items-center justify-center relative active:scale-90 ${
+                                    formData.color === c 
+                                      ? 'ring-[2.4px] sm:ring-[3px] ring-white ring-offset-[4px] sm:ring-offset-[5px] ring-offset-black scale-110 z-10 shadow-[0_0_30px_rgba(255,255,255,0.3)]' 
+                                      : 'opacity-60 hover:opacity-100 hover:scale-105'
+                                  }`} 
+                                  style={{ backgroundColor: c }}
+                                >
+                                </button>
+                             ))}
+                          </div>
                        </div>
                     </div>
                  </div>
-
-                 {/* Core Paradigms - Adaptive Layout */}
-                 <div className="space-y-6">
-                    <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">寫作範式 CORE PARADIGMS</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                       {mainParadigms.map((type) => {
-                          const t = TEMPLATES[type];
-                          const active = formData.type === type;
-                          return (
-                            <button 
-                              key={type} 
-                              onClick={() => setFormData({...formData, type})} 
-                              className={`flex flex-col items-start p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] border transition-all min-h-[180px] sm:min-h-[220px] text-left relative group ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-[0_20px_50px_rgba(123,97,255,0.4)] scale-[1.02]' : 'bg-[#1C1C1E] border-white/5 text-gray-400 hover:border-white/10'}`}
-                            >
-                               <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 transition-transform group-hover:scale-110 ${active ? 'bg-white/20' : 'bg-white/5'}`}>
-                                  <i className={`fa-solid ${t.icon} text-xl sm:text-2xl`} style={{ color: active ? 'white' : '#7b61ff' }}></i>
-                               </div>
-                               <span className={`text-sm sm:text-[16px] font-black uppercase tracking-widest leading-none mb-2 sm:mb-3 ${active ? 'text-white' : 'text-slate-200'}`}>{t.label}</span>
-                               <p className={`text-[10px] sm:text-[11px] font-medium line-clamp-2 sm:line-clamp-3 leading-relaxed ${active ? 'text-white/80' : 'text-gray-500'}`}>{t.description}</p>
-                            </button>
-                          );
-                       })}
-                    </div>
-                 </div>
-
-                 <div className="space-y-6">
-                    <div className="flex items-center justify-between px-1">
-                       <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest">其他專業存檔 SPECIALIZED ARCHIVES</label>
-                       <button onClick={() => setIsTemplatesExpanded(!isTemplatesExpanded)} className="text-[10px] font-black text-[#7b61ff] uppercase tracking-[0.2em] flex items-center gap-2">
-                          {isTemplatesExpanded ? '收起 COLLAPSE' : '瀏覽全部 VIEW ALL'}
-                          <i className={`fa-solid fa-chevron-${isTemplatesExpanded ? 'up' : 'down'}`}></i>
-                       </button>
-                    </div>
-
-                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 transition-all duration-700 ${isTemplatesExpanded ? 'opacity-100 max-h-[1200px] visible mt-4' : 'opacity-0 max-h-0 invisible overflow-hidden'}`}>
-                       {scrollParadigms.map(type => {
-                          const t = TEMPLATES[type];
-                          const active = formData.type === type;
-                          return (
-                             <button 
-                                key={type} 
-                                onClick={() => setFormData({...formData, type})}
-                                className={`flex items-center justify-between p-5 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] border transition-all ${active ? 'bg-[#7b61ff] border-[#7b61ff] text-white shadow-lg' : 'bg-[#1C1C1E] border-white/5 text-gray-500 hover:border-white/10'}`}
-                             >
-                                <div className="flex items-center space-x-4 sm:space-x-5 text-left">
-                                   <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center ${active ? 'bg-white/20' : 'bg-white/5'}`}>
-                                      <i className={`fa-solid ${t.icon} text-base sm:text-lg`} style={{ color: active ? 'white' : '#7b61ff' }}></i>
-                                   </div>
-                                   <div>
-                                      <h4 className={`text-xs sm:text-[13px] font-black uppercase tracking-widest leading-none ${active ? 'text-white' : 'text-slate-200'}`}>{t.label}</h4>
-                                      <p className="text-[8px] sm:text-[9px] font-bold opacity-40 mt-1">{t.enLabel}</p>
-                                   </div>
-                                </div>
-                                {active && <i className="fa-solid fa-circle-check text-white text-xs"></i>}
-                             </button>
-                          );
-                       })}
-                    </div>
-                 </div>
-
-                 {/* Visual Coding Section - Refined Responsive Grid */}
-                 <div className="space-y-6">
-                    <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">視覺編碼 VISUAL CODING</label>
-                    <div className="grid grid-cols-5 sm:grid-cols-10 gap-x-3 sm:gap-x-4 gap-y-6 sm:gap-y-8 justify-items-center sm:justify-items-start">
-                       {PROJECT_COLORS.map(c => (
-                          <button 
-                            key={c} 
-                            onClick={() => setFormData({...formData, color: c})} 
-                            className={`w-10 h-10 sm:w-11 sm:w-12 sm:h-12 rounded-full transition-all duration-300 flex items-center justify-center relative active:scale-90 ${
-                              formData.color === c 
-                                ? 'ring-[4px] sm:ring-[5px] ring-white ring-offset-[4px] sm:ring-offset-[5px] ring-offset-black scale-110 z-10 shadow-[0_0_30px_rgba(255,255,255,0.3)]' 
-                                : 'opacity-60 hover:opacity-100 hover:scale-105'
-                            }`} 
-                            style={{ backgroundColor: c }}
-                          />
-                       ))}
-                    </div>
-                 </div>
                  
-                 {/* Layout Bottom Padding to ensure Visual Coding is never hidden by fixed footer */}
+                 {/* Layout Bottom Padding */}
                  <div className="h-32" />
               </div>
 
-              {/* Fixed Bottom Action Area - Depth Optimized */}
+              {/* Fixed Bottom Action Area */}
               <div className="absolute bottom-0 inset-x-0 p-8 sm:p-12 bg-gradient-to-t from-[#0F0F10] via-[#0F0F10] to-transparent shrink-0 z-30">
                  <button 
                     onClick={handleCreate} 
