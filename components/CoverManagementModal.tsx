@@ -21,29 +21,19 @@ const CoverManagementModal: React.FC<CoverManagementModalProps> = ({ project, on
   const [customPrompt, setCustomPrompt] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleAIInvoke = async (overridePrompt?: string) => {
+  const handleAIInvoke = async () => {
     setIsProcessing(true);
     try {
-      const basePrompt = overridePrompt || customPrompt.trim() || `Professional artistic book cover for '${project.name}', dramatic lighting, award-winning illustration style.`;
-      const newAsset = await geminiService.generateImagenCover(basePrompt, selectedType);
+      const prompt = customPrompt.trim() || `Professional artistic book cover for '${project.name}', dramatic lighting, award-winning illustration style.`;
+      const newAsset = await geminiService.generateImagenCover(prompt, selectedType);
       
       const updated = { ...currentAssets, [selectedType]: newAsset };
       setCurrentAssets(updated);
-      if (overridePrompt) {
-          // Sync UI prompt if it was a fix attempt
-          setCustomPrompt(basePrompt);
-      }
     } catch (e) {
       alert("AI 生成失敗：" + e);
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const handleRegenerateWithFixes = () => {
-    if (!currentAsset) return;
-    const fixPrompt = `Based on the previous feedback: "${currentAsset.complianceReport}". Re-generate the cover ensuring: ${customPrompt || 'Professional aesthetic'}`;
-    handleAIInvoke(fixPrompt);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,7 +52,7 @@ const CoverManagementModal: React.FC<CoverManagementModalProps> = ({ project, on
         const newAsset: CoverAsset = {
           url: base64,
           type: selectedType,
-          width: spec.width, // Placeholder
+          width: spec.width,
           height: spec.height,
           source: 'UPLOAD',
           timestamp: Date.now(),
@@ -84,9 +74,9 @@ const CoverManagementModal: React.FC<CoverManagementModalProps> = ({ project, on
 
   return createPortal(
     <div className="fixed inset-0 z-[3000] flex items-end sm:items-center justify-center animate-in fade-in duration-500 font-sans">
-      <div className="absolute inset-0 bg-black/90 backdrop-blur-2xl" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/95 backdrop-blur-2xl" onClick={onClose} />
       
-      <div className="relative w-full max-w-[800px] bg-[#0A0A0B] border-t sm:border border-white/10 rounded-t-[3.5rem] sm:rounded-[3.5rem] shadow-3xl overflow-hidden flex flex-col h-[95vh] sm:h-[90vh] animate-in slide-in-from-bottom duration-700 cubic-bezier(0.16, 1, 0.3, 1)">
+      <div className="relative w-full max-w-[840px] bg-[#0A0A0B] border-t sm:border border-white/10 rounded-t-[3.5rem] sm:rounded-[3.5rem] shadow-3xl overflow-hidden flex flex-col h-[95vh] sm:h-[90vh] animate-in slide-in-from-bottom duration-700">
         
         <header className="px-8 sm:px-12 pt-12 pb-8 shrink-0 z-20 bg-[#0A0A0B] border-b border-white/5">
           <div className="flex justify-between items-start mb-8">
@@ -125,7 +115,7 @@ const CoverManagementModal: React.FC<CoverManagementModalProps> = ({ project, on
                 <span className="text-[9px] text-blue-500 font-bold uppercase">{COVER_SPECS[selectedType].ratio} Ratio</span>
               </div>
               
-              <div className="relative aspect-[3/4] bg-black/40 rounded-[44px] border border-white/5 overflow-hidden flex items-center justify-center group shadow-inner">
+              <div className="relative aspect-[3/4] bg-black rounded-[44px] border border-white/5 overflow-hidden flex items-center justify-center group shadow-inner">
                 {currentAsset ? (
                   <img src={currentAsset.url} className="w-full h-full object-cover animate-in zoom-in duration-700" alt="Preview" />
                 ) : (
@@ -145,24 +135,11 @@ const CoverManagementModal: React.FC<CoverManagementModalProps> = ({ project, on
 
               {currentAsset && (
                 <div className={`p-6 rounded-3xl border animate-in slide-in-from-top-4 duration-500 ${currentAsset.isCompliant ? 'bg-[#D4FF5F]/5 border-[#D4FF5F]/20' : 'bg-amber-500/5 border-amber-500/20'}`}>
-                   <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-2 h-2 rounded-full ${currentAsset.isCompliant ? 'bg-[#D4FF5F] animate-pulse' : 'bg-amber-500'}`} />
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${currentAsset.isCompliant ? 'text-[#D4FF5F]' : 'text-amber-500'}`}>
-                          {currentAsset.isCompliant ? 'Compliance Passed' : 'Optimization Required'}
-                        </span>
-                      </div>
-                      
-                      {!currentAsset.isCompliant && (
-                        <button 
-                          onClick={handleRegenerateWithFixes}
-                          disabled={isProcessing}
-                          className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-500 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-amber-500/20 active:scale-95"
-                        >
-                           <i className="fa-solid fa-wand-sparkles mr-2"></i>
-                           AI 修復引導
-                        </button>
-                      )}
+                   <div className="flex items-center space-x-3 mb-3">
+                      <div className={`w-2 h-2 rounded-full ${currentAsset.isCompliant ? 'bg-[#D4FF5F] animate-pulse' : 'bg-amber-500'}`} />
+                      <span className={`text-[11px] font-black uppercase tracking-widest ${currentAsset.isCompliant ? 'text-[#D4FF5F]' : 'text-amber-500'}`}>
+                        {currentAsset.isCompliant ? 'Compliance Passed' : 'Optimization Required'}
+                      </span>
                    </div>
                    <p className="text-[13px] text-gray-400 leading-relaxed font-medium">
                       {currentAsset.complianceReport}
@@ -190,7 +167,7 @@ const CoverManagementModal: React.FC<CoverManagementModalProps> = ({ project, on
                        />
                     </div>
                     <button 
-                      onClick={() => handleAIInvoke()}
+                      onClick={handleAIInvoke}
                       disabled={isProcessing}
                       className="w-full h-20 bg-blue-600 text-white rounded-full font-black text-[13px] uppercase tracking-[0.4em] shadow-xl active:scale-[0.98] transition-all hover:brightness-110"
                     >
@@ -212,20 +189,16 @@ const CoverManagementModal: React.FC<CoverManagementModalProps> = ({ project, on
                        </div>
                     </div>
                     <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
-                    <p className="text-[11px] text-gray-600 leading-relaxed font-medium italic text-center px-4">
-                      All uploaded assets will undergo industrial-grade compliance screening to ensure they meet store requirements.
-                    </p>
                  </div>
                )}
             </div>
-
           </div>
         </div>
 
-        <footer className="p-8 sm:p-12 bg-[#0F0F10] border-t border-white/5 shrink-0 flex gap-4">
+        <footer className="p-8 sm:p-12 bg-[#0F0F10] border-t border-white/5 shrink-0">
           <button 
             onClick={() => onSave(currentAssets)}
-            className="flex-1 h-24 bg-white text-black font-black uppercase rounded-full tracking-[0.5em] shadow-2xl active:scale-[0.98] transition-all hover:brightness-110 flex items-center justify-center text-[15px]"
+            className="w-full h-24 bg-white text-black font-black uppercase rounded-full tracking-[0.5em] shadow-2xl active:scale-[0.98] transition-all hover:brightness-110 flex items-center justify-center text-[15px]"
           >
             Commit Assets to Project
           </button>

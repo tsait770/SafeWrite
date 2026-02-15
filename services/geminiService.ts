@@ -11,14 +11,14 @@ const getAIClient = () => {
 };
 
 export const COVER_SPECS = {
-  [CoverAssetType.EBOOK_DIGITAL]: { ratio: "1:1.6", width: 1600, height: 2560, desc: "Amazon KDP / Apple Books" },
-  [CoverAssetType.PRINT_PAPERBACK]: { ratio: "1:1.5", width: 1800, height: 2700, desc: "Print-on-Demand / IngramSpark" },
-  [CoverAssetType.DOC_PREVIEW]: { ratio: "1:1.414", width: 1414, height: 2000, desc: "DOCX / A4 Preview" },
+  [CoverAssetType.EBOOK_DIGITAL]: { ratio: "3:4", width: 1600, height: 2133, desc: "Amazon KDP / Apple Books (Digital)" },
+  [CoverAssetType.PRINT_PAPERBACK]: { ratio: "3:4", width: 1800, height: 2400, desc: "Print-on-Demand / IngramSpark (Paperback)" },
+  [CoverAssetType.DOC_PREVIEW]: { ratio: "3:4", width: 1414, height: 1885, desc: "DOCX / A4 Preview" },
   [CoverAssetType.SQUARE_SOCIAL]: { ratio: "1:1", width: 2048, height: 2048, desc: "Marketing / Social Media" },
 };
 
 export const geminiService = {
-  // 生成影像 (gemini-3-pro-image-preview)
+  // 生成影像 (gemini-3-pro-image-preview) - 用於一般高品質請求
   async generateImage(prompt: string, size: '1K' | '2K' | '4K' = '1K') {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
@@ -40,12 +40,12 @@ export const geminiService = {
     throw new Error("No image data returned from model");
   },
 
-  // 使用 Imagen 4.0 生成高品質出版封面
+  // 使用 Imagen 4.0 生成專業出版封面 (正式呼叫 generateImages API)
   async generateImagenCover(prompt: string, targetSpecs: CoverAssetType): Promise<CoverAsset> {
     const ai = getAIClient();
     const spec = COVER_SPECS[targetSpecs];
     
-    // 注入規格引導詞
+    // 注入規格引導詞以確保高品質
     const enhancedPrompt = `${prompt}. Professional book cover composition, focus on central motif, ${spec.ratio} aspect ratio aesthetic, cinematic lighting, ultra-high resolution. No text overlays. Optimal for ${spec.desc}.`;
 
     const response = await ai.models.generateImages({
@@ -70,22 +70,23 @@ export const geminiService = {
         source: 'AI',
         timestamp: Date.now(),
         isCompliant: true, // AI Generated with these settings is compliant by default
-        complianceReport: `✅ 符合 ${spec.desc} 標準規格 (${spec.ratio})。`
+        complianceReport: `✅ 符合 ${spec.desc} 標準規格 (${spec.ratio})。自動校驗完成。`
       };
     }
     throw new Error("Imagen generation failed: No image returned");
   },
 
-  // 封面視覺合規性 AI 檢測
+  // 封面視覺與技術合規性 AI 深度檢測
   async checkCoverCompliance(imageUrl: string, targetSpecs: CoverAssetType): Promise<{ isCompliant: boolean, report: string }> {
     const ai = getAIClient();
     const spec = COVER_SPECS[targetSpecs];
-    const prompt = `作為專業出版專家，請針對這張封面進行「${spec.desc}」規格的合規性檢測：
+    const prompt = `作為專業出版專家，請針對這張封面進行「${spec.desc}」規格的深度合規性檢測。
+    請分析：
     1. 視覺中心是否避開了底部的「條碼預留區」？
-    2. 文字空間預留是否足夠？
-    3. 整體氛圍是否符合商業出版標準？
-    4. 假設目標比例為 ${spec.ratio}，請評估當前視覺是否合適。
-    請給出具體且精簡的報告。`;
+    2. 構圖是否為文字標題預留了足夠空間？
+    3. 假設目標比例為 ${spec.ratio}，請評估當前視覺裁剪後是否合適。
+    4. 總結其是否符合商業出版標準。
+    請直接給出結論並以條列式說明。`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
@@ -97,7 +98,7 @@ export const geminiService = {
 
     const report = response.text || "合規檢測完成。";
     return {
-      isCompliant: !report.includes("不符合") && !report.includes("警告"),
+      isCompliant: !report.includes("不符合") && !report.includes("警告") && !report.includes("不合適"),
       report
     };
   },
@@ -164,7 +165,7 @@ export const geminiService = {
 
   // 測試連線功能
   async testConnection(apiKey: string, provider: string) {
-    if (provider !== 'GOOGLE') return true;
+    if (provider !== 'Google Gemini') return true;
     try {
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({

@@ -64,25 +64,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   }, [isAddingChapter]);
 
   const handleSaveAssets = (assets: Record<CoverAssetType, CoverAsset>) => {
-    // 自動更新出版主軸狀態
-    const updatedNodes = { ...(project.publishingSpine?.nodes || INITIAL_SPINE_NODES()) };
-    const hasAnyAsset = Object.keys(assets).length > 0;
-    
-    if (hasAnyAsset) {
-      updatedNodes[SpineNodeId.COVER_READY] = {
-        ...updatedNodes[SpineNodeId.COVER_READY],
-        isCompleted: true,
-        timestamp: Date.now()
-      };
-    }
-
     onUpdateProject({
       ...project,
       updatedAt: Date.now(),
-      publishingSpine: {
-        currentNode: project.publishingSpine?.currentNode || SpineNodeId.WRITING,
-        nodes: updatedNodes
-      },
       publishingPayload: {
         ...(project.publishingPayload || {
           title: project.name,

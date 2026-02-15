@@ -41,6 +41,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
   const [targetPlatform, setTargetPlatform] = useState('');
   const [deliveryPhase, setDeliveryPhase] = useState(0);
   const [showISBNPrompt, setShowISBNPrompt] = useState(false);
+  const [isISBNAssistantOpen, setIsISBNAssistantOpen] = useState(false);
 
   const [config, setConfig] = useState({
     author: project?.publishingPayload?.author || 'Author Identity',
@@ -55,25 +56,68 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     longDescription: project?.publishingPayload?.longDescription || ''
   });
 
+  // ISBN-13 Validation Logic
+  const isValidISBN13 = (isbn: string) => {
+    const clean = isbn.replace(/[- ]/g, "");
+    return /^\d{13}$/.test(clean);
+  };
+
   const handleUpdateConfig = (key: string, value: any) => {
-    setConfig(prev => ({ ...prev, [key]: value }));
-    if (key === 'isbn') setShowISBNPrompt(false);
+    const newConfig = { ...config, [key]: value };
+    setConfig(newConfig);
+    
+    if (key === 'isbn') {
+      setShowISBNPrompt(false);
+      // Sync ISBN and Spine Status to Project immediately for persistence
+      if (onUpdateProject && project) {
+        const isNowValid = isValidISBN13(value);
+        const currentSpine = project.publishingSpine || { currentNode: SpineNodeId.WRITING, nodes: INITIAL_SPINE_NODES() };
+        
+        const updatedSpine: PublishingSpineState = {
+          ...currentSpine,
+          nodes: {
+            ...currentSpine.nodes,
+            [SpineNodeId.ISBN_ASSIGNED]: {
+              id: SpineNodeId.ISBN_ASSIGNED,
+              isCompleted: isNowValid,
+              timestamp: isNowValid ? Date.now() : currentSpine.nodes[SpineNodeId.ISBN_ASSIGNED]?.timestamp
+            }
+          }
+        };
+
+        onUpdateProject({
+          ...project,
+          publishingPayload: {
+            ...(project.publishingPayload || {} as any),
+            isbn13: value
+          },
+          publishingSpine: updatedSpine
+        });
+      }
+    }
   };
 
   const channelRule = useMemo(() => CHANNEL_RULES[targetPlatform] || { requiresISBN: false, allowsPlatformISBN: false }, [targetPlatform]);
   
   const isbnState = useMemo(() => {
     if (!channelRule.requiresISBN) return ISBNState.NOT_REQUIRED;
-    return config.isbn.trim().length >= 10 ? ISBNState.PROVIDED : ISBNState.REQUIRED_UNSET;
+    return isValidISBN13(config.isbn) ? ISBNState.PROVIDED : ISBNState.REQUIRED_UNSET;
   }, [channelRule, config.isbn]);
 
   const handleInitiateDelivery = () => {
     if (channelRule.requiresISBN && isbnState === ISBNState.REQUIRED_UNSET) {
       setShowISBNPrompt(true);
-      alert(`【出版驗證失敗】\n\n您選擇的通路「${targetPlatform}」要求提供 ISBN 識別碼。請在文稿細節區塊中填寫 13 位數 ISBN 後再執行投遞。`);
+      alert(`【出版驗證失敗】\n\n您選擇的通路「${targetPlatform}」要求提供正確的 13 位數 ISBN 識別碼。請點擊「取得 ISBN 協助」或手動填寫。`);
       return;
     }
     setStep(PubStep.DELIVERY_SEQUENCE);
+  };
+
+  const generateMockISBN = () => {
+    const randomSuffix = Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+    const mock = `978${randomSuffix}0`; // Simplified mock
+    handleUpdateConfig('isbn', mock);
+    setIsISBNAssistantOpen(false);
   };
 
   const templates = [
@@ -85,7 +129,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
 
   const deliverySteps = [
     { title: '內容標準化與 AST 解析', en: 'CONTENT NORMALIZATION & AST PARSING', icon: 'fa-microchip' },
-    { title: '選取最佳封面資產', en: 'SELECTING OPTIMAL COVER ASSET', icon: 'fa-image' }, // Added step
+    { title: '選取最佳封面資產', en: 'SELECTING OPTIMAL COVER ASSET', icon: 'fa-image' },
     { title: '生成 DOCX 編輯母檔', en: 'GENERATING EDITORIAL DOCX ARTIFACT', icon: 'fa-file-lines' },
     { title: '封裝 PDF 印刷級手稿', en: 'PACKAGING HIGH-FIDELITY PDF', icon: 'fa-file-pdf' },
     { title: '構建 EPUB 3 出版規格電子書', en: 'BUILDING EPUB 3 STANDARDS E-BOOK', icon: 'fa-book' },
@@ -106,11 +150,11 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
     }
   }, [step]);
 
-  // 選取封面邏輯
   const selectedCover = useMemo(() => {
     if (!project?.publishingPayload?.coverAssets) return null;
     const assets = project.publishingPayload.coverAssets;
     
+    // Optimized selection logic based on target channel
     if (targetPlatform.includes('Paperback') || targetPlatform === 'IngramSpark') {
       return assets[CoverAssetType.PRINT_PAPERBACK] || assets[CoverAssetType.EBOOK_DIGITAL] || assets[CoverAssetType.DOC_PREVIEW];
     }
@@ -277,49 +321,12 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         </header>
 
         <main className="flex-1 px-6 sm:px-12 py-10 space-y-12 max-w-4xl mx-auto w-full">
-          {/* Hero Section */}
           <div className="bg-[#121214] p-10 sm:p-14 rounded-[56px] border border-white/5 text-center relative overflow-hidden shadow-2xl">
              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/[0.02] to-transparent" />
              <h3 className="text-4xl sm:text-5xl font-black tracking-tighter mb-4 text-white relative z-10">From Draft to the World</h3>
              <p className="text-[16px] text-gray-500 leading-relaxed font-medium max-w-xl mx-auto relative z-10">Deliver your work through official global publishing channels. This is where your journey from manuscript to published work completes.</p>
           </div>
 
-          {/* Main Direct Publishing Card */}
-          <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-3xl">
-             <div className="flex items-center space-x-6">
-                <div className="w-16 h-16 rounded-3xl bg-[#2563EB] flex items-center justify-center text-white text-2xl shadow-lg">
-                   <i className="fa-solid fa-paper-plane"></i>
-                </div>
-                <div>
-                   <h3 className="text-2xl font-black text-white tracking-tight">一鍵自動投遞</h3>
-                   <p className="text-[10px] font-black text-[#2563EB] uppercase tracking-widest mt-1.5">DIRECT PUBLISHING</p>
-                </div>
-             </div>
-
-             <div className="relative">
-                <div className="w-full h-[86px] bg-black/40 border border-white/5 rounded-[28px] px-10 flex items-center justify-between cursor-pointer group hover:border-white/10 transition-all">
-                   <div className="flex items-center space-x-6">
-                      <i className="fa-solid fa-building-columns text-gray-700 text-lg"></i>
-                      <span className="text-[16px] font-black text-gray-500">選擇目標出版社...</span>
-                   </div>
-                   <i className="fa-solid fa-chevron-down text-gray-800 text-xs"></i>
-                </div>
-             </div>
-
-             <button className="w-full h-[86px] bg-white text-black rounded-full text-[14px] font-black uppercase tracking-[0.6em] shadow-2xl active:scale-[0.98] transition-all">
-                啟 動 全 球 投 遞 程 序
-             </button>
-          </div>
-
-          <div className="pt-10 px-4">
-             <h3 className="text-[11px] font-black text-gray-600 uppercase tracking-[0.5em] flex items-center">
-                <span className="mr-3">一鍵自動投遞</span>
-                D I R E C T P U B L I S H I N G
-             </h3>
-             <p className="text-[14px] text-[#D4FF5F] font-black tracking-tight uppercase mt-3">直接對接全球主流發行商</p>
-          </div>
-
-          {/* Distribution Platform Cards */}
           <div className="grid grid-cols-1 gap-10">
                 <div className="bg-[#121214] rounded-[56px] p-10 sm:p-14 space-y-12 border border-white/5 shadow-2xl transition-all">
                     <div className="flex items-center justify-between">
@@ -401,23 +408,21 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
 
   if (step === PubStep.FINALIZATION) {
     const isTraditional = targetPlatform === 'Traditional submission';
-    const isStorage = ['Google Drive', 'Apple iCloud', 'Local Device'].includes(targetPlatform);
     
     return (
       <div className="fixed inset-0 z-[2000] bg-black flex flex-col animate-in slide-in-from-right duration-500 overflow-hidden text-white font-sans">
         <header className="h-[86px] px-8 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between shrink-0 border-b border-white/5 bg-black/80">
           <button onClick={() => setStep(PubStep.DISTRIBUTION_GALLERY)} className="w-12 h-12 flex items-center justify-start text-white opacity-60 active:scale-90 transition-all"><i className="fa-solid fa-chevron-left text-lg"></i></button>
           <div className="text-center">
-            <h2 className="text-[11px] font-black uppercase tracking-[0.3em]">{isTraditional ? 'SUBMISSION PACKAGE PREPARATION' : isStorage ? 'FILE EXPORT PREPARATION' : 'PUBLISHING RESPONSIBILITY'}</h2>
+            <h2 className="text-[11px] font-black uppercase tracking-[0.3em]">{isTraditional ? 'SUBMISSION PREPARATION' : 'PUBLISHING FINAL CHECK'}</h2>
             <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest mt-1">TARGET: {targetPlatform.toUpperCase()}</p>
           </div>
           <div className="w-12" />
         </header>
         <main className="flex-1 overflow-y-auto px-8 py-9 no-scrollbar space-y-10 pb-40">
            
-           {/* Cover Selection Logic Status */}
            <section className="space-y-5">
-              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] px-2">PUBLICATION COVER ARSET</label>
+              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] px-2">PUBLICATION COVER ASSET</label>
               <div className="bg-[#121214] border border-white/5 rounded-3xl p-6 flex items-center space-x-6">
                  <div className="w-24 h-32 bg-black rounded-xl overflow-hidden shrink-0 border border-white/10">
                    {selectedCover ? <img src={selectedCover.url} className="w-full h-full object-cover" alt="Selected" /> : <div className="w-full h-full flex items-center justify-center opacity-20"><i className="fa-solid fa-image"></i></div>}
@@ -437,7 +442,17 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
            </section>
 
            <section className="space-y-5">
-              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] px-2">AUTHOR INFORMATION</label>
+              <div className="flex items-center justify-between px-2">
+                <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">AUTHOR & ISBN</label>
+                {channelRule.requiresISBN && (
+                  <button 
+                    onClick={() => setIsISBNAssistantOpen(true)}
+                    className="text-[9px] font-black text-blue-500 uppercase tracking-widest bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20"
+                  >
+                    取得 ISBN 協助
+                  </button>
+                )}
+              </div>
               <div className="space-y-5">
                   <div className="bg-[#121214] border border-white/5 rounded-3xl overflow-hidden shadow-inner">
                     <input 
@@ -449,28 +464,17 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                   </div>
                   {channelRule.requiresISBN && (
                     <div className="space-y-3">
-                      <div className={`border rounded-[36px] overflow-hidden transition-all shadow-inner ${showISBNPrompt ? 'border-red-500 bg-red-500/5' : isbnState === ISBNState.REQUIRED_UNSET ? 'border-amber-500' : 'border-white/5'}`}>
+                      <div className={`border rounded-[36px] overflow-hidden transition-all shadow-inner ${showISBNPrompt ? 'border-red-500 bg-red-500/5' : isbnState === ISBNState.REQUIRED_UNSET ? 'border-amber-500/40 bg-amber-500/[0.02]' : 'border-white/5'}`}>
                         <input 
                           value={config.isbn} 
                           onChange={e => handleUpdateConfig('isbn', e.target.value)} 
-                          placeholder="ISBN-13 (Required)" 
-                          className={`w-full h-[86px] px-9 text-[18px] font-black bg-[#121214] outline-none transition-all ${showISBNPrompt ? 'text-red-500' : isbnState === ISBNState.REQUIRED_UNSET ? 'text-amber-500' : 'text-white'}`} 
+                          placeholder="ISBN-13 (Required: 13 digits)" 
+                          className={`w-full h-[86px] px-9 text-[18px] font-black bg-[#121214] outline-none transition-all ${showISBNPrompt ? 'text-red-500' : isbnState === ISBNState.REQUIRED_UNSET ? 'text-amber-500' : 'text-[#D4FF5F]'}`} 
                         />
                       </div>
+                      <p className="text-[10px] text-gray-600 px-4">格式提示：需為 13 位數字。範例：9780123456789</p>
                     </div>
                   )}
-              </div>
-           </section>
-
-           <section className="space-y-5">
-              <label className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em] px-2">DESCRIPTION / BLURB</label>
-              <div className="p-1 rounded-[48px] border border-blue-600/30 bg-blue-600/5 shadow-[0_0_20px_rgba(37,99,235,0.1)]">
-                 <textarea 
-                   value={config.longDescription} 
-                   onChange={e => handleUpdateConfig('longDescription', e.target.value)} 
-                   placeholder="What is your work about?" 
-                   className="w-full h-[360px] bg-[#121214] border-none rounded-[44px] p-11 text-[18px] font-medium text-gray-400 outline-none focus:ring-0 resize-none leading-relaxed shadow-inner placeholder-white/5" 
-                 />
               </div>
            </section>
         </main>
@@ -479,7 +483,7 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
            <div className="max-w-4xl mx-auto">
              <button 
                onClick={handleInitiateDelivery} 
-               className={`w-full h-[86px] rounded-full flex items-center justify-center space-x-5 shadow-[0_25px_60px_rgba(37,99,235,0.4)] bg-[#2563EB] text-white active:scale-[0.98] transition-all hover:scale-[1.01]`}
+               className={`w-full h-[86px] rounded-full flex items-center justify-center space-x-5 shadow-[0_25px_60px_rgba(37,99,235,0.4)] bg-[#2563EB] text-white active:scale-[0.98] transition-all hover:scale-101`}
              >
                 <i className="fa-solid fa-paper-plane text-xs"></i>
                 <span className="text-[14px] font-black uppercase tracking-[0.45em]">
@@ -488,6 +492,53 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
              </button>
            </div>
         </footer>
+
+        {/* ISBN Assistant Modal */}
+        {isISBNAssistantOpen && (
+          <div className="fixed inset-0 z-[3000] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300">
+             <div className="w-full max-w-xl bg-[#1C1C1E] rounded-[44px] border border-white/10 overflow-hidden shadow-3xl animate-in zoom-in duration-500">
+                <header className="p-10 border-b border-white/5 flex justify-between items-center">
+                   <div>
+                     <h3 className="text-2xl font-black text-white tracking-tight">ISBN 取得助手</h3>
+                     <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest mt-1">ISBN REGISTRATION PROTOCOL</p>
+                   </div>
+                   <button onClick={() => setIsISBNAssistantOpen(false)} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-gray-500">
+                      <i className="fa-solid fa-xmark text-xl"></i>
+                   </button>
+                </header>
+                <div className="p-10 space-y-8">
+                   <div className="p-6 bg-blue-600/10 border border-blue-500/20 rounded-3xl space-y-4">
+                      <div className="flex items-center space-x-4">
+                         <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white"><i className="fa-solid fa-earth-americas"></i></div>
+                         <h4 className="text-lg font-bold text-white">官方申請管道</h4>
+                      </div>
+                      <p className="text-sm text-gray-400 leading-relaxed">ISBN 是圖書的唯一識別碼。您可以透過國家圖書館或專業代理機構（如 Bowker）申請正式 ISBN。</p>
+                      <div className="flex flex-wrap gap-3">
+                         <a href="https://isbn.ncl.edu.tw/" target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">台灣國家圖書館 (NCL)</a>
+                         <a href="https://www.myidentifiers.com/" target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">美國 Bowker</a>
+                      </div>
+                   </div>
+
+                   <div className="space-y-4">
+                      <h4 className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">測試與草稿用途</h4>
+                      <button 
+                        onClick={generateMockISBN}
+                        className="w-full p-6 bg-amber-500/10 border border-amber-500/20 rounded-3xl text-left flex items-center justify-between group hover:border-amber-500/50 transition-all"
+                      >
+                         <div className="flex items-center space-x-5">
+                            <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center text-black"><i className="fa-solid fa-flask"></i></div>
+                            <div>
+                               <p className="text-[15px] font-bold text-white">產生模擬驗證碼</p>
+                               <p className="text-[10px] text-amber-500 font-black uppercase tracking-widest mt-0.5">FOR PREVIEW ONLY</p>
+                            </div>
+                         </div>
+                         <i className="fa-solid fa-chevron-right text-gray-700 group-hover:text-amber-500 transition-colors"></i>
+                      </button>
+                   </div>
+                </div>
+             </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -519,22 +570,8 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
         </div>
 
         <div className="space-y-6 max-w-xl mb-24">
-           <h2 className="text-4xl font-black tracking-tighter text-white animate-in slide-in-from-bottom-4 duration-700">{currentStep.title}</h2>
+           <h2 className="text-4xl font-black tracking-tighter text-white">{currentStep.title}</h2>
            <p className="text-[11px] text-blue-500 font-black uppercase tracking-[0.5em] opacity-80">{currentStep.en}</p>
-        </div>
-
-        <div className="w-full max-w-sm space-y-6">
-           {deliverySteps.map((s, i) => (
-             <div 
-               key={i} 
-               className={`flex items-center space-x-6 transition-all duration-700 ${i === deliveryPhase ? 'opacity-100 scale-105' : i < deliveryPhase ? 'opacity-30' : 'opacity-10'}`}
-             >
-                <div className={`w-3 h-3 rounded-full ${i <= deliveryPhase ? 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.6)]' : 'bg-gray-800'}`} />
-                <span className={`text-[12px] font-black uppercase tracking-widest text-left ${i === deliveryPhase ? 'text-white' : 'text-gray-500'}`}>
-                  {s.title}
-                </span>
-             </div>
-           ))}
         </div>
       </div>
     );
@@ -549,19 +586,10 @@ const ProfessionalPublicationCenter: React.FC<ProfessionalPublicationCenterProps
                <i className="fa-solid fa-check text-7xl"></i>
             </div>
          </div>
-
-         <div className="space-y-6 max-w-lg mb-20">
-           <h1 className="text-5xl font-black tracking-tighter leading-tight text-white animate-in slide-in-from-bottom-4 duration-700">Published successfully.</h1>
-           <p className="text-lg text-gray-500 font-medium leading-relaxed animate-in slide-in-from-bottom-8 duration-1000">
-             Your work has been delivered to <span className="text-white font-black">{targetPlatform}</span> official distribution channel.
-           </p>
-         </div>
-
-         <div className="mt-20 w-full max-w-md animate-in slide-in-from-bottom-16 duration-1000">
-            <button onClick={onClose} className="w-full h-24 bg-white text-black rounded-[44px] text-[13px] font-black uppercase tracking-[0.4em] shadow-2xl active:scale-[0.95] transition-all hover:scale-102">
-              VIEW PUBLISHING STATUS
-            </button>
-         </div>
+         <h1 className="text-5xl font-black tracking-tighter leading-tight text-white mb-6">Published successfully.</h1>
+         <button onClick={onClose} className="mt-12 w-full max-w-md h-24 bg-white text-black rounded-[44px] text-[13px] font-black uppercase tracking-[0.4em] shadow-2xl active:scale-[0.95] transition-all">
+           VIEW PUBLISHING STATUS
+         </button>
       </div>
     );
   }
