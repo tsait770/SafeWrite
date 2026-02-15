@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppState, MembershipLevel, SupportedLanguage, AIPreferences, SecuritySettings, BackupSettings, CreditCard } from '../types';
 import LanguageSelector from './LanguageSelector';
@@ -318,7 +317,7 @@ const Profile: React.FC<ProfileProps> = ({ state, onUpgrade, onLanguageChange, o
       </div>
       
       <div className="text-center pt-10 pb-20 border-t border-white/5">
-        <p className="text-[10px] text-gray-800 font-black uppercase tracking-[0.6em]">SafeWrite Narrative Protocol v1.1.0-RC</p>
+        <p className="text-[10px] text-gray-800 font-black uppercase tracking-[0.6em]">InsPublish Narrative Protocol v1.1.0-RC</p>
         <p className="text-[9px] text-gray-900 font-bold uppercase tracking-[0.2em] mt-2">All rights reserved to the author's legacy</p>
       </div>
 

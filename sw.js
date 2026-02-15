@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'safewrite-v1.3';
+const CACHE_NAME = 'inspublish-v1.3';
 const ASSETS = [
   './',
   './index.html',

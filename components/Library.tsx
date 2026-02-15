@@ -407,7 +407,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                           </div>
                        </div>
 
-                       {/* Visual Coding Section - Moved below Specialized Archives with checkmark removed and ring width reduced by 40% */}
+                       {/* Visual Coding Section - Outer white ring removed as per instruction */}
                        <div className="space-y-6 pt-6 border-t border-white/5">
                           <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">視覺編碼 VISUAL CODING</label>
                           <div className="grid grid-cols-5 sm:grid-cols-11 gap-x-3 sm:gap-x-4 gap-y-6 sm:gap-y-8 justify-items-center sm:justify-items-start">
@@ -417,7 +417,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                                   onClick={() => setFormData({...formData, color: c})} 
                                   className={`w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-full transition-all duration-300 flex items-center justify-center relative active:scale-90 ${
                                     formData.color === c 
-                                      ? 'ring-[2.4px] sm:ring-[3px] ring-white ring-offset-[4px] sm:ring-offset-[5px] ring-offset-black scale-110 z-10 shadow-[0_0_30px_rgba(255,255,255,0.3)]' 
+                                      ? 'scale-110 z-10 shadow-[0_0_30px_rgba(255,255,255,0.4)] border-[3px] border-white/90' 
                                       : 'opacity-60 hover:opacity-100 hover:scale-105'
                                   }`} 
                                   style={{ backgroundColor: c }}
@@ -440,7 +440,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     disabled={!formData.name.trim()} 
                     className={`w-full h-16 sm:h-24 rounded-[2rem] sm:rounded-[3rem] text-white font-black text-[12px] sm:text-[15px] uppercase tracking-[0.4em] sm:tracking-[0.5em] shadow-2xl transition-all active:scale-[0.97] hover:scale-[1.01] ${!formData.name.trim() ? 'bg-gray-800 opacity-40 cursor-not-allowed' : 'bg-blue-600 shadow-[0_25px_60px_rgba(37,99,235,0.4)] hover:brightness-110'}`}
                  >
-                    啟 動 寫 作 存 檔 PROTOCOL
+                    啟 動 寫 作 存 檔 P R O T O C O L
                  </button>
               </div>
            </div>

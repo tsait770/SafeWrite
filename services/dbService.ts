@@ -1,7 +1,6 @@
-
 import { Project, VersionSnapshot } from '../types';
 
-const DB_NAME = 'SafeWriteDB';
+const DB_NAME = 'InsPublishDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'projects';
 
@@ -63,7 +62,7 @@ export const dbService = {
   },
 
   onSync(callback: (id: string) => void) {
-    const channel = new BroadcastChannel('safewrite_sync');
+    const channel = new BroadcastChannel('inspublish_sync');
     channel.onmessage = (e) => callback(e.data.id);
   }
 };
