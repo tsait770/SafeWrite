@@ -1,3 +1,4 @@
+
 export enum MembershipLevel {
   FREE = 'FREE',
   PRO = 'PRO',
@@ -93,6 +94,26 @@ export enum ISBNState {
   PENDING = 'PENDING'
 }
 
+export enum CoverAssetType {
+  EBOOK_DIGITAL = 'EBOOK_DIGITAL',
+  PRINT_PAPERBACK = 'PRINT_PAPERBACK',
+  DOC_PREVIEW = 'DOC_PREVIEW',
+  SQUARE_SOCIAL = 'SQUARE_SOCIAL',
+}
+
+export interface CoverAsset {
+  url: string;
+  type: CoverAssetType;
+  width: number;
+  height: number;
+  dpi?: number;
+  colorMode?: 'RGB' | 'CMYK';
+  source: 'AI' | 'UPLOAD';
+  timestamp: number;
+  complianceReport?: string;
+  isCompliant: boolean;
+}
+
 export interface ChannelRule {
   requiresISBN: boolean;
   allowsPlatformISBN: boolean;
@@ -111,7 +132,9 @@ export interface PublishingPayload {
   regionCode: string;
   keywords: string[];
   isbn13?: string;
-  coverImage?: string;
+  coverImage?: string; // Legacy field for simple preview
+  coverAssets?: Record<CoverAssetType, CoverAsset>;
+  selectedCoverAssetType?: CoverAssetType;
   contentFormats: ('epub' | 'pdf' | 'docx')[];
 }
 

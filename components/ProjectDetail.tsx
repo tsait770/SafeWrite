@@ -1,8 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Project, Chapter, StructureType, SpineNodeId, SpineNodeStatus } from '../types';
+import { Project, Chapter, StructureType, SpineNodeId, SpineNodeStatus, CoverAssetType, CoverAsset } from '../types';
 import { TEMPLATES, STRUCTURE_DEFINITIONS, SPINE_NODES_CONFIG, INITIAL_SPINE_NODES } from '../constants';
 import { geminiService } from '../services/geminiService';
+import CoverManagementModal from './CoverManagementModal';
 
 interface ProjectDetailProps {
   project: Project;
@@ -19,7 +20,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const [newTitle, setNewTitle] = useState('');
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
+  const [isCoverModalOpen, setIsCoverModalOpen] = useState(false);
   
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState(project.name);
@@ -62,47 +63,44 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
     }
   }, [isAddingChapter]);
 
-  const handleGenerateCover = async () => {
-    setIsGeneratingCover(true);
-    try {
-      const prompt = `A cinematic, professional book cover for a book titled '${project.name}', genre: ${TEMPLATES[project.writingType]?.label || 'Creative Writing'}, dramatic lighting, award-winning illustration style, 8k resolution, artistic masterpiece. No text overlay, focus on visual mood.`;
-      const coverUrl = await geminiService.generateImagenCover(prompt);
-      
-      onUpdateProject({
-        ...project,
-        updatedAt: Date.now(),
-        publishingPayload: {
-          ...(project.publishingPayload || {
-            title: project.name,
-            subtitle: '',
-            author: 'Author Identity',
-            languageCode: 'zh-TW',
-            regionCode: 'TW',
-            shortDescription: '',
-            longDescription: '',
-            bisacCategories: [],
-            keywords: [],
-            contentFormats: ['epub', 'pdf', 'docx']
-          }),
-          coverImage: coverUrl
-        }
-      });
-      
-    } catch (e) {
-      alert("封面生成失敗，請稍後再試。");
-    } finally {
-      setIsGeneratingCover(false);
+  const handleSaveAssets = (assets: Record<CoverAssetType, CoverAsset>) => {
+    // 自動更新出版主軸狀態
+    const updatedNodes = { ...(project.publishingSpine?.nodes || INITIAL_SPINE_NODES()) };
+    const hasAnyAsset = Object.keys(assets).length > 0;
+    
+    if (hasAnyAsset) {
+      updatedNodes[SpineNodeId.COVER_READY] = {
+        ...updatedNodes[SpineNodeId.COVER_READY],
+        isCompleted: true,
+        timestamp: Date.now()
+      };
     }
-  };
 
-  const handleDownloadCover = () => {
-    if (!project.publishingPayload?.coverImage) return;
-    const link = document.createElement('a');
-    link.href = project.publishingPayload.coverImage;
-    link.download = `${project.name.replace(/\s+/g, '_')}_Cover.jpg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    onUpdateProject({
+      ...project,
+      updatedAt: Date.now(),
+      publishingSpine: {
+        currentNode: project.publishingSpine?.currentNode || SpineNodeId.WRITING,
+        nodes: updatedNodes
+      },
+      publishingPayload: {
+        ...(project.publishingPayload || {
+          title: project.name,
+          subtitle: '',
+          author: 'Author Identity',
+          languageCode: 'zh-TW',
+          regionCode: 'TW',
+          shortDescription: '',
+          longDescription: '',
+          bisacCategories: [],
+          keywords: [],
+          contentFormats: ['epub', 'pdf', 'docx']
+        }),
+        coverAssets: assets,
+        coverImage: assets[CoverAssetType.EBOOK_DIGITAL]?.url || assets[Object.keys(assets)[0] as CoverAssetType]?.url || project.publishingPayload?.coverImage
+      }
+    });
+    setIsCoverModalOpen(false);
   };
 
   const handleOpenAdd = () => {
@@ -203,6 +201,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
   const displayProgress = project.id === 'p1' ? 11 : project.progress;
   const wordGoal = project.targetWordCount || 50000;
   const miniProgress = project.id === 'p1' ? 2 : project.progress;
+
+  const hasAssets = project.publishingPayload?.coverAssets && Object.keys(project.publishingPayload.coverAssets).length > 0;
+  const currentPreviewUrl = project.publishingPayload?.coverImage;
 
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-700 overflow-y-auto no-scrollbar pb-40">
@@ -349,17 +350,17 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
           </div>
         </section>
 
-        {/* Book Cover Section */}
+        {/* Book Cover Section - Refactored for Multi-Spec Asset Management */}
         <section className="space-y-8">
           <div className="px-2 flex justify-between items-end">
              <div className="space-y-1.5">
                 <h3 className="text-[11px] font-black text-[#8E8E93] uppercase tracking-[0.2em]">作品視覺封面 BOOK COVER</h3>
-                <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest">PRINT COMPLIANCE SYSTEM</p>
+                <p className="text-[9px] text-blue-500 font-black uppercase tracking-widest">MULTI-SPEC ASSET SYSTEM</p>
              </div>
              <div className="flex space-x-8">
                 <div className="text-right">
-                  <p className="text-[9px] text-[#4E4E52] font-black uppercase tracking-widest">EST. SPINE</p>
-                  <p className="text-[15px] font-black text-white tracking-tighter">{estSpineWidth}"</p>
+                  <p className="text-[9px] text-[#4E4E52] font-black uppercase tracking-widest">ASSETS</p>
+                  <p className="text-[15px] font-black text-white tracking-tighter">{Object.keys(project.publishingPayload?.coverAssets || {}).length}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[9px] text-[#4E4E52] font-black uppercase tracking-widest">EST. PAGES</p>
@@ -369,12 +370,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
           </div>
           
           <div className="relative aspect-[3/4] w-full max-w-[360px] mx-auto bg-[#1C1C1E] rounded-[56px] border border-white/10 overflow-hidden shadow-3xl group transition-all">
-             {project.publishingPayload?.coverImage ? (
+             {currentPreviewUrl ? (
                 <>
-                  <img src={project.publishingPayload.coverImage} alt="Book Cover" className="w-full h-full object-cover" />
+                  <img src={currentPreviewUrl} alt="Book Cover" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-10 space-y-4">
-                     <button onClick={handleGenerateCover} className="w-full py-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl text-[12px] font-black uppercase tracking-[0.3em] text-white active:scale-95">重新渲染封面</button>
-                     <button onClick={handleDownloadCover} className="w-full py-5 bg-[#D4FF5F] text-black rounded-3xl text-[12px] font-black uppercase tracking-[0.3em] shadow-xl active:scale-95">下載至本地</button>
+                     <button onClick={() => setIsCoverModalOpen(true)} className="w-full py-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl text-[12px] font-black uppercase tracking-[0.3em] text-white active:scale-95">管理封面資產</button>
+                     <button className="w-full py-5 bg-[#D4FF5F] text-black rounded-3xl text-[12px] font-black uppercase tracking-[0.3em] shadow-xl active:scale-95">下載當前預覽</button>
+                  </div>
+                  
+                  {/* Status Indicator */}
+                  <div className="absolute top-8 left-8 flex items-center space-x-2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+                     <div className="w-1.5 h-1.5 rounded-full bg-[#D4FF5F] animate-pulse" />
+                     <span className="text-[9px] font-black text-white uppercase tracking-widest">Active Preview</span>
                   </div>
                 </>
              ) : (
@@ -385,23 +392,15 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
                    <div className="space-y-3 mb-12">
                       <h4 className="text-lg font-black text-white uppercase tracking-widest">尚未生成封面</h4>
                       <p className="text-[12px] text-[#8E8E93] font-medium leading-relaxed">
-                        將字數、書脊與條碼安全區納入生成邏輯。
+                        根據專案目標生成符合 Amazon KDP 或實體書規範的出版級封面。
                       </p>
                    </div>
                    <button 
-                     onClick={handleGenerateCover} 
-                     disabled={isGeneratingCover} 
+                     onClick={() => setIsCoverModalOpen(true)} 
                      className="w-full py-6 bg-[#2563EB] rounded-[28px] text-[12px] font-black uppercase tracking-[0.3em] text-white shadow-[0_20px_40px_rgba(37,99,235,0.3)] active:scale-95 transition-all"
                    >
-                     {isGeneratingCover ? '正在生成中...' : '一鍵生成 AI 封面'}
+                     啟動封面管理中心
                    </button>
-                </div>
-             )}
-             
-             {isGeneratingCover && (
-                <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center space-y-6 z-20 animate-in fade-in">
-                   <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                   <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] animate-pulse">RENDER IN PROGRESS...</p>
                 </div>
              )}
           </div>
@@ -532,6 +531,14 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onOpenMo
               </footer>
            </div>
         </div>
+      )}
+
+      {isCoverModalOpen && (
+        <CoverManagementModal 
+          project={project} 
+          onClose={() => setIsCoverModalOpen(false)} 
+          onSave={handleSaveAssets} 
+        />
       )}
     </div>
   );

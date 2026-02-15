@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Project, WritingType, StructureUnit, StructureType } from '../types';
+import { Project, WritingType, StructureUnit, StructureType, CoverAssetType } from '../types';
 import { PROJECT_COLORS, PROJECT_ICONS, TEMPLATES, TEMPLATE_STRUCTURE_MAP, STRUCTURE_DEFINITIONS } from '../constants';
 
 interface LibraryProps {
@@ -177,6 +178,8 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
           {sortedProjects.map((proj, idx) => {
             // Priority: Use actual project color, else cycle through core palette
             const displayColor = proj.color || coreBrandColors[idx % coreBrandColors.length];
+            const ebookCover = proj.publishingPayload?.coverAssets?.[CoverAssetType.EBOOK_DIGITAL]?.url;
+            
             return (
               <div 
                 key={proj.id} 
@@ -184,12 +187,18 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                 style={{ 
                   zIndex: sortedProjects.length - idx,
                   backgroundColor: displayColor,
-                  color: '#121212',
+                  backgroundImage: ebookCover ? `url(${ebookCover})` : 'none',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  color: ebookCover ? '#FFFFFF' : '#121212',
                   animationDelay: `${idx * 150}ms`
                 }}
                 onClick={() => onSelectProject(proj)}
               >
-                <div className="flex flex-col h-full relative">
+                {/* Overlay for text readability when using cover image */}
+                {ebookCover && <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-all group-hover:bg-black/20" />}
+                
+                <div className="flex flex-col h-full relative z-10">
                   <div className="flex justify-between items-start mb-2">
                     <div className="max-w-[85%]">
                       <div className="flex flex-col space-y-1">
@@ -204,7 +213,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                               if (e.key === 'Enter') handleSaveInlineEdit(proj.id);
                               if (e.key === 'Escape') setEditingProjectId(null);
                             }}
-                            className="bg-black/10 border-b-2 border-current outline-none text-[28px] sm:text-[34px] font-black tracking-tighter leading-none w-full px-2 py-1 rounded-sm mb-4"
+                            className={`bg-black/10 border-b-2 border-current outline-none text-[28px] sm:text-[34px] font-black tracking-tighter leading-none w-full px-2 py-1 rounded-sm mb-4 ${ebookCover ? 'text-white border-white' : ''}`}
                           />
                         ) : (
                           <h3 
@@ -215,7 +224,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                           </h3>
                         )}
                         
-                        <div className="flex items-center space-x-2.5 opacity-40">
+                        <div className={`flex items-center space-x-2.5 ${ebookCover ? 'opacity-80' : 'opacity-40'}`}>
                            {proj.isPinned && <i className="fa-solid fa-thumbtack text-[11px]"></i>}
                            <span className="text-[11px] font-black uppercase tracking-[0.25em] flex items-center">
                              {proj.tags && proj.tags.length > 0 ? proj.tags.join(' • ') : TEMPLATES[proj.writingType]?.label}
@@ -230,9 +239,9 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                           e.stopPropagation();
                           setActiveMenuId(activeMenuId === proj.id ? null : proj.id);
                         }}
-                        className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors"
+                        className={`w-12 h-12 rounded-full ${ebookCover ? 'bg-white/10 hover:bg-white/20' : 'bg-black/5 hover:bg-black/10'} flex items-center justify-center transition-colors`}
                       >
-                        <i className="fa-solid fa-ellipsis-vertical text-xl opacity-40"></i>
+                        <i className={`fa-solid fa-ellipsis-vertical text-xl ${ebookCover ? 'opacity-80' : 'opacity-40'}`}></i>
                       </button>
 
                       {activeMenuId === proj.id && (
@@ -269,16 +278,16 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                   
                   <div className="mt-auto pb-6">
                     <div className="flex justify-between items-end mb-4">
-                      <div className="text-[12px] font-black uppercase tracking-[0.3em] opacity-40 flex items-center">
+                      <div className={`text-[12px] font-black uppercase tracking-[0.3em] flex items-center ${ebookCover ? 'opacity-80' : 'opacity-40'}`}>
                         <i className="fa-regular fa-clock mr-2.5"></i>
                         {proj.metadata || 'JUST NOW'}
                       </div>
-                      <div className="text-[12px] font-black tracking-tight opacity-50">
+                      <div className={`text-[12px] font-black tracking-tight ${ebookCover ? 'opacity-80' : 'opacity-50'}`}>
                         {proj.progress}%
                       </div>
                     </div>
-                    <div className="progress-bar-container bg-black/5">
-                      <div className="progress-fill bg-black/25" style={{ width: `${proj.progress}%` }} />
+                    <div className={`progress-bar-container ${ebookCover ? 'bg-white/10' : 'bg-black/5'}`}>
+                      <div className={`progress-fill ${ebookCover ? 'bg-white/40' : 'bg-black/25'}`} style={{ width: `${proj.progress}%` }} />
                     </div>
                   </div>
                 </div>
@@ -291,7 +300,6 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
       {/* Modern Creation Protocol UI - Optimized RWD for Mobile, Tablet, Web App */}
       {isCreating && (
         <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center animate-in fade-in duration-500">
-           {/* Deep dark blurry mask to fix "overlapping UI" complaint - Apple HIG style */}
            <div className="absolute inset-0 bg-black/95 backdrop-blur-[40px]" onClick={resetForm} />
            
            <div className="relative w-full max-w-full sm:max-w-3xl lg:max-w-6xl bg-[#0F0F10] rounded-t-[44px] sm:rounded-[44px] p-0 flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in duration-700 cubic-bezier(0.16, 1, 0.3, 1) overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,1)] border border-white/5 h-[94vh] sm:h-auto sm:max-h-[90vh]">
@@ -407,7 +415,7 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                           </div>
                        </div>
 
-                       {/* Visual Coding Section - Outer white ring removed as per instruction */}
+                       {/* Visual Coding Section */}
                        <div className="space-y-6 pt-6 border-t border-white/5">
                           <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest px-1">視覺編碼 VISUAL CODING</label>
                           <div className="grid grid-cols-5 sm:grid-cols-11 gap-x-3 sm:gap-x-4 gap-y-6 sm:gap-y-8 justify-items-center sm:justify-items-start">
@@ -429,11 +437,9 @@ const Library: React.FC<LibraryProps> = ({ projects, onSelectProject, onCreatePr
                     </div>
                  </div>
                  
-                 {/* Layout Bottom Padding */}
                  <div className="h-32" />
               </div>
 
-              {/* Fixed Bottom Action Area */}
               <div className="absolute bottom-0 inset-x-0 p-8 sm:p-12 bg-gradient-to-t from-[#0F0F10] via-[#0F0F10] to-transparent shrink-0 z-30">
                  <button 
                     onClick={handleCreate} 

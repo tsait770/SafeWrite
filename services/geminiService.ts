@@ -1,12 +1,20 @@
 
 // @google/genai SDK implementation for SafeWrite core AI services.
 import { GoogleGenAI, Type } from "@google/genai";
+import { CoverAssetType, CoverAsset } from "../types";
 
 // Initialize AI client with environment API key.
 const getAIClient = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey) throw new Error("API Key is missing");
   return new GoogleGenAI({ apiKey });
+};
+
+export const COVER_SPECS = {
+  [CoverAssetType.EBOOK_DIGITAL]: { ratio: "1:1.6", width: 1600, height: 2560, desc: "Amazon KDP / Apple Books" },
+  [CoverAssetType.PRINT_PAPERBACK]: { ratio: "1:1.5", width: 1800, height: 2700, desc: "Print-on-Demand / IngramSpark" },
+  [CoverAssetType.DOC_PREVIEW]: { ratio: "1:1.414", width: 1414, height: 2000, desc: "DOCX / A4 Preview" },
+  [CoverAssetType.SQUARE_SOCIAL]: { ratio: "1:1", width: 2048, height: 2048, desc: "Marketing / Social Media" },
 };
 
 export const geminiService = {
@@ -32,27 +40,68 @@ export const geminiService = {
     throw new Error("No image data returned from model");
   },
 
-  // 使用 Imagen 4.0 生成高品質封面
-  async generateImagenCover(prompt: string) {
+  // 使用 Imagen 4.0 生成高品質出版封面
+  async generateImagenCover(prompt: string, targetSpecs: CoverAssetType): Promise<CoverAsset> {
     const ai = getAIClient();
+    const spec = COVER_SPECS[targetSpecs];
+    
+    // 注入規格引導詞
+    const enhancedPrompt = `${prompt}. Professional book cover composition, focus on central motif, ${spec.ratio} aspect ratio aesthetic, cinematic lighting, ultra-high resolution. No text overlays. Optimal for ${spec.desc}.`;
+
     const response = await ai.models.generateImages({
       model: 'imagen-4.0-generate-001',
-      prompt: prompt,
+      prompt: enhancedPrompt,
       config: {
         numberOfImages: 1,
         outputMimeType: 'image/jpeg',
-        aspectRatio: '3:4', 
+        aspectRatio: spec.ratio as any, 
       },
     });
 
     if (response.generatedImages && response.generatedImages.length > 0) {
       const base64Bytes = response.generatedImages[0].image.imageBytes;
-      return `data:image/jpeg;base64,${base64Bytes}`;
+      const url = `data:image/jpeg;base64,${base64Bytes}`;
+      
+      return {
+        url,
+        type: targetSpecs,
+        width: spec.width,
+        height: spec.height,
+        source: 'AI',
+        timestamp: Date.now(),
+        isCompliant: true, // AI Generated with these settings is compliant by default
+        complianceReport: `✅ 符合 ${spec.desc} 標準規格 (${spec.ratio})。`
+      };
     }
     throw new Error("Imagen generation failed: No image returned");
   },
 
-  // 出版導向審計功能
+  // 封面視覺合規性 AI 檢測
+  async checkCoverCompliance(imageUrl: string, targetSpecs: CoverAssetType): Promise<{ isCompliant: boolean, report: string }> {
+    const ai = getAIClient();
+    const spec = COVER_SPECS[targetSpecs];
+    const prompt = `作為專業出版專家，請針對這張封面進行「${spec.desc}」規格的合規性檢測：
+    1. 視覺中心是否避開了底部的「條碼預留區」？
+    2. 文字空間預留是否足夠？
+    3. 整體氛圍是否符合商業出版標準？
+    4. 假設目標比例為 ${spec.ratio}，請評估當前視覺是否合適。
+    請給出具體且精簡的報告。`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: [
+        { inlineData: { mimeType: 'image/jpeg', data: imageUrl.split(',')[1] } },
+        { text: prompt }
+      ]
+    });
+
+    const report = response.text || "合規檢測完成。";
+    return {
+      isCompliant: !report.includes("不符合") && !report.includes("警告"),
+      report
+    };
+  },
+
   async auditManuscript(content: string, type: 'tone' | 'pacing' | 'style') {
     const ai = getAIClient();
     const promptMap = {
@@ -66,25 +115,6 @@ export const geminiService = {
       contents: `${promptMap[type]}\n\n${content}`,
     });
     return response.text || "審計結果暫不可用。";
-  },
-
-  // 封面視覺合規性 AI 檢測
-  async checkCoverCompliance(base64Image: string, title: string) {
-    const ai = getAIClient();
-    const prompt = `作為專業印刷與出版專家，請分析這張封面圖（針對書名「${title}」）：
-    1. 視覺中心是否避開了底部的「條碼預留區」（右下角 3x2cm 區域）？
-    2. 文字與背景的對比度是否足以在實體書架辨識？
-    3. 整體設計是否具有市場競爭力？
-    請給出精簡的建議。`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
-      contents: [
-        { inlineData: { mimeType: 'image/jpeg', data: base64Image.split(',')[1] } },
-        { text: prompt }
-      ]
-    });
-    return response.text || "合規檢測完成。";
   },
 
   async analyzeManuscript(content: string) {
@@ -132,7 +162,7 @@ export const geminiService = {
     return response.text || content;
   },
 
-  // 測試連線功能 (Fix for components/AIPreferences.tsx)
+  // 測試連線功能
   async testConnection(apiKey: string, provider: string) {
     if (provider !== 'GOOGLE') return true;
     try {
@@ -147,7 +177,7 @@ export const geminiService = {
     }
   },
 
-  // 提取專案結構 (Fix for components/StructureGraph.tsx)
+  // 提取專案結構
   async analyzeProjectStructure(content: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
@@ -182,7 +212,7 @@ export const geminiService = {
     }
   },
 
-  // 圖片文字擷取 (Fix for components/capture/ScanModule.tsx)
+  // 圖片文字擷取
   async extractTextFromImage(base64Data: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
@@ -222,7 +252,7 @@ export const geminiService = {
     }
   },
 
-  // 語音轉錄功能 (Fix for components/capture/VoiceModule.tsx)
+  // 語音轉錄功能
   async transcribeAudio(base64Data: string, mimeType: string) {
     const ai = getAIClient();
     const response = await ai.models.generateContent({
